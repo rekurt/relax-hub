@@ -65,6 +65,7 @@ type userResponse struct {
 	CityID              *int64 `json:"city_id"`
 	Region              string `json:"region"`
 	OnboardingCompleted bool   `json:"onboarding_completed"`
+	TwoFAMethod         string `json:"two_fa_method"` // "none" | "totp" | "sms"
 }
 
 type updateProfileRequest struct {
@@ -103,6 +104,10 @@ type publicProfileResponse struct {
 }
 
 func toUserResponse(u *domain.User) userResponse {
+	twoFA := string(u.TwoFAMethod)
+	if twoFA == "" {
+		twoFA = string(domain.TwoFANone)
+	}
 	return userResponse{
 		ID:                  u.ID.String(),
 		Email:               u.Email,
@@ -115,6 +120,7 @@ func toUserResponse(u *domain.User) userResponse {
 		CityID:              u.CityID,
 		Region:              string(u.Region),
 		OnboardingCompleted: u.OnboardingCompleted,
+		TwoFAMethod:         twoFA,
 	}
 }
 

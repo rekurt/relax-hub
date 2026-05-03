@@ -224,7 +224,7 @@ func (r *walletRepo) ListTransactions(ctx context.Context, filter domain.WalletT
 
 	offset := (page - 1) * pageSize
 	selectQuery := fmt.Sprintf(`
-		SELECT id, wallet_id, type, amount, balance_after, status, description, reference_type, reference_id, is_bonus, expires_at, created_at
+		SELECT id, wallet_id, type, amount, balance_after, status, COALESCE(description, ''), COALESCE(reference_type, ''), reference_id, is_bonus, expires_at, created_at
 		FROM wallet_transactions %s
 		ORDER BY created_at DESC
 		LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
@@ -263,7 +263,7 @@ func (r *walletRepo) ListTransactions(ctx context.Context, filter domain.WalletT
 
 func (r *walletRepo) GetExpiringBonuses(ctx context.Context, walletID uuid.UUID, before time.Time) ([]domain.WalletTransaction, error) {
 	query := `
-		SELECT id, wallet_id, type, amount, balance_after, status, description, reference_type, reference_id, is_bonus, expires_at, created_at
+		SELECT id, wallet_id, type, amount, balance_after, status, COALESCE(description, ''), COALESCE(reference_type, ''), reference_id, is_bonus, expires_at, created_at
 		FROM wallet_transactions
 		WHERE wallet_id = $1 AND is_bonus = true AND expires_at IS NOT NULL AND expires_at <= $2
 			AND status = 'completed'
@@ -274,7 +274,7 @@ func (r *walletRepo) GetExpiringBonuses(ctx context.Context, walletID uuid.UUID,
 
 func (r *walletRepo) GetBonusTransactionsForSpending(ctx context.Context, walletID uuid.UUID) ([]domain.WalletTransaction, error) {
 	query := `
-		SELECT id, wallet_id, type, amount, balance_after, status, description, reference_type, reference_id, is_bonus, expires_at, created_at
+		SELECT id, wallet_id, type, amount, balance_after, status, COALESCE(description, ''), COALESCE(reference_type, ''), reference_id, is_bonus, expires_at, created_at
 		FROM wallet_transactions
 		WHERE wallet_id = $1 AND is_bonus = true AND status = 'completed'
 			AND (expires_at IS NULL OR expires_at > now())
@@ -298,7 +298,7 @@ func (r *walletRepo) ExpireBonuses(ctx context.Context, transactionIDs []uuid.UU
 
 func (r *walletRepo) GetExpiringBonusesSoon(ctx context.Context, walletID uuid.UUID, from, to time.Time) ([]domain.WalletTransaction, error) {
 	query := `
-		SELECT id, wallet_id, type, amount, balance_after, status, description, reference_type, reference_id, is_bonus, expires_at, created_at
+		SELECT id, wallet_id, type, amount, balance_after, status, COALESCE(description, ''), COALESCE(reference_type, ''), reference_id, is_bonus, expires_at, created_at
 		FROM wallet_transactions
 		WHERE wallet_id = $1 AND is_bonus = true AND expires_at >= $2 AND expires_at <= $3
 			AND status = 'completed'
@@ -362,7 +362,7 @@ func (r *walletRepo) CreateHold(ctx context.Context, hold *domain.WalletHold) er
 
 func (r *walletRepo) GetHoldByID(ctx context.Context, holdID uuid.UUID) (*domain.WalletHold, error) {
 	query := `
-		SELECT id, wallet_id, amount, status, description, reference_type, reference_id, expires_at, captured_at, released_at, created_at
+		SELECT id, wallet_id, amount, status, COALESCE(description, ''), COALESCE(reference_type, ''), reference_id, expires_at, captured_at, released_at, created_at
 		FROM wallet_holds WHERE id = $1`
 
 	var h domain.WalletHold
@@ -395,7 +395,7 @@ func (r *walletRepo) UpdateHoldStatus(ctx context.Context, holdID uuid.UUID, sta
 
 func (r *walletRepo) GetActiveHolds(ctx context.Context, walletID uuid.UUID) ([]domain.WalletHold, error) {
 	query := `
-		SELECT id, wallet_id, amount, status, description, reference_type, reference_id, expires_at, captured_at, released_at, created_at
+		SELECT id, wallet_id, amount, status, COALESCE(description, ''), COALESCE(reference_type, ''), reference_id, expires_at, captured_at, released_at, created_at
 		FROM wallet_holds
 		WHERE wallet_id = $1 AND status = 'active'
 		ORDER BY created_at DESC`
@@ -405,7 +405,7 @@ func (r *walletRepo) GetActiveHolds(ctx context.Context, walletID uuid.UUID) ([]
 
 func (r *walletRepo) GetExpiredHolds(ctx context.Context, before time.Time) ([]domain.WalletHold, error) {
 	query := `
-		SELECT id, wallet_id, amount, status, description, reference_type, reference_id, expires_at, captured_at, released_at, created_at
+		SELECT id, wallet_id, amount, status, COALESCE(description, ''), COALESCE(reference_type, ''), reference_id, expires_at, captured_at, released_at, created_at
 		FROM wallet_holds
 		WHERE status = 'active' AND expires_at <= $1
 		ORDER BY expires_at ASC`

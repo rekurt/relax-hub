@@ -4446,6 +4446,9 @@ definitions:
         type: string
       role:
         type: string
+      two_fa_method:
+        description: '"none" | "totp" | "sms"'
+        type: string
     type: object
   internal_handler.validatePromoRequest:
     properties:

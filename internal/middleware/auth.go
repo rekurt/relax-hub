@@ -167,9 +167,6 @@ func OptionalAuth(authService AuthService) func(http.Handler) http.Handler {
 }
 
 func writeAuthError(w http.ResponseWriter, status int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-
 	// Map HTTP status codes to standard error codes
 	var errorCode string
 	switch status {
@@ -180,11 +177,20 @@ func writeAuthError(w http.ResponseWriter, status int, message string) {
 	default:
 		errorCode = "error"
 	}
+	writeAuthErrorCode(w, status, errorCode, message)
+}
 
+// writeAuthErrorCode writes the same envelope as writeAuthError but with an
+// explicit, caller-supplied error code. Use when the generic status-derived
+// code would be too coarse for the frontend to act on (e.g. distinguishing
+// "admin needs 2FA" from a generic 403).
+func writeAuthErrorCode(w http.ResponseWriter, status int, code, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": false,
 		"error": map[string]string{
-			"code":    errorCode,
+			"code":    code,
 			"message": message,
 		},
 	}); err != nil {

@@ -268,7 +268,7 @@ export default function AdminNotificationCenter() {
           dataSource={notifications}
           loading={isLoading}
           locale={{ emptyText: <Empty description="Нет уведомлений" /> }}
-          rowClassName={(record) => (record.is_read ? '' : 'ant-table-row-unread')}
+          rowClassName={(record) => (record.is_read ? '' : 'rh-table-row-unread')}
           pagination={{
             current: page,
             pageSize,
@@ -284,7 +284,7 @@ export default function AdminNotificationCenter() {
       </Card>
 
       <style>{`
-        .ant-table-row-unread {
+        .rh-table-row-unread {
           background: rgba(22, 119, 255, 0.04) !important;
         }
       `}</style>

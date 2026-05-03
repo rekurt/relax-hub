@@ -67,7 +67,15 @@ export default function AdminDashboard() {
 
   const { data: analyticsData, isLoading: analyticsLoading } = useGetAdminAnalytics({ period })
   const { data: topData, isLoading: topLoading } = useGetAdminAnalyticsTop({ metric, limit: 10 })
-  const { data: supportMetrics } = useSupportMetrics()
+  const { data: supportMetricsData } = useSupportMetrics()
+  const supportMetrics = supportMetricsData
+    ? {
+        fcr_percent: supportMetricsData.fcr_percent ?? 0,
+        aht_seconds: supportMetricsData.aht_seconds ?? 0,
+        sla_compliance_percent: supportMetricsData.sla_compliance_percent ?? 0,
+        queue_size: supportMetricsData.queue_size ?? 0,
+      }
+    : undefined
 
   const dashboard = analyticsData?.data
   const topBathhouses = topData?.data?.bathhouses ?? []

@@ -26,10 +26,6 @@ export default function PublicLayout() {
   const isClientUser = user?.role === 'client'
   const searchParams = new URLSearchParams(location.search)
   const selectedCitySlug = searchParams.get('city_slug') ?? undefined
-  const preferredCity = useMemo(
-    () => cities.find((city) => city.slug === 'moscow' || city.slug === 'moskva' || city.name === 'Москва') ?? cities[0],
-    [cities],
-  )
   const selectedCityValue = selectedCitySlug
 
   useEffect(() => {
@@ -53,7 +49,7 @@ export default function PublicLayout() {
         value={selectedCityValue}
         className="rh-topnav__city-select"
         classNames={{ popup: { root: 'rh-topnav__city-dropdown' } }}
-        placeholder={preferredCity?.name ?? 'Город'}
+        placeholder="Город"
         suffixIcon={<DownOutlined />}
         variant="borderless"
         size="middle"

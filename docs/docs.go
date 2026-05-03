@@ -44949,6 +44949,10 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                },
+                "two_fa_method": {
+                    "description": "\"none\" | \"totp\" | \"sms\"",
+                    "type": "string"
                 }
             }
         },
