@@ -10,7 +10,7 @@ import PhoneOTPInput from '@/components/PhoneOTPInput'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
 import { PLATFORM_NAME } from '@/content/support'
-import { syncAntdFormFromDOM } from '@/lib/autofill'
+import { syncDesignFormFromDOM } from '@/lib/autofill'
 
 const { Text } = Typography
 
@@ -58,10 +58,10 @@ export default function Register() {
   const [emailForm] = Form.useForm<EmailRegisterFormValues>()
 
   // Chrome/Safari password-managers fill DOM values but may skip React change
-  // events — drain the DOM into form state before submit so antd validators
+  // events — drain the DOM into form state before submit so validators
   // don't reject autofilled fields as "empty".
   const handleEmailSubmitMouseDown = () => {
-    syncAntdFormFromDOM(emailForm, ['name', 'email', 'phone', 'password', 'confirmPassword'])
+    syncDesignFormFromDOM(emailForm, ['name', 'email', 'phone', 'password', 'confirmPassword'])
   }
 
   const getRoleHomePath = (r: string) => (r === 'client' ? '/client' : '/')

@@ -29,7 +29,8 @@ export default defineConfig(({ mode }) => {
       hookTimeout: 30000,
     },
     server: {
-      allowedHosts: ['mac.local'],
+      host: true,
+      allowedHosts: true,
       proxy: {
         '/api': {
           target: backendUrl,

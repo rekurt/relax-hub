@@ -6,7 +6,7 @@ import { ruRU } from '@/components/design/system'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ChatPage from '@/pages/chat/ChatPage'
 
-// Note: In jsdom, antd useBreakpoint() returns {} so isMobile=true (mobile layout).
+// Note: In jsdom, design-system useBreakpoint() returns {} so isMobile=true (mobile layout).
 // Mobile layout shows either conversation list OR messages, not both side by side.
 
 vi.mock('@/api/generated/chat/chat', () => ({
