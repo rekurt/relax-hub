@@ -2060,6 +2060,10 @@ body.rh-app .rh-grid--content-aside {
   align-items: start;
 }
 
+body.rh-app .rh-calendar-grid-card .rh-card__body {
+  overflow-x: auto;
+}
+
 body.rh-app .rh-stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
