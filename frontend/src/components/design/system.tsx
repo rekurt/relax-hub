@@ -1079,15 +1079,20 @@ interface ColProps extends HTMLAttributes<HTMLDivElement> {
 export function Col({ span, xs, sm, md, lg, xl, xxl, flex, className, style, children, ...props }: ColProps) {
   const screens = useMediaScreens()
   const gutter = useContext(RowGutterContext)
-  let basis = span ?? xs ?? 24
+  let basis = span ?? xs
   if (screens.sm && sm != null) basis = sm
   if (screens.md && md != null) basis = md
   if (screens.lg && lg != null) basis = lg
   if (screens.xl && xl != null) basis = xl
   if (screens.xxl && xxl != null) basis = xxl
-  const ratio = Math.min(24, basis) / 24
-  const gutterOffset = gutter.x * (1 - ratio)
-  const width = `calc(${ratio * 100}% - ${gutterOffset}px)`
+  const gridStyle: CSSProperties = {}
+  if (basis != null) {
+    const ratio = Math.min(24, basis) / 24
+    const gutterOffset = gutter.x * (1 - ratio)
+    const width = `calc(${ratio * 100}% - ${gutterOffset}px)`
+    gridStyle.flex = `0 0 ${width}`
+    gridStyle.maxWidth = width
+  }
   return (
     <div
       className={cx(
@@ -1102,7 +1107,7 @@ export function Col({ span, xs, sm, md, lg, xl, xxl, flex, className, style, chi
         xxl != null && `ant-col-xxl-${xxl}`,
         className,
       )}
-      style={{ flex: flex ?? `0 0 ${width}`, maxWidth: flex ? undefined : width, ...style }}
+      style={{ ...(flex != null ? { flex } : gridStyle), ...style }}
       {...props}
     >
       {children}
