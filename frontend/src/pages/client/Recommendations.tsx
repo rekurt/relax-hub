@@ -1,41 +1,36 @@
 import { useState } from 'react'
-import { Button, Typography, Row, Col, Pagination, Spin, Empty, Card, Rate, Select, Divider } from '@/components/design/system'
-import { EnvironmentOutlined } from '@/components/design/icons'
+import { Button, Typography, Row, Col, Pagination, Spin, Empty, Select, Divider } from '@/components/design/system'
 import { useNavigate } from 'react-router-dom'
 import { useGetRecommendations, useGetPopular } from '@/api/generated/recommendations/recommendations'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { formatPrice } from '@/lib/format'
+import { resolveAssetUrl } from '@/lib/asset-url'
+import { DesignListingCard } from '@/components/design'
 import type { InternalHandlerRecommendationResponse } from '@/api/generated/model'
 
-const { Title, Text } = Typography
+const { Title } = Typography
 
 const PAGE_SIZE = 12
 
 function RecommendationCard({ item }: { item: InternalHandlerRecommendationResponse }) {
   const navigate = useNavigate()
+  const cover = resolveAssetUrl(
+    (item as { cover_photo?: string }).cover_photo
+    ?? (item as { images?: string[] }).images?.[0],
+  )
 
   return (
-    <Card
-      hoverable
+    <DesignListingCard
       onClick={() => navigate(`/client/bathhouse/${item.slug ?? item.id}`)}
-    >
-      <Title level={5} style={{ margin: 0, marginBottom: 8 }}>{item.name}</Title>
-      {item.address && (
-        <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 4 }}>
-          <EnvironmentOutlined style={{ marginRight: 4 }} />
-          {item.address}
-        </Text>
-      )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-        <Rate disabled allowHalf value={item.rating ?? 0} style={{ fontSize: 14 }} />
-        <Text type="secondary" style={{ fontSize: 13 }}>
-          {item.rating?.toFixed(1)} ({item.review_count ?? 0})
-        </Text>
-      </div>
-      {item.price_per_hour != null && (
-        <Text strong>{formatPrice(item.price_per_hour)}/ч</Text>
-      )}
-    </Card>
+      name={item.name}
+      address={item.address}
+      price={item.price_per_hour != null ? `${formatPrice(item.price_per_hour)}/ч` : undefined}
+      rating={item.rating ?? 0}
+      reviewCount={item.review_count ?? 0}
+      verified={Boolean(item.is_photo_verified)}
+      imageUrl={cover}
+      imageAlt={item.name}
+    />
   )
 }
 

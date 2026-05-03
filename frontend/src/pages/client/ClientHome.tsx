@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { Typography, Input, Row, Col, Card, Rate, Select, Space, Tag, Carousel, Button } from '@/components/design/system'
+import { Typography, Input, Row, Col, Card, Select, Space, Tag, Carousel, Button } from '@/components/design/system'
 import { useNavigate } from 'react-router-dom'
 import {
   SearchOutlined,
@@ -16,6 +16,8 @@ import { useGetCities } from '@/api/generated/cities/cities'
 import type { InternalHandlerRecommendationResponse } from '@/api/generated/model'
 import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/lib/format'
+import { resolveAssetUrl } from '@/lib/asset-url'
+import { DesignListingCard } from '@/components/design'
 import PublicState from '@/components/PublicState'
 import RecentlyViewed from '@/components/RecentlyViewed'
 import OnboardingTour from '@/components/OnboardingTour'
@@ -89,54 +91,35 @@ function DiscoveryBathhouseCard({ item }: { item: InternalHandlerRecommendationR
   const navigate = useNavigate()
   const statusTags = getBathhouseStatusTags(item)
   const amenities = getBathhouseAmenities(item)
+  const tags: string[] = [...statusTags, ...amenities.slice(0, 4)]
+  if (amenities.length > 4) tags.push(`+${amenities.length - 4}`)
+
+  const lastMinute = (item as { last_minute_active?: boolean }).last_minute_active
+  const lastMinutePercent = (item as { last_minute_discount_percent?: number }).last_minute_discount_percent
+  const badge = lastMinute
+    ? `Срочно ${lastMinutePercent ? `-${lastMinutePercent}%` : ''}`.trim()
+    : undefined
+
+  const cover = resolveAssetUrl(
+    (item as { cover_photo?: string }).cover_photo
+    ?? (item as { images?: string[] }).images?.[0],
+  )
 
   return (
-    <Card
-      hoverable
-      className="rh-home__listing-card"
+    <DesignListingCard
       onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
-    >
-      <Title level={5} className="rh-home__listing-card-title">{item.name}</Title>
-      {item.address && (
-        <Text type="secondary" className="rh-home__listing-card-address">
-          <EnvironmentOutlined style={{ marginRight: 4 }} />
-          {item.address}
-        </Text>
-      )}
-      <div className="rh-home__listing-card-rating">
-        <Rate disabled allowHalf value={item.rating ?? 0} style={{ fontSize: 14 }} />
-        <Text type="secondary" className="rh-home__listing-card-rating-text">
-          {item.rating?.toFixed(1)} ({item.review_count ?? 0})
-        </Text>
-      </div>
-      {statusTags.length > 0 && (
-        <div className="rh-home__listing-card-tags">
-          {statusTags.map((label) => (
-            <Tag key={label} className="rh-home__listing-card-tag">
-              {label}
-            </Tag>
-          ))}
-        </div>
-      )}
-      {amenities.length > 0 && (
-        <div className="rh-home__listing-card-amenities">
-          <Text className="rh-home__listing-card-amenities-label">Удобства</Text>
-          <div className="rh-home__listing-card-tags rh-home__listing-card-tags--amenities">
-            {amenities.slice(0, 4).map((label) => (
-              <Tag key={label} className="rh-home__listing-card-tag rh-home__listing-card-tag--amenity">
-                {label}
-              </Tag>
-            ))}
-            {amenities.length > 4 && (
-              <Tag className="rh-home__listing-card-tag rh-home__listing-card-tag--amenity">+{amenities.length - 4}</Tag>
-            )}
-          </div>
-        </div>
-      )}
-      {item.price_per_hour != null && (
-        <Text strong className="rh-home__listing-card-price">{formatPrice(item.price_per_hour)}/ч</Text>
-      )}
-    </Card>
+      name={item.name}
+      address={item.address}
+      price={item.price_per_hour != null ? `${formatPrice(item.price_per_hour)}/ч` : undefined}
+      rating={item.rating ?? 0}
+      reviewCount={item.review_count ?? 0}
+      verified={Boolean(item.is_photo_verified)}
+      imageUrl={cover}
+      imageAlt={item.name}
+      badge={badge}
+      badgeTone="red"
+      tags={tags}
+    />
   )
 }
 
