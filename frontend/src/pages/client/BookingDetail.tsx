@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   Typography,
@@ -35,7 +35,10 @@ import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/p
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { axiosInstance } from '@/api/axios-instance'
+import { useDeviceToken } from '@/lib/useDeviceToken'
 import { usePostApiV1BookingsShare } from '@/api/generated/share/share'
+
+const PUSH_PROMPTED_KEY = 'rh_push_prompted'
 import ApplePayButton from '@/components/ApplePayButton'
 import GooglePayButton from '@/components/GooglePayButton'
 import ShareButton from '@/components/ShareButton'
@@ -101,6 +104,18 @@ export default function ClientBookingDetail() {
       onError: () => message.error('Не удалось инициировать оплату'),
     },
   })
+
+  const { requestPushPermission } = useDeviceToken()
+
+  // Request push permission once after the first booking actually completes.
+  // Triggering on creation would burn the one-shot prompt for cancelled or
+  // never-completed (request-mode) bookings.
+  useEffect(() => {
+    if (booking?.status === 'completed' && !localStorage.getItem(PUSH_PROMPTED_KEY)) {
+      localStorage.setItem(PUSH_PROMPTED_KEY, '1')
+      void requestPushPermission()
+    }
+  }, [booking?.status, requestPushPermission])
 
   const shareMutation = usePostApiV1BookingsShare()
 
