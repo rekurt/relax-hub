@@ -5633,9 +5633,8 @@ body.rh-app .rh-certificates-list-loading {
 }
 
 /* ===== Design Kit Completion Layer =====
- * This section intentionally normalizes the remaining AntD primitives used by
- * admin/owner/client pages so legacy screens inherit the RelaxHUB kit without
- * page-by-page rewrites.
+ * This section normalizes the design-system primitives used by admin, owner,
+ * and client pages so every screen inherits the RelaxHUB kit consistently.
  */
 
 body.rh-app,

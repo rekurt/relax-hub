@@ -256,7 +256,7 @@ banya/
 │   ├── index.html                # SPA entry point
 │   ├── vite.config.ts            # Vite + plugin config, /api proxy
 │   ├── tsconfig.json             # TypeScript strict mode config
-│   ├── package.json              # Dependencies (Ant Design, React Query, TanStack)
+│   ├── package.json              # Dependencies (React Query, TanStack, RelaxHUB design system)
 │   └── vitest.config.ts          # Test runner configuration
 │
 ├── widget/                        # Embedded booking widget (separate SPA)
@@ -386,7 +386,7 @@ banya/
   - `api/generated/` — Orval-generated API client (DO NOT EDIT)
   - `pages/` — Organized by role: owner (/), client (/client/*), admin (/admin/*)
   - `stores/` — Zustand stores (auth token, selected bathhouse)
-  - `components/` — Reusable Ant Design-based components
+  - `components/` — Reusable RelaxHUB design-system components and app-level wrappers
 
 **`migrations/`:**
 - Purpose: Database schema version control
