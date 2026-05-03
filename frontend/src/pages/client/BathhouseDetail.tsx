@@ -343,7 +343,7 @@ export default function BathhouseDetail() {
                       <Image
                         src={url}
                         alt={`${bathhouse.name} фото ${i + 1}`}
-                        style={{ borderRadius: 8, objectFit: 'cover', width: '100%', height: i === 0 ? 300 : 100 }}
+                        style={{ borderRadius: 20, objectFit: 'cover', width: '100%', height: i === 0 ? 300 : 100 }}
                       />
                     </Col>
                   ))}
@@ -353,7 +353,7 @@ export default function BathhouseDetail() {
                 ))}
               </Image.PreviewGroup>
             ) : (
-              <div style={{ height: 200, background: '#f5f5f5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ height: 200, background: 'rgba(248, 244, 236, 0.78)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Text type="secondary">Нет фото</Text>
               </div>
             )}
@@ -630,7 +630,7 @@ export default function BathhouseDetail() {
             {currentUser?.role === 'client' && walletBalance?.balance != null && walletBalance.balance > 0 && bathhouse.price_per_hour && walletBalance.balance >= bathhouse.price_per_hour && (
               <Card size="small">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <WalletOutlined style={{ fontSize: 18, color: '#52c41a' }} />
+                  <WalletOutlined style={{ fontSize: 18, color: '#15803d' }} />
                   <Text>Баланс кошелька: <Text strong>{formatPrice(walletBalance.balance)}</Text></Text>
                 </div>
                 <Button

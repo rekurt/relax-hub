@@ -106,7 +106,7 @@ export default function PaymentHistory() {
           <span>
             {formatPrice(record.refund_amount)}
             {record.refunded_at && (
-              <div style={{ color: '#888', fontSize: 12 }}>
+              <div style={{ color: 'var(--rh-text-soft)', fontSize: 12 }}>
                 {formatDateTime(record.refunded_at, 'DD.MM.YYYY')}
               </div>
             )}

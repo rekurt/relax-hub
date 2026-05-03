@@ -75,7 +75,7 @@ export default function BathhouseCard({
       <Button
         key="favorite"
         type="text"
-        icon={bathhouse.is_favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+        icon={bathhouse.is_favorite ? <HeartFilled style={{ color: '#b42318' }} /> : <HeartOutlined />}
         onClick={handleFavoriteClick}
         loading={favoriteMutation.isPending}
       >

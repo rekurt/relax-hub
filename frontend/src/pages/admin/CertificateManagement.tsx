@@ -206,7 +206,7 @@ export default function CertificateManagement() {
         <Col xs={8}>
           <Card size="small">
             <Text type="secondary">Активных</Text>
-            <div style={{ fontSize: 24, fontWeight: 600, color: '#52c41a' }}>{activeCount}</div>
+            <div style={{ fontSize: 24, fontWeight: 600, color: '#15803d' }}>{activeCount}</div>
           </Card>
         </Col>
         <Col xs={8}>

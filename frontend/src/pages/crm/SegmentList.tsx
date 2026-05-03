@@ -34,11 +34,11 @@ const SEGMENT_ICONS: Record<string, React.ReactNode> = {
 }
 
 const SEGMENT_COLORS: Record<string, string> = {
-  new: '#52c41a',
-  regular: '#1677ff',
-  lost: '#ff4d4f',
-  vip: '#faad14',
-  birthday_soon: '#722ed1',
+  new: '#15803d',
+  regular: '#0f766e',
+  lost: '#b42318',
+  vip: '#d97706',
+  birthday_soon: '#0a5f59',
 }
 
 export default function SegmentList() {
@@ -161,7 +161,7 @@ export default function SegmentList() {
             />
           ) : (
             <Card>
-              <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
                 Выберите сегмент для просмотра гостей
               </div>
             </Card>

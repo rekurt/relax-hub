@@ -255,7 +255,7 @@ export default function BathhouseModeration() {
             <a
               key="reject"
               onClick={() => handleReject(record)}
-              style={{ color: '#ff4d4f' }}
+              style={{ color: '#b42318' }}
             >
               Отклонить
             </a>,

@@ -365,7 +365,7 @@ export default function DisputeDetail() {
                           src={item.url}
                           alt="Доказательство"
                           width={200}
-                          style={{ borderRadius: 4 }}
+                          style={{ borderRadius: 12 }}
                         />
                       ) : item.url ? (
                         <a href={item.url} target="_blank" rel="noopener noreferrer">

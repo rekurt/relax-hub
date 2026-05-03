@@ -109,7 +109,7 @@ export default function ReviewCard({
                 alt="Фото отзыва"
                 width={80}
                 height={80}
-                style={{ borderRadius: 4, objectFit: 'cover' }}
+                style={{ borderRadius: 12, objectFit: 'cover' }}
                 preview={{ src: m.url }}
               />
             ) : (
@@ -191,7 +191,7 @@ export default function ReviewCard({
                       src={url}
                       width={80}
                       height={80}
-                      style={{ objectFit: 'cover', borderRadius: 4 }}
+                      style={{ objectFit: 'cover', borderRadius: 12 }}
                     />
                   ))}
                 </Space>
@@ -200,7 +200,7 @@ export default function ReviewCard({
           )}
 
           {review.owner_response && (
-            <Card size="small" style={{ marginTop: 8, background: '#f6ffed' }}>
+            <Card size="small" style={{ marginTop: 8, background: 'rgba(21, 128, 61, 0.08)' }}>
               <Text strong>Ответ владельца:</Text>
               <Paragraph style={{ margin: '4px 0 0' }}>{review.owner_response}</Paragraph>
               {review.owner_response_at && (

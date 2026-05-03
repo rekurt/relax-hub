@@ -49,8 +49,8 @@ function KpiCard({ title, value, change, icon, loading, suffix, hint }: KpiCardP
     change === undefined || change === 0
       ? undefined
       : change > 0
-        ? '#52c41a'
-        : '#ff4d4f'
+        ? '#15803d'
+        : '#b42318'
 
   const changeIcon =
     change !== undefined && change !== 0

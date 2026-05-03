@@ -47,11 +47,11 @@ function useRFMAnalysis() {
 }
 
 const SCORE_COLORS: Record<number, string> = {
-  1: '#ff4d4f',
-  2: '#ff7a45',
-  3: '#ffc53d',
-  4: '#73d13d',
-  5: '#52c41a',
+  1: '#b42318',
+  2: '#d97706',
+  3: '#d97706',
+  4: '#15803d',
+  5: '#15803d',
 }
 
 const SCORE_LABELS: Record<number, string> = {
@@ -91,9 +91,9 @@ function RFMMatrix({ matrix }: { matrix: RFMMatrixCell[] }) {
         <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 350 }}>
           <thead>
             <tr>
-              <th style={{ padding: 8, border: '1px solid #f0f0f0', background: '#fafafa' }}>R \ F</th>
+              <th style={{ padding: 8, border: '1px solid rgba(15, 23, 42, 0.08)', background: 'rgba(255, 253, 248, 0.72)' }}>R \ F</th>
               {[1, 2, 3, 4, 5].map((f) => (
-                <th key={f} style={{ padding: 8, border: '1px solid #f0f0f0', background: '#fafafa', textAlign: 'center' }}>
+                <th key={f} style={{ padding: 8, border: '1px solid rgba(15, 23, 42, 0.08)', background: 'rgba(255, 253, 248, 0.72)', textAlign: 'center' }}>
                   F={f}
                 </th>
               ))}
@@ -102,7 +102,7 @@ function RFMMatrix({ matrix }: { matrix: RFMMatrixCell[] }) {
           <tbody>
             {[5, 4, 3, 2, 1].map((r) => (
               <tr key={r}>
-                <td style={{ padding: 8, border: '1px solid #f0f0f0', background: '#fafafa', fontWeight: 600 }}>
+                <td style={{ padding: 8, border: '1px solid rgba(15, 23, 42, 0.08)', background: 'rgba(255, 253, 248, 0.72)', fontWeight: 600 }}>
                   R={r}
                 </td>
                 {[1, 2, 3, 4, 5].map((f) => {
@@ -116,11 +116,11 @@ function RFMMatrix({ matrix }: { matrix: RFMMatrixCell[] }) {
                       key={f}
                       style={{
                         padding: 8,
-                        border: '1px solid #f0f0f0',
+                        border: '1px solid rgba(15, 23, 42, 0.08)',
                         textAlign: 'center',
                         background: bg,
                         fontWeight: count > 0 ? 600 : 400,
-                        color: intensity > 0.5 ? '#fff' : '#333',
+                        color: intensity > 0.5 ? '#fff' : 'var(--rh-text)',
                       }}
                     >
                       {count || ''}
@@ -234,7 +234,7 @@ export default function RFMAnalysis() {
         <Col xs={12} sm={6}>
           <Card size="small">
             <Text type="secondary">Чемпионы</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#52c41a' }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#15803d' }}>
               {segmentSummary.champions}
             </div>
             <Text type="secondary" style={{ fontSize: 11 }}>R≥4, F≥4</Text>
@@ -243,7 +243,7 @@ export default function RFMAnalysis() {
         <Col xs={12} sm={6}>
           <Card size="small">
             <Text type="secondary">Лояльные</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#1677ff' }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#0f766e' }}>
               {segmentSummary.loyal}
             </div>
             <Text type="secondary" style={{ fontSize: 11 }}>F≥4, R&lt;4</Text>
@@ -252,7 +252,7 @@ export default function RFMAnalysis() {
         <Col xs={12} sm={6}>
           <Card size="small">
             <Text type="secondary">Под угрозой</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#faad14' }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#d97706' }}>
               {segmentSummary.atRisk}
             </div>
             <Text type="secondary" style={{ fontSize: 11 }}>R≤2, F≥3</Text>
@@ -261,7 +261,7 @@ export default function RFMAnalysis() {
         <Col xs={12} sm={6}>
           <Card size="small">
             <Text type="secondary">Потерянные</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#ff4d4f' }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#b42318' }}>
               {segmentSummary.lost}
             </div>
             <Text type="secondary" style={{ fontSize: 11 }}>R≤2, F≤2</Text>
@@ -276,11 +276,11 @@ export default function RFMAnalysis() {
         <Col xs={24} lg={12}>
           <Card title="Подсказка по интерпретации" size="small">
             <div style={{ lineHeight: 2 }}>
-              <Tag color="#52c41a">5</Tag> Лучший квинтиль (топ-20%)<br />
-              <Tag color="#73d13d">4</Tag> Выше среднего<br />
-              <Tag color="#ffc53d">3</Tag> Средний<br />
-              <Tag color="#ff7a45">2</Tag> Ниже среднего<br />
-              <Tag color="#ff4d4f">1</Tag> Нижний квинтиль (нижние 20%)<br />
+              <Tag color="#15803d">5</Tag> Лучший квинтиль (топ-20%)<br />
+              <Tag color="#15803d">4</Tag> Выше среднего<br />
+              <Tag color="#d97706">3</Tag> Средний<br />
+              <Tag color="#d97706">2</Tag> Ниже среднего<br />
+              <Tag color="#b42318">1</Tag> Нижний квинтиль (нижние 20%)<br />
             </div>
             <Text type="secondary" style={{ fontSize: 12, marginTop: 12, display: 'block' }}>
               Чемпионы (R≥4, F≥4) - самые ценные гости. Потерянные (R≤2, F≤2) - давно не приходили.

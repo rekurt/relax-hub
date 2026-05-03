@@ -170,7 +170,7 @@ export default function ExtensionRequests({ bookingId, open, onClose }: Extensio
         )}
 
         {pendingRequests.length > 0 && (
-          <div style={{ marginTop: 16, padding: 8, background: '#fff1f0', borderRadius: 4 }}>
+          <div style={{ marginTop: 16, padding: 8, background: 'rgba(180, 35, 24, 0.08)', borderRadius: 12 }}>
             <Text type="danger">
               {pendingRequests.length} запрос(ов) ожидают вашего решения. Без ответа запрос автоматически отклоняется через 30 минут.
             </Text>

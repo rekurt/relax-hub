@@ -589,7 +589,7 @@ export default function BookingCreate() {
                     key={addon.id}
                     size="small"
                     style={{
-                      border: selected ? '2px solid #1677ff' : '1px solid #d9d9d9',
+                      border: selected ? '2px solid #0f766e' : '1px solid #c9c1b5',
                       cursor: 'pointer',
                     }}
                     onClick={() => addon.id && toggleAddon(addon.id)}
@@ -974,8 +974,8 @@ function paymentMethodStyle(isSelected: boolean): React.CSSProperties {
     height: 'auto',
     padding: '12px 16px',
     textAlign: 'left' as const,
-    borderRadius: 8,
-    border: isSelected ? '2px solid #1677ff' : '1px solid #d9d9d9',
-    background: isSelected ? '#e6f4ff' : '#fff',
+    borderRadius: 20,
+    border: isSelected ? '2px solid #0f766e' : '1px solid #c9c1b5',
+    background: isSelected ? 'rgba(15, 118, 110, 0.08)' : '#fff',
   }
 }

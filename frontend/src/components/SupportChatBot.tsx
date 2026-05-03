@@ -46,11 +46,11 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  booking: 'blue',
+  booking: 'green',
   payment: 'green',
   cancellation: 'orange',
-  wallet: 'purple',
-  account: 'cyan',
+  wallet: 'gold',
+  account: 'green',
   general: 'default',
 }
 
@@ -165,11 +165,12 @@ export default function SupportChatBot({ onEscalate }: SupportChatBotProps) {
               <div key={idx} style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
                 <div
                   style={{
-                    background: '#1677ff',
+                    background: 'linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong))',
                     color: '#fff',
-                    borderRadius: '12px 12px 0 12px',
-                    padding: '8px 14px',
+                    borderRadius: '18px 18px 6px 18px',
+                    padding: '10px 14px',
                     maxWidth: '75%',
+                    boxShadow: '0 12px 24px rgba(15, 118, 110, 0.16)',
                   }}
                 >
                   <Text style={{ color: '#fff' }}>{msg.text}</Text>
@@ -183,9 +184,10 @@ export default function SupportChatBot({ onEscalate }: SupportChatBotProps) {
               <div key={idx} style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
                 <div
                   style={{
-                    background: '#f5f5f5',
-                    borderRadius: '12px 12px 12px 0',
-                    padding: '8px 14px',
+                    background: 'rgba(248, 244, 236, 0.82)',
+                    border: '1px solid var(--rh-border)',
+                    borderRadius: '18px 18px 18px 6px',
+                    padding: '10px 14px',
                     maxWidth: '75%',
                   }}
                 >
@@ -238,7 +240,7 @@ export default function SupportChatBot({ onEscalate }: SupportChatBotProps) {
         })}
         <div ref={messagesEndRef} />
       </div>
-      <div style={{ padding: '8px 16px 16px', borderTop: '1px solid #f0f0f0' }}>
+      <div style={{ padding: '10px 16px 16px', borderTop: '1px solid var(--rh-border)' }}>
         <Space.Compact style={{ width: '100%' }}>
           <Input
             placeholder="Опишите вашу проблему..."

@@ -23,6 +23,7 @@ interface TopNavigationLayoutProps {
   profilePath?: string
   profileMenuItems?: NavigationItem[]
   headerAccessory?: React.ReactNode
+  headerAccessoryVariant?: 'default' | 'city'
   showNotifications?: boolean
   contentWidth?: number
   drawerSections?: NavigationSection[]
@@ -98,6 +99,7 @@ export default function TopNavigationLayout({
   profilePath,
   profileMenuItems = [],
   headerAccessory,
+  headerAccessoryVariant = 'default',
   showNotifications = true,
   contentWidth = 1480,
   drawerSections,
@@ -231,7 +233,7 @@ export default function TopNavigationLayout({
 
           <div className="bani-topnav__actions">
             {!isMobile && headerAccessory && (
-              <div className="bani-topnav__accessory">
+              <div className={`bani-topnav__accessory bani-topnav__accessory--${headerAccessoryVariant}`}>
                 {headerAccessory}
               </div>
             )}
@@ -255,7 +257,12 @@ export default function TopNavigationLayout({
                 </Dropdown>
               </>
             ) : (
-              <Button type="default" onClick={() => navigate('/login')} className="bani-topnav__profile-button">
+              <Button
+                type="default"
+                icon={<UserOutlined />}
+                onClick={() => navigate('/login')}
+                className="bani-topnav__profile-button bani-topnav__login-button"
+              >
                 Войти
               </Button>
             )}
@@ -294,7 +301,7 @@ export default function TopNavigationLayout({
       >
         <Space orientation="vertical" style={{ width: '100%' }} size={12}>
           {headerAccessory && (
-            <div className="bani-topnav__drawer-accessory">
+            <div className={`bani-topnav__drawer-accessory bani-topnav__drawer-accessory--${headerAccessoryVariant}`}>
               {headerAccessory}
             </div>
           )}

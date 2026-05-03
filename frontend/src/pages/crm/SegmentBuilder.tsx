@@ -409,7 +409,7 @@ export default function SegmentBuilder() {
                 hoverable
                 style={{
                   marginBottom: 8,
-                  borderColor: selectedSegment?.id === item.id ? '#1677ff' : undefined,
+                  borderColor: selectedSegment?.id === item.id ? '#0f766e' : undefined,
                   borderWidth: selectedSegment?.id === item.id ? 2 : 1,
                 }}
                 onClick={() => { setSelectedSegment(item); setPage(1) }}
@@ -417,7 +417,7 @@ export default function SegmentBuilder() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <TeamOutlined style={{ color: '#1677ff', fontSize: 18 }} />
+                      <TeamOutlined style={{ color: '#0f766e', fontSize: 18 }} />
                       <Text strong>{item.name}</Text>
                     </div>
                     <Text type="secondary" style={{ fontSize: 12 }}>
@@ -473,7 +473,7 @@ export default function SegmentBuilder() {
             </Card>
           ) : (
             <Card>
-              <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
                 Выберите сегмент или создайте новый
               </div>
             </Card>

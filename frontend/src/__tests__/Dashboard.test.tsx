@@ -82,13 +82,13 @@ describe('Dashboard', () => {
     const positiveChanges = screen.getAllByText(/\+.*% к пред\. периоду/)
     expect(positiveChanges.length).toBeGreaterThan(0)
     positiveChanges.forEach((el) => {
-      expect(el).toHaveStyle({ color: '#52c41a' })
+      expect(el).toHaveStyle({ color: '#15803d' })
     })
 
     const negativeChanges = screen.getAllByText(/-.*% к пред\. периоду/)
     expect(negativeChanges.length).toBeGreaterThan(0)
     negativeChanges.forEach((el) => {
-      expect(el).toHaveStyle({ color: '#ff4d4f' })
+      expect(el).toHaveStyle({ color: '#b42318' })
     })
   })
 

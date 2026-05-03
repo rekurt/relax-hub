@@ -172,7 +172,7 @@ export default function AdminNotifications() {
             locale={{
               emptyText: (
                 <Empty
-                  image={<BellOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />}
+                  image={<BellOutlined style={{ fontSize: 48, color: '#c9c1b5' }} />}
                   description="Нет уведомлений"
                 />
               ),

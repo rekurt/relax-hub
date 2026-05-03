@@ -357,7 +357,7 @@ export default function ProfileSettings() {
                           <Avatar
                             src={account.avatar_url}
                             style={{
-                              backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? '#999',
+                              backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? 'var(--rh-text-muted)',
                             }}
                           >
                             {(account.provider ?? '')[0]?.toUpperCase()}

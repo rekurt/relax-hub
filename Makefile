@@ -61,7 +61,7 @@ swagger-fmt:
 	$(SWAG) fmt -g cmd/server/docs.go
 
 frontend-dev:
-	cd frontend && npm run dev
+	cd frontend && npm run dev -- --host
 
 frontend-build:
 	cd frontend && npm run build

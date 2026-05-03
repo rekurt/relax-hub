@@ -244,7 +244,7 @@ export default function GeoHeatmap() {
               title="Объекты"
               value={totalListings}
               prefix={<ShopOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#0f766e' }}
             />
           </Card>
         </Col>
@@ -254,7 +254,7 @@ export default function GeoHeatmap() {
               title="Поисковые запросы"
               value={totalSearches}
               prefix={<SearchOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#d97706' }}
             />
           </Card>
         </Col>
@@ -264,7 +264,7 @@ export default function GeoHeatmap() {
               title="Бронирования"
               value={totalBookings}
               prefix={<EnvironmentOutlined />}
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#15803d' }}
             />
           </Card>
         </Col>
@@ -297,7 +297,7 @@ export default function GeoHeatmap() {
         />
         {cells.length > 0 && (
           <div style={{ padding: '12px 0 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12, color: '#999' }}>
+            <span style={{ fontSize: 12, color: 'var(--rh-text-muted)' }}>
               {layer === 'demand' ? 'Спрос (запросы):' : 'Предложение (объекты):'}
             </span>
             <div style={{ display: 'flex', gap: 2 }}>
@@ -313,11 +313,11 @@ export default function GeoHeatmap() {
                         : getSupplyColor((i + 1) * 20, 100),
                     }}
                   />
-                  {label && <div style={{ fontSize: 10, color: '#999' }}>{label}</div>}
+                  {label && <div style={{ fontSize: 10, color: 'var(--rh-text-muted)' }}>{label}</div>}
                 </div>
               ))}
             </div>
-            <span style={{ fontSize: 12, color: '#999', marginLeft: 'auto' }}>
+            <span style={{ fontSize: 12, color: 'var(--rh-text-muted)', marginLeft: 'auto' }}>
               {cells.length} ячеек
             </span>
           </div>

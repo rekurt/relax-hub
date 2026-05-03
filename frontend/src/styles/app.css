@@ -1,50 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap');
+
 :root {
   color-scheme: light;
-  --bani-primary: #0f766e;
-  --bani-primary-strong: #0a5f59;
-  --bani-primary-soft: rgba(15, 118, 110, 0.08);
-  --bani-primary-glow: rgba(15, 118, 110, 0.20);
-  --bani-accent: #d97706;
-  --bani-accent-soft: rgba(217, 119, 6, 0.10);
-  --bani-success: #15803d;
-  --bani-warning: #b45309;
-  --bani-error: #b42318;
-  --bani-text: #16212b;
-  --bani-text-soft: #5f6877;
-  --bani-text-muted: rgba(22, 33, 43, 0.48);
-  --bani-text-disabled: rgba(22, 33, 43, 0.42);
-  --bani-bg-base: #f8f4ec;
-  --bani-bg-elevated: #fffefb;
-  --bani-bg-container: #fffdf8;
-  --bani-surface: rgba(255, 253, 248, 0.82);
-  --bani-surface-strong: rgba(255, 255, 255, 0.96);
-  --bani-surface-glow: rgba(255, 255, 255, 0.7);
-  --bani-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 252, 246, 0.84));
-  --bani-card-bg-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 245, 238, 0.96));
-  --bani-border: rgba(15, 23, 42, 0.12);
-  --bani-border-strong: rgba(15, 23, 42, 0.16);
-  --bani-border-control: rgba(15, 23, 42, 0.14);
-  --bani-border-hover: rgba(15, 118, 110, 0.28);
-  --bani-border-focus: rgba(15, 118, 110, 0.52);
-  --bani-shadow: 0 24px 64px rgba(15, 23, 42, 0.10);
-  --bani-shadow-soft: 0 16px 40px rgba(15, 23, 42, 0.06);
-  --bani-shadow-strong: 0 30px 80px rgba(15, 23, 42, 0.22);
+  --rh-primary: #0f766e;
+  --rh-primary-strong: #0a5f59;
+  --rh-primary-soft: rgba(15, 118, 110, 0.08);
+  --rh-primary-glow: rgba(15, 118, 110, 0.20);
+  --rh-accent: #d97706;
+  --rh-accent-soft: rgba(217, 119, 6, 0.10);
+  --rh-success: #15803d;
+  --rh-warning: #b45309;
+  --rh-error: #b42318;
+  --rh-info: #0f766e;
+  --rh-success-soft: rgba(21, 128, 61, 0.08);
+  --rh-error-soft: rgba(180, 35, 24, 0.08);
+  --rh-warning-soft: rgba(217, 119, 6, 0.10);
+  --rh-info-soft: rgba(15, 118, 110, 0.08);
+  --rh-text: #16212b;
+  --rh-text-soft: #5f6877;
+  --rh-text-muted: rgba(22, 33, 43, 0.48);
+  --rh-text-disabled: rgba(22, 33, 43, 0.42);
+  --rh-text-on-dark: #f7f4eb;
+  --rh-text-on-dark-soft: rgba(247, 244, 235, 0.66);
+  --rh-bg-base: #f8f4ec;
+  --rh-bg-elevated: #fffefb;
+  --rh-bg-container: #fffdf8;
+  --rh-surface: rgba(255, 253, 248, 0.82);
+  --rh-surface-strong: rgba(255, 255, 255, 0.96);
+  --rh-surface-glow: rgba(255, 255, 255, 0.70);
+  --rh-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 252, 246, 0.84));
+  --rh-card-bg-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 245, 238, 0.96));
+  --rh-page-bg-stack:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 30%),
+    radial-gradient(circle at top right, rgba(217, 119, 6, 0.10), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.07), transparent 28%),
+    linear-gradient(180deg, #f8f2e8 0%, #f4f6ef 30%, #fffdf8 68%, #fff9f1 100%);
+  --rh-dot-pattern: radial-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 0);
+  --rh-grad-auth: linear-gradient(135deg, #10313a 0%, #38606a 44%, #9a5c30 100%);
+  --rh-grad-footer:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.32), transparent 28%),
+    linear-gradient(180deg, rgba(17, 27, 33, 0.98), rgba(12, 18, 24, 0.98));
+  --rh-border-subtle: rgba(15, 23, 42, 0.06);
+  --rh-border: rgba(15, 23, 42, 0.08);
+  --rh-border-strong: rgba(15, 23, 42, 0.12);
+  --rh-border-control: rgba(15, 23, 42, 0.14);
+  --rh-border-hover: rgba(15, 118, 110, 0.28);
+  --rh-border-focus: rgba(15, 118, 110, 0.52);
+  --rh-border-on-dark: rgba(255, 255, 255, 0.10);
+  --rh-radius-sm: 12px;
+  --rh-radius-md: 16px;
+  --rh-radius-lg: 20px;
+  --rh-radius-xl: 24px;
+  --rh-radius-2xl: 28px;
+  --rh-radius-3xl: 32px;
+  --rh-radius-pill: 999px;
+  --rh-shadow-soft: 0 16px 40px rgba(15, 23, 42, 0.06);
+  --rh-shadow: 0 24px 64px rgba(15, 23, 42, 0.10);
+  --rh-shadow-strong: 0 30px 80px rgba(15, 23, 42, 0.22);
+  --rh-shadow-control: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 10px 24px rgba(15, 23, 42, 0.04);
+  --rh-shadow-control-hover: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 14px 28px rgba(15, 23, 42, 0.06);
+  --rh-shadow-control-focus: 0 0 0 4px rgba(15, 118, 110, 0.10), 0 18px 32px rgba(15, 23, 42, 0.08);
+  --rh-shadow-primary: 0 14px 28px rgba(15, 118, 110, 0.20);
+  --rh-shadow-primary-hover: 0 18px 30px rgba(15, 118, 110, 0.24);
+  --rh-font-sans: 'Manrope', 'Avenir Next', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Legacy aliases kept so older page classes inherit the design kit without a flag day. */
+  --bani-primary: var(--rh-primary);
+  --bani-primary-strong: var(--rh-primary-strong);
+  --bani-primary-soft: var(--rh-primary-soft);
+  --bani-primary-glow: var(--rh-primary-glow);
+  --bani-accent: var(--rh-accent);
+  --bani-accent-soft: var(--rh-accent-soft);
+  --bani-success: var(--rh-success);
+  --bani-warning: var(--rh-warning);
+  --bani-error: var(--rh-error);
+  --bani-text: var(--rh-text);
+  --bani-text-soft: var(--rh-text-soft);
+  --bani-text-muted: var(--rh-text-muted);
+  --bani-text-disabled: var(--rh-text-disabled);
+  --bani-bg-base: var(--rh-bg-base);
+  --bani-bg-elevated: var(--rh-bg-elevated);
+  --bani-bg-container: var(--rh-bg-container);
+  --bani-surface: var(--rh-surface);
+  --bani-surface-strong: var(--rh-surface-strong);
+  --bani-surface-glow: var(--rh-surface-glow);
+  --bani-card-bg: var(--rh-card-bg);
+  --bani-card-bg-tint: var(--rh-card-bg-tint);
+  --bani-border: var(--rh-border-strong);
+  --bani-border-strong: var(--rh-border-strong);
+  --bani-border-control: var(--rh-border-control);
+  --bani-border-hover: var(--rh-border-hover);
+  --bani-border-focus: var(--rh-border-focus);
+  --bani-shadow: var(--rh-shadow);
+  --bani-shadow-soft: var(--rh-shadow-soft);
+  --bani-shadow-strong: var(--rh-shadow-strong);
   --bani-control-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(251, 247, 240, 0.96));
   --bani-control-bg-strong: rgba(255, 255, 255, 0.99);
   --bani-control-bg-disabled: rgba(244, 239, 231, 0.82);
-  --bani-control-border: rgba(15, 23, 42, 0.14);
-  --bani-control-border-hover: rgba(15, 118, 110, 0.28);
-  --bani-control-border-focus: rgba(15, 118, 110, 0.52);
+  --bani-control-border: var(--rh-border-control);
+  --bani-control-border-hover: var(--rh-border-hover);
+  --bani-control-border-focus: var(--rh-border-focus);
   --bani-control-placeholder: #7a8390;
   --bani-control-text: #13212d;
-  --bani-control-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 10px 24px rgba(15, 23, 42, 0.04);
-  --bani-control-shadow-hover: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 14px 28px rgba(15, 23, 42, 0.06);
-  --bani-control-shadow-focus: 0 0 0 4px rgba(15, 118, 110, 0.10), 0 18px 32px rgba(15, 23, 42, 0.08);
-  --bani-radius-xl: 28px;
-  --bani-radius-lg: 20px;
-  --bani-radius-md: 16px;
-  --bani-radius-sm: 12px;
-  --bani-radius-pill: 999px;
+  --bani-control-shadow: var(--rh-shadow-control);
+  --bani-control-shadow-hover: var(--rh-shadow-control-hover);
+  --bani-control-shadow-focus: var(--rh-shadow-control-focus);
+  --bani-radius-xl: var(--rh-radius-2xl);
+  --bani-radius-lg: var(--rh-radius-lg);
+  --bani-radius-md: var(--rh-radius-md);
+  --bani-radius-sm: var(--rh-radius-sm);
+  --bani-radius-pill: var(--rh-radius-pill);
 }
 
 html,
@@ -55,14 +120,13 @@ body,
 
 body {
   margin: 0;
-  font-family: 'Manrope', 'Avenir Next', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--rh-font-sans);
   color: var(--bani-text);
-  background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 30%),
-    radial-gradient(circle at top right, rgba(217, 119, 6, 0.10), transparent 24%),
-    radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.07), transparent 28%),
-    linear-gradient(180deg, #f8f2e8 0%, #f4f6ef 30%, #fffdf8 68%, #fff9f1 100%);
+  background: var(--rh-page-bg-stack);
   background-attachment: fixed;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 body::before {
@@ -70,7 +134,7 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image: radial-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 0);
+  background-image: var(--rh-dot-pattern);
   background-size: 24px 24px;
   opacity: 0.28;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.45));
@@ -539,6 +603,54 @@ body.bani-app .ant-result {
   padding: 4px 0;
 }
 
+body.bani-app .ant-result .ant-result-title {
+  color: var(--bani-text);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+body.bani-app .ant-result .ant-result-subtitle {
+  color: var(--bani-text-soft);
+}
+
+body.bani-app .ant-spin-dot-item {
+  background-color: var(--bani-primary);
+}
+
+body.bani-app .ant-progress .ant-progress-bg {
+  background: linear-gradient(135deg, var(--bani-primary), var(--bani-primary-strong));
+}
+
+body.bani-app .ant-rate {
+  color: var(--bani-accent);
+}
+
+body.bani-app .ant-badge .ant-badge-count {
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  box-shadow: 0 8px 18px rgba(180, 35, 24, 0.18);
+}
+
+body.bani-app .ant-image,
+body.bani-app .ant-image-img,
+body.bani-app .ant-upload-list-item,
+body.bani-app .ant-upload-wrapper .ant-upload-select {
+  border-radius: 20px;
+}
+
+body.bani-app .ant-upload-wrapper .ant-upload-drag,
+body.bani-app .ant-upload-wrapper .ant-upload-select {
+  border-color: var(--bani-border-control);
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 34%),
+    rgba(255, 253, 248, 0.72);
+}
+
+body.bani-app .ant-upload-wrapper .ant-upload-drag-hover,
+body.bani-app .ant-upload-wrapper .ant-upload-select:hover {
+  border-color: var(--bani-border-hover);
+  background: rgba(255, 255, 255, 0.92);
+}
+
 body.bani-app .ant-segmented {
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 20px;
@@ -621,18 +733,19 @@ body.bani-app .bani-topnav {
   position: sticky;
   top: 0;
   z-index: 20;
-  padding: 18px 24px;
-  background: rgba(255, 252, 247, 0.80);
+  padding: 14px 24px;
+  background: rgba(255, 252, 247, 0.88);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.055);
 }
 
 body.bani-app .bani-topnav__inner {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
+  min-height: 48px;
 }
 
 body.bani-app .bani-topnav__brand {
@@ -671,7 +784,7 @@ body.bani-app .bani-brand-lockup__title {
   font-size: 30px;
   font-weight: 800;
   line-height: 0.94;
-  letter-spacing: -0.06em;
+  letter-spacing: 0;
   color: var(--bani-text);
 }
 
@@ -766,10 +879,10 @@ body.bani-app .bani-topnav__nav-button:focus {
 body.bani-app .bani-topnav__nav-button--active,
 body.bani-app .bani-topnav__nav-button--active:hover,
 body.bani-app .bani-topnav__nav-button--active:focus {
-  color: var(--bani-text) !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-color: rgba(15, 23, 42, 0.10);
-  box-shadow: 0 10px 24px rgba(19, 79, 92, 0.08);
+  color: var(--bani-primary-strong) !important;
+  background: var(--bani-primary-soft) !important;
+  border-color: rgba(15, 118, 110, 0.18);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.08);
 }
 
 body.bani-app .bani-topnav__workspace-button {
@@ -791,7 +904,7 @@ body.bani-app .bani-topnav__actions {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 body.bani-app .bani-topnav__accessory {
@@ -805,10 +918,107 @@ body.bani-app .bani-topnav__accessory {
   background: rgba(255, 255, 255, 0.64);
 }
 
+body.bani-app .bani-topnav__accessory--city {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.bani-app .bani-topnav__city-picker {
+  height: 42px;
+  min-width: 164px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 9px 0 14px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 253, 248, 0.80));
+  box-shadow:
+    0 10px 26px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+body.bani-app .bani-topnav__city-picker:hover,
+body.bani-app .bani-topnav__city-picker:focus-within {
+  border-color: rgba(15, 118, 110, 0.30);
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.09),
+    0 0 0 3px rgba(15, 118, 110, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+body.bani-app .bani-topnav__city-icon {
+  flex: 0 0 auto;
+  color: var(--bani-primary);
+  font-size: 16px;
+}
+
+body.bani-app .bani-topnav__city-select {
+  width: 116px;
+}
+
+body.bani-app .bani-topnav__city-select .ant-select-selector {
+  height: 40px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body.bani-app .bani-topnav__city-select .ant-select-selection-search {
+  inset-inline-start: 0 !important;
+  inset-inline-end: 20px !important;
+}
+
+body.bani-app .bani-topnav__city-select .ant-select-selection-item,
+body.bani-app .bani-topnav__city-select .ant-select-selection-placeholder {
+  padding-inline-end: 20px !important;
+  color: var(--bani-text) !important;
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 40px !important;
+}
+
+body.bani-app .bani-topnav__city-select .ant-select-arrow {
+  inset-inline-end: 0;
+  color: rgba(22, 33, 43, 0.58);
+  font-size: 11px;
+}
+
+body.bani-app .bani-topnav__city-dropdown .ant-select-item {
+  border-radius: 12px;
+}
+
+body.bani-app .bani-topnav__city-dropdown .ant-select-item-option-selected {
+  background: rgba(15, 118, 110, 0.10) !important;
+  color: var(--bani-text);
+  font-weight: 700;
+}
+
 body.bani-app .bani-topnav__profile-button {
+  height: 42px;
   border-radius: 999px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(255, 255, 255, 0.74);
+}
+
+body.bani-app .bani-topnav__login-button.ant-btn {
+  padding: 0 18px;
+  border-color: rgba(22, 33, 43, 0.16);
+  background: #16212b;
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(22, 33, 43, 0.16);
+}
+
+body.bani-app .bani-topnav__login-button.ant-btn:hover,
+body.bani-app .bani-topnav__login-button.ant-btn:focus {
+  border-color: var(--bani-primary);
+  background: var(--bani-primary);
+  color: #fff !important;
+  box-shadow: 0 14px 30px rgba(15, 118, 110, 0.20);
 }
 
 body.bani-app .bani-topnav__profile-label {
@@ -840,6 +1050,15 @@ body.bani-app .bani-topnav__footer-inner {
 body.bani-app .bani-topnav__drawer-accessory {
   width: 100%;
   padding: 8px 0 4px;
+}
+
+body.bani-app .bani-topnav__drawer-accessory--city .bani-topnav__city-picker {
+  width: 100%;
+}
+
+body.bani-app .bani-topnav__drawer-accessory--city .bani-topnav__city-select {
+  flex: 1;
+  width: auto;
 }
 
 body.bani-app .bani-topnav__drawer-user {
@@ -1019,9 +1238,7 @@ body.bani-app .bani-listing-card .ant-card-actions {
 
 body.bani-app .bani-shell-footer {
   color: rgba(245, 245, 241, 0.88);
-  background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.32), transparent 28%),
-    linear-gradient(180deg, rgba(17, 27, 33, 0.98), rgba(12, 18, 24, 0.98));
+  background: var(--rh-grad-footer);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 32px;
   padding: 32px;
@@ -1165,10 +1382,10 @@ body.bani-app .bani-stat-tile__eyebrow {
 }
 
 body.bani-app .bani-stat-tile__value {
-  font-size: clamp(24px, 2.6vw, 34px);
+  font-size: 34px;
   font-weight: 800;
   line-height: 1.05;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   color: var(--bani-text);
 }
 
@@ -1367,7 +1584,7 @@ body.bani-app .bani-auth-aside {
   padding: 40px;
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 38%),
-    linear-gradient(135deg, #10313a 0%, #38606a 44%, #9a5c30 100%);
+    var(--rh-grad-auth);
   color: #fff;
 }
 
@@ -1403,9 +1620,9 @@ body.bani-app .bani-auth-badge {
 body.bani-app .bani-auth-aside__title {
   margin: 0 !important;
   color: #fff !important;
-  font-size: clamp(34px, 4vw, 52px) !important;
+  font-size: 48px !important;
   line-height: 1.02 !important;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-auth-aside__description {
@@ -1621,14 +1838,14 @@ body.bani-app .bani-page-header__eyebrow {
 
 body.bani-app .bani-page-header__title {
   margin: 0 !important;
-  font-size: clamp(28px, 3vw, 38px) !important;
+  font-size: 36px !important;
   line-height: 1.08 !important;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-page-header--compact .bani-page-header__title,
 body.bani-app .bani-shell--admin .bani-page-header__title {
-  font-size: clamp(24px, 2.2vw, 32px) !important;
+  font-size: 30px !important;
 }
 
 body.bani-app .bani-page-header__description {
@@ -1765,9 +1982,9 @@ body.bani-app .bani-notification-toggle__eyebrow {
 body.bani-app .bani-notification-prefs__title.ant-typography,
 body.bani-app .bani-notification-prefs__title {
   margin: 0 !important;
-  font-size: clamp(28px, 2.6vw, 36px) !important;
+  font-size: 34px !important;
   line-height: 1.02 !important;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-notification-prefs__description.ant-typography {
@@ -1802,7 +2019,7 @@ body.bani-app .bani-notification-prefs__stat strong {
   color: var(--bani-text);
   font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-notification-prefs__section {
@@ -1821,7 +2038,7 @@ body.bani-app .bani-notification-prefs__section-header {
 body.bani-app .bani-notification-prefs__section-title {
   font-size: 20px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   color: var(--bani-text);
 }
 
@@ -1948,7 +2165,7 @@ body.bani-app .bani-profile-metric__value {
   margin-top: auto;
   font-size: 24px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   color: var(--bani-text);
 }
 
@@ -1990,9 +2207,9 @@ body.bani-app .bani-home__hero-copy {
 body.bani-app .bani-home__hero-title {
   margin: 0 !important;
   color: var(--bani-text) !important;
-  font-size: clamp(32px, 3.6vw, 48px) !important;
+  font-size: 46px !important;
   line-height: 1.06 !important;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-home__hero-description {
@@ -2095,7 +2312,7 @@ body.bani-app .bani-catalog__eyebrow {
 body.bani-app .bani-home__section-title,
 body.bani-app .bani-catalog__title {
   margin: 0 !important;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-home__section-description,
@@ -2164,7 +2381,7 @@ body.bani-app .bani-home__proof-eyebrow {
 
 body.bani-app .bani-home__proof-title {
   margin: 10px 0 8px !important;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-home__proof-description {
@@ -2196,7 +2413,7 @@ body.bani-app .bani-home__listing-card .ant-card-body {
 
 body.bani-app .bani-home__listing-card-title {
   margin: 0 !important;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-home__listing-card-address {
@@ -2487,9 +2704,9 @@ body.bani-app .bani-hero-panel--dark .bani-hero-panel__eyebrow {
 
 body.bani-app .bani-hero-panel__title {
   margin: 0;
-  font-size: clamp(28px, 3vw, 42px);
+  font-size: 38px;
   line-height: 1.04;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   color: inherit;
 }
 
@@ -2647,7 +2864,7 @@ body.bani-app .bani-info-card__label {
 body.bani-app .bani-info-card__value {
   font-size: 20px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   color: var(--bani-text);
 }
 
@@ -2667,7 +2884,7 @@ body.bani-app .bani-section-card__title {
   margin: 0;
   font-size: 20px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   color: var(--bani-text);
 }
 
@@ -2748,7 +2965,7 @@ body.bani-app .bani-shell--admin .bani-hero-panel {
 }
 
 body.bani-app .bani-shell--admin .bani-hero-panel__title {
-  font-size: clamp(24px, 2.4vw, 34px);
+  font-size: 32px;
 }
 
 body.bani-app .bani-shell--owner .bani-stat-grid,
@@ -2764,7 +2981,7 @@ body.bani-app .bani-shell--admin .bani-stat-tile {
 
 body.bani-app .bani-shell--owner .bani-stat-tile__value,
 body.bani-app .bani-shell--admin .bani-stat-tile__value {
-  font-size: clamp(22px, 2vw, 30px);
+  font-size: 30px;
 }
 
 body.bani-app .bani-shell--owner .bani-table-shell,
@@ -2840,7 +3057,7 @@ body.bani-app .bani-admin-metric__icon {
 
 body.bani-app .bani-admin-metric__value {
   color: var(--bani-text);
-  font-size: clamp(24px, 2.2vw, 32px);
+  font-size: 32px;
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: 0;
@@ -3184,9 +3401,9 @@ body.bani-app .bani-security-hero__title.ant-typography,
 body.bani-app .bani-security-hero__title {
   margin: 0 !important;
   color: #f8f4eb !important;
-  font-size: clamp(34px, 4vw, 56px) !important;
+  font-size: 48px !important;
   line-height: 0.98 !important;
-  letter-spacing: -0.06em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-security-hero__description.ant-typography,
@@ -3228,7 +3445,7 @@ body.bani-app .bani-security-hero__pill strong {
   font-size: 20px;
   font-weight: 800;
   line-height: 1.15;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-security-hero__actions {
@@ -3282,7 +3499,7 @@ body.bani-app .bani-security-hero__score {
   color: #fff7eb;
   font-size: 40px;
   font-weight: 800;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
@@ -3298,7 +3515,7 @@ body.bani-app .bani-security-hero__score-label {
   font-size: 26px;
   font-weight: 800;
   line-height: 1.04;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-security-hero__facts {
@@ -3361,7 +3578,7 @@ body.bani-app .bani-security-card .ant-card-head {
 body.bani-app .bani-security-card .ant-card-head-title {
   font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-security-card .ant-card-body {
@@ -3493,7 +3710,7 @@ body.bani-app .bani-security-method-card__title {
   margin: 6px 0 0 !important;
   font-size: 28px !important;
   font-weight: 800 !important;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-security-method-card__description.ant-typography {
@@ -4245,7 +4462,7 @@ body.bani-app .bani-certificate-summary__card-top {
 body.bani-app .bani-certificate-summary__brand {
   font-size: 32px;
   font-weight: 900;
-  letter-spacing: -0.08em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-certificate-summary__chip {
@@ -4263,10 +4480,10 @@ body.bani-app .bani-certificate-summary__chip {
 }
 
 body.bani-app .bani-certificate-summary__amount {
-  font-size: clamp(36px, 4vw, 52px);
+  font-size: 48px;
   line-height: 0.96;
   font-weight: 800;
-  letter-spacing: -0.06em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-certificate-summary__recipient {
@@ -4377,9 +4594,9 @@ body.bani-app .bani-certificates-status__badge {
 
 body.bani-app .bani-certificates-status__copy h2 {
   margin: 0 0 8px;
-  font-size: clamp(28px, 3vw, 40px);
+  font-size: 36px;
   line-height: 1.02;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-certificates-status__copy p {
@@ -4478,7 +4695,7 @@ body.bani-app .bani-certificates-card__code {
   margin: 6px 0 0;
   font-size: 24px;
   line-height: 1.04;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-certificates-card__stats {

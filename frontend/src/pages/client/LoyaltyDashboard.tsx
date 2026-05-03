@@ -103,7 +103,7 @@ export default function LoyaltyDashboard() {
       dataIndex: 'amount',
       key: 'amount',
       render: (val: number) => (
-        <Text strong style={{ color: val > 0 ? '#52c41a' : '#ff4d4f' }}>
+        <Text strong style={{ color: val > 0 ? '#15803d' : '#b42318' }}>
           {val > 0 ? `+${val}` : val}
         </Text>
       ),
@@ -168,7 +168,7 @@ export default function LoyaltyDashboard() {
                       </div>
                       <Progress
                         percent={Math.round(progress)}
-                        strokeColor={LEVEL_CONFIG[loyalty.privileges.next_level]?.color ?? '#1890ff'}
+                        strokeColor={LEVEL_CONFIG[loyalty.privileges.next_level]?.color ?? '#0f766e'}
                         size="small"
                       />
                     </div>

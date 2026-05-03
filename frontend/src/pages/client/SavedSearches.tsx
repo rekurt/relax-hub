@@ -70,7 +70,7 @@ export default function SavedSearches() {
       dataIndex: 'filters',
       key: 'filters',
       render: (filters: unknown) => (
-        <span style={{ fontSize: 13, color: '#666' }}>{renderFilters(filters)}</span>
+        <span style={{ fontSize: 13, color: 'var(--rh-text-soft)' }}>{renderFilters(filters)}</span>
       ),
     },
     {

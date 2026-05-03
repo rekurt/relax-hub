@@ -113,8 +113,8 @@ export default function OfferAcceptance() {
                   maxHeight: 400,
                   overflow: 'auto',
                   padding: 16,
-                  background: '#fafafa',
-                  borderRadius: 8,
+                  background: 'rgba(255, 253, 248, 0.72)',
+                  borderRadius: 20,
                   marginBottom: 24,
                   lineHeight: 1.8,
                 }}

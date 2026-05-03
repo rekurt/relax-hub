@@ -712,7 +712,7 @@ export default function ClientProfile() {
                             <Avatar
                               src={account.avatar_url}
                               style={{
-                                backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? '#999',
+                                backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? 'var(--rh-text-muted)',
                               }}
                             >
                               {(account.provider ?? '')[0]?.toUpperCase()}
@@ -871,7 +871,7 @@ export default function ClientProfile() {
             className="bani-profile-danger-card"
             title={
               <Space>
-                <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />
+                <ExclamationCircleOutlined style={{ color: '#b42318' }} />
                 <Text>Удаление аккаунта</Text>
               </Space>
             }

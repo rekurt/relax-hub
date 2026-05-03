@@ -216,7 +216,7 @@ export default function AntiFraudDashboard() {
               title="На рассмотрении"
               value={pendingCount}
               prefix={<ExclamationCircleOutlined />}
-              valueStyle={{ color: pendingCount > 0 ? '#faad14' : '#52c41a' }}
+              valueStyle={{ color: pendingCount > 0 ? '#d97706' : '#15803d' }}
             />
           </Card>
         </Col>
@@ -325,9 +325,9 @@ export default function AntiFraudDashboard() {
                 <Text strong>Детали:</Text>
                 <pre
                   style={{
-                    background: '#f5f5f5',
+                    background: 'rgba(248, 244, 236, 0.78)',
                     padding: 12,
-                    borderRadius: 8,
+                    borderRadius: 20,
                     fontSize: 13,
                     marginTop: 8,
                     overflow: 'auto',

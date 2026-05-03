@@ -164,9 +164,9 @@ function PromoBanner() {
   if (banners.length > 0) {
     const renderBanner = (banner: PromotionBanner) => {
       const gradients: Record<string, string> = {
-        promo: 'linear-gradient(135deg, #f5222d 0%, #fa541c 100%)',
-        welcome: 'linear-gradient(135deg, #52c41a 0%, #13c2c2 100%)',
-        loyalty: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        promo: 'linear-gradient(135deg, #b42318 0%, #d97706 100%)',
+        welcome: 'linear-gradient(135deg, #15803d 0%, #0f766e 100%)',
+        loyalty: 'linear-gradient(135deg, #0f766e 0%, #0a5f59 100%)',
       }
       return (
         <div key={banner.id}>
@@ -194,7 +194,7 @@ function PromoBanner() {
               {banner.promo_code && (
                 <Tag
                   color="#fff"
-                  style={{ color: '#333', marginTop: 12, fontSize: 14, padding: '4px 12px', fontWeight: 600 }}
+                  style={{ color: 'var(--rh-text)', marginTop: 12, fontSize: 14, padding: '4px 12px', fontWeight: 600 }}
                 >
                   {banner.promo_code}
                   {banner.discount_text && ` — ${banner.discount_text}`}
@@ -225,7 +225,7 @@ function PromoBanner() {
         style={{
           marginBottom: failedToLoad ? 12 : 0,
           background: isNewUser
-            ? 'linear-gradient(135deg, #52c41a 0%, #13c2c2 100%)'
+            ? 'linear-gradient(135deg, #15803d 0%, #0f766e 100%)'
             : 'linear-gradient(135deg, #1f4853 0%, #80502c 100%)',
           border: 'none',
           borderRadius: 12,
@@ -337,7 +337,7 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
       >
         <div>
           <Title level={4} style={{ margin: 0 }}>
-            <FireOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />
+            <FireOutlined style={{ marginRight: 8, color: '#b42318' }} />
             Популярные рядом
           </Title>
           <Text data-testid="popular-city-caption" type="secondary">
@@ -403,7 +403,7 @@ function PersonalRecommendations() {
   return (
     <div style={{ marginBottom: 24 }}>
       <Title level={4}>
-        <StarOutlined style={{ marginRight: 8, color: '#faad14' }} />
+        <StarOutlined style={{ marginRight: 8, color: '#d97706' }} />
         Рекомендации для вас
       </Title>
       <Row gutter={[16, 16]}>

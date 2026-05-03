@@ -65,9 +65,9 @@ export default function SavedCards() {
       key: 'card',
       render: (_, record) => (
         <Space>
-          <CreditCardOutlined style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? '#666', fontSize: 20 }} />
+          <CreditCardOutlined style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? 'var(--rh-text-soft)', fontSize: 20 }} />
           <span>
-            <strong style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? '#666' }}>
+            <strong style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? 'var(--rh-text-soft)' }}>
               {record.brand ?? 'Карта'}
             </strong>
             {' •••• '}

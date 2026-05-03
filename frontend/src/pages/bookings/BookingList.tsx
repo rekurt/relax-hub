@@ -343,7 +343,7 @@ export default function BookingList() {
       render: (_, record) => (
         <div>
           <div>{record.start_time ? formatDateTime(record.start_time, 'DD.MM.YYYY') : '—'}</div>
-          <div style={{ color: '#888', fontSize: 12 }}>
+          <div style={{ color: 'var(--rh-text-soft)', fontSize: 12 }}>
             {record.start_time ? formatDateTime(record.start_time, 'HH:mm') : ''}
             {record.end_time ? ` – ${formatDateTime(record.end_time, 'HH:mm')}` : ''}
           </div>

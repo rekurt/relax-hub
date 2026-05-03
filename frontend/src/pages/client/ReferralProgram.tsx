@@ -87,8 +87,8 @@ export default function ReferralProgram() {
               <Title level={5}>Ваш реферальный код</Title>
               <div
                 style={{
-                  background: '#f5f5f5',
-                  borderRadius: 8,
+                  background: 'rgba(248, 244, 236, 0.78)',
+                  borderRadius: 20,
                   padding: '16px 24px',
                   textAlign: 'center',
                   marginBottom: 16,
@@ -164,7 +164,7 @@ export default function ReferralProgram() {
                     title="Текущий баланс"
                     value={balance?.balance ?? 0}
                     formatter={(val) => formatPrice(Number(val))}
-                    valueStyle={{ color: '#52c41a' }}
+                    valueStyle={{ color: '#15803d' }}
                   />
                 </Col>
                 <Col xs={24} sm={12}>

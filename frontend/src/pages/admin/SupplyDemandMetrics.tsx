@@ -147,7 +147,7 @@ export default function SupplyDemandMetrics() {
                 value={biz?.dau ?? 0}
                 prefix={<UserOutlined />}
               />
-              <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 12, color: '#888' }}>
+              <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 12, color: 'var(--rh-text-soft)' }}>
                 <span>MAU: {biz?.mau ?? 0}</span>
               </div>
             </Card>

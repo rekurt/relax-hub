@@ -244,13 +244,13 @@ export default function SubscriptionManagement() {
         <Col xs={8} sm={8}>
           <Card size="small">
             <Text type="secondary">Премиум</Text>
-            <div style={{ fontSize: 24, fontWeight: 600, color: '#1677ff' }}>{premiumCount}</div>
+            <div style={{ fontSize: 24, fontWeight: 600, color: '#0f766e' }}>{premiumCount}</div>
           </Card>
         </Col>
         <Col xs={8} sm={8}>
           <Card size="small">
             <Text type="secondary">Продвинутых</Text>
-            <div style={{ fontSize: 24, fontWeight: 600, color: '#faad14' }}>{promotedCount}</div>
+            <div style={{ fontSize: 24, fontWeight: 600, color: '#d97706' }}>{promotedCount}</div>
           </Card>
         </Col>
       </Row>

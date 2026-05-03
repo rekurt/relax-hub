@@ -329,7 +329,7 @@ export default function ClientBookingDetail() {
             </Descriptions.Item>
           </Descriptions>
         ) : (
-          <div style={{ color: '#999' }}>Платёж не найден</div>
+          <div style={{ color: 'var(--rh-text-muted)' }}>Платёж не найден</div>
         )}
       </Card>
 

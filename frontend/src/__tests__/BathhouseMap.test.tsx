@@ -82,7 +82,7 @@ describe('BathhouseMap', () => {
     render(
       <BathhouseMap
         bathhouses={mockBathhouses}
-        style={{ height: 500, borderRadius: 8 }}
+        style={{ height: 500, borderRadius: 20 }}
       />,
     )
     const map = screen.getByTestId('bathhouse-map')

@@ -61,11 +61,11 @@ function renderChangedFields(fields: unknown): React.ReactNode {
             return (
               <div key={key} style={{ marginBottom: 4, fontSize: 13 }}>
                 <strong>{label}:</strong>{' '}
-                <span style={{ color: '#cf1322', textDecoration: 'line-through' }}>
+                <span style={{ color: '#b42318', textDecoration: 'line-through' }}>
                   {formatValue(typedChange.old)}
                 </span>
                 {' → '}
-                <span style={{ color: '#389e0d' }}>{formatValue(typedChange.new)}</span>
+                <span style={{ color: '#15803d' }}>{formatValue(typedChange.new)}</span>
               </div>
             )
           }

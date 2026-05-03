@@ -46,7 +46,7 @@ export default function TwoFactorChallenge({ partialToken, onSuccess, onCancel }
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
       <div style={{ textAlign: 'center' }}>
-        <SafetyOutlined style={{ fontSize: 48, color: '#1677ff', marginBottom: 16 }} />
+        <SafetyOutlined style={{ fontSize: 48, color: '#0f766e', marginBottom: 16 }} />
         <Typography.Title level={4}>Двухфакторная аутентификация</Typography.Title>
         <Text type="secondary">
           {method === 'totp'

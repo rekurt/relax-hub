@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RelaxHUB · Design Canvas</title>
+
+  <link rel="stylesheet" href="colors_and_type.css" />
+  <link rel="stylesheet" href="web.css" />
+
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #f0eee9; font-family: 'Manrope', system-ui, sans-serif; }
+    #root { height: 100%; }
+
+    /* DC overrides — make the canvas read like an editorial spec sheet */
+    .dc-section-title { font-weight: 800 !important; letter-spacing: -0.02em !important; }
+
+    /* Cover plate over each artboard while showcase panel is faded */
+    .rh-art-frame {
+      width: 100%; height: 100%; position: relative;
+      background: #fffdf8; border-radius: 18px; overflow: hidden;
+      box-shadow: 0 24px 64px rgba(15,23,42,0.08), 0 0 0 1px rgba(15,23,42,0.06);
+    }
+    .rh-art-frame--mobile {
+      background: transparent; box-shadow: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rh-art-scroll {
+      width: 100%; height: 100%; overflow: hidden; position: relative;
+    }
+
+    /* Mini section banner */
+    .rh-banner {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 22px; margin: 4px 6px 14px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(15,118,110,0.12), rgba(217,119,6,0.10));
+      border: 1px solid rgba(15,23,42,0.08);
+    }
+    .rh-banner__num {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: #16212b; color: #fffdf8;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 14px; letter-spacing: -0.02em;
+    }
+    .rh-banner__t { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: #16212b; }
+    .rh-banner__s { font-size: 13px; color: #5f6877; margin-top: 2px; }
+
+    /* Component showcase — flat, no glass, big swatches */
+    .ks-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .ks-tile {
+      padding: 18px; border-radius: 22px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(15,23,42,0.08);
+    }
+    .ks-tile h4 { margin: 0 0 12px; font-size: 13px; font-weight: 800; letter-spacing: 0.10em; text-transform: uppercase; color: #5f6877; }
+    .ks-swatch { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ks-chip { width: 44px; height: 44px; border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(15,23,42,0.08); }
+    .ks-stack { display: flex; flex-direction: column; gap: 8px; }
+
+    /* Tweaks integration — when Tweaks selects a section/role, faded screens get desaturated */
+    .dc-fade-out { opacity: 0.18; filter: saturate(0.4); transition: opacity 0.3s, filter 0.3s; pointer-events: none; }
+    .dc-fade-out > * { pointer-events: none; }
+
+    /* Density: compact mode reduces global spacing inside artboards (visual demo) */
+    .density-compact .rh-page { transform-origin: top left; }
+    .density-compact .rh-card { padding: 16px !important; border-radius: 18px !important; }
+
+    /* Dark mode (mobile-only — mocks are warm-light by spec) */
+    .theme-dark .rh-art-frame--mobile { background: transparent; }
+
+    /* Scrollbar polish for artboards */
+    .rh-art-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .rh-art-scroll::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.20); border-radius: 999px; }
+    .rh-art-scroll::-webkit-scrollbar-track { background: transparent; }
+  </style>
+
+  <!-- React + Babel (pinned with integrity) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <template id="__bundler_thumbnail" data-bg-color="#10313a">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="#0f766e"/>
+          <stop offset="1" stop-color="#d97706"/>
+        </linearGradient>
+      </defs>
+      <rect x="240" y="160" width="720" height="480" rx="64" fill="url(#g)"/>
+      <text x="600" y="450" font-family="system-ui,sans-serif" font-size="120" font-weight="800" fill="#fffdf8" text-anchor="middle" letter-spacing="-4">RH</text>
+    </svg>
+  </template>
+  <div id="root"></div>
+
+  <!-- 1. Tweaks panel infra -->
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+  <!-- 2. Web primitives + shell + screens -->
+  <script type="text/babel" src="web-primitives.jsx"></script>
+  <script type="text/babel" src="web-shell.jsx"></script>
+  <script type="text/babel" src="web-public-home.jsx"></script>
+  <script type="text/babel" src="web-public-catalogue.jsx"></script>
+  <script type="text/babel" src="web-public-listing.jsx"></script>
+  <script type="text/babel" src="web-public-booking.jsx"></script>
+  <script type="text/babel" src="web-public-auth.jsx"></script>
+  <script type="text/babel" src="web-client-bookings.jsx"></script>
+  <script type="text/babel" src="web-client-rest.jsx"></script>
+  <script type="text/babel" src="web-owner-dashboard.jsx"></script>
+  <script type="text/babel" src="web-owner-rest.jsx"></script>
+
+  <!-- 3. Mobile primitives + screens + iOS frame -->
+  <script type="text/babel" src="mobile-primitives.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="mobile-client-screens.jsx"></script>
+  <script type="text/babel" src="mobile-owner-screens.jsx"></script>
+
+  <!-- 4. Design canvas -->
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <!-- 5. Main app -->
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

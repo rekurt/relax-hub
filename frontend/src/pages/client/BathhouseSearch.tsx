@@ -1245,7 +1245,7 @@ export default function BathhouseSearch() {
           <Space>
             <SwapOutlined />
             <span>
-              Выбрано для сравнения: <Badge count={compareIds.length} style={{ backgroundColor: '#1f6b76' }} />
+              Выбрано для сравнения: <Badge count={compareIds.length} style={{ backgroundColor: '#0f766e' }} />
             </span>
           </Space>
           <Space>

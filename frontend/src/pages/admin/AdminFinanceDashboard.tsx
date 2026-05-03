@@ -161,7 +161,7 @@ export default function AdminFinanceDashboard() {
       key: 'discrepancy',
       render: (v: number) => {
         const val = v ?? 0
-        return <span style={{ color: val !== 0 ? '#ff4d4f' : undefined }}>{formatPrice(val)}</span>
+        return <span style={{ color: val !== 0 ? '#b42318' : undefined }}>{formatPrice(val)}</span>
       },
     },
     {

@@ -36,9 +36,11 @@ export default function ChatPage() {
         </Title>
         <div
           style={{
-            background: '#fff',
-            borderRadius: 8,
-            border: '1px solid #f0f0f0',
+            background: 'var(--rh-card-bg)',
+            borderRadius: 28,
+            border: '1px solid var(--rh-border)',
+            boxShadow: 'var(--rh-shadow-soft)',
+            backdropFilter: 'blur(18px)',
             height: chatHeight,
             overflow: 'hidden',
           }}
@@ -48,9 +50,10 @@ export default function ChatPage() {
               <div
                 style={{
                   padding: '8px 16px',
-                  borderBottom: '1px solid #f0f0f0',
+                  borderBottom: '1px solid var(--rh-border)',
                   cursor: 'pointer',
-                  color: '#1677ff',
+                  color: 'var(--rh-primary)',
+                  fontWeight: 700,
                 }}
                 onClick={handleBack}
               >
@@ -76,9 +79,11 @@ export default function ChatPage() {
       <div
         style={{
           display: 'flex',
-          background: '#fff',
-          borderRadius: 8,
-          border: '1px solid #f0f0f0',
+          background: 'var(--rh-card-bg)',
+          borderRadius: 28,
+          border: '1px solid var(--rh-border)',
+          boxShadow: 'var(--rh-shadow-soft)',
+          backdropFilter: 'blur(18px)',
           height: chatHeight,
           overflow: 'hidden',
         }}
@@ -86,7 +91,7 @@ export default function ChatPage() {
         <div
           style={{
             width: 320,
-            borderRight: '1px solid #f0f0f0',
+            borderRight: '1px solid var(--rh-border)',
             overflow: 'hidden',
           }}
         >

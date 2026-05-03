@@ -124,7 +124,7 @@ export default function FinanceDashboard() {
       render: (amount: number, record) => {
         const isPositive = record.type !== 'spend' && record.type !== 'service_fee' && record.type !== 'payout'
         return (
-          <span style={{ color: isPositive ? '#52c41a' : '#ff4d4f', fontWeight: 500 }}>
+          <span style={{ color: isPositive ? '#15803d' : '#b42318', fontWeight: 500 }}>
             {isPositive ? '+' : '-'}{formatPrice(amount ?? 0)}
           </span>
         )
@@ -252,7 +252,7 @@ export default function FinanceDashboard() {
                 </div>
                 <div className="bani-info-card">
                   <span className="bani-info-card__label">Списания</span>
-                  <div className="bani-info-card__value" style={{ color: '#dc2626' }}>{formatPrice(incomeStats.negative)}</div>
+                  <div className="bani-info-card__value" style={{ color: '#b42318' }}>{formatPrice(incomeStats.negative)}</div>
                   <div className="bani-info-card__hint">Комиссии, выплаты и возвраты за выбранный период</div>
                 </div>
               </div>

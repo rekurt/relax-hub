@@ -15,11 +15,11 @@ const MONTHS_OPTIONS = [
 ]
 
 function retentionColor(value: number): string {
-  if (value >= 80) return '#f6ffed'
+  if (value >= 80) return 'rgba(21, 128, 61, 0.08)'
   if (value >= 60) return '#fcffe6'
   if (value >= 40) return '#fff7e6'
-  if (value >= 20) return '#fff1f0'
-  return '#fff1f0'
+  if (value >= 20) return 'rgba(180, 35, 24, 0.08)'
+  return 'rgba(180, 35, 24, 0.08)'
 }
 
 export default function CohortAnalysis() {
@@ -71,7 +71,7 @@ export default function CohortAnalysis() {
             style={{
               background: retentionColor(val),
               padding: '2px 6px',
-              borderRadius: 4,
+              borderRadius: 12,
               textAlign: 'center',
               fontWeight: val >= 50 ? 600 : 400,
             }}

@@ -189,7 +189,7 @@ export default function UserManagement() {
         return record.is_active === false ? (
           <a onClick={() => handleUnblock(record)}>Разблокировать</a>
         ) : (
-          <a onClick={() => handleBlock(record)} style={{ color: '#ff4d4f' }}>
+          <a onClick={() => handleBlock(record)} style={{ color: '#b42318' }}>
             Заблокировать
           </a>
         )

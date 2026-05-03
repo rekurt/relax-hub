@@ -20,7 +20,7 @@ elif command -v terser &> /dev/null; then
     echo "Using terser..."
     terser "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"
     # For CSS, we'll use a simple approach
-    cat "$SRC_DIR/styles.css" | tr -s ' ' | sed 's/\/\*.*\*\///g' | sed 's/[[:space:]]*{[[:space:]]*/\{/g' | sed 's/[[:space:]]*}[[:space:]]*/\}/g' | sed 's/[[:space:]]*:[[:space:]]*/:\ /g' | sed 's/[[:space:]]*;[[:space:]]*/;/g' | sed 's/[[:space:]]*,[[:space:]]*//g' > "$DIST_DIR/widget.min.css"
+    cat "$SRC_DIR/styles.css" | tr -s ' ' | sed 's/\/\*.*\*\///g' | sed 's/[[:space:]]*{[[:space:]]*/\{/g' | sed 's/[[:space:]]*}[[:space:]]*/\}/g' | sed 's/[[:space:]]*:[[:space:]]*/:/g' | sed 's/[[:space:]]*;[[:space:]]*/;/g' | sed 's/[[:space:]]*,[[:space:]]*/,/g' > "$DIST_DIR/widget.min.css"
 elif command -v uglifyjs &> /dev/null; then
     echo "Using uglifyjs..."
     uglifyjs "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"

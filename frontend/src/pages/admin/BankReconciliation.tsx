@@ -159,7 +159,7 @@ export default function BankReconciliation() {
             Связать
           </Button>
         ) : record.matched_tx_id ? (
-          <span style={{ fontSize: 12, color: '#888' }}>
+          <span style={{ fontSize: 12, color: 'var(--rh-text-soft)' }}>
             {record.matched_tx_type}: {record.matched_tx_id?.slice(0, 8)}...
           </span>
         ) : null

@@ -143,7 +143,7 @@ export default function ListingImport() {
         <Dragger {...uploadProps} disabled={importMutation.isPending}>
           <p className="ant-upload-drag-icon">
             {importMutation.isPending ? (
-              <FileExcelOutlined style={{ color: '#1677ff' }} />
+              <FileExcelOutlined style={{ color: '#0f766e' }} />
             ) : (
               <InboxOutlined />
             )}
@@ -165,12 +165,12 @@ export default function ListingImport() {
               <Statistic
                 title="Успешно создано"
                 value={report.success_count ?? 0}
-                valueStyle={{ color: '#3f8600' }}
+                valueStyle={{ color: '#15803d' }}
               />
               <Statistic
                 title="Ошибки"
                 value={report.error_count ?? 0}
-                valueStyle={{ color: report.error_count ? '#cf1322' : undefined }}
+                valueStyle={{ color: report.error_count ? '#b42318' : undefined }}
               />
             </Space>
           </Card>

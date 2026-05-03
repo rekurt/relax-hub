@@ -99,7 +99,7 @@ export default function OwnerAnalytics() {
 
   const changeColor = (change?: number) => {
     if (change === undefined || change === 0) return undefined
-    return change > 0 ? '#52c41a' : '#ff4d4f'
+    return change > 0 ? '#15803d' : '#b42318'
   }
 
   const dailyColumns = [

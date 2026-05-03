@@ -310,9 +310,9 @@ export default function AdminTicketDetail() {
                     style={{
                       maxWidth: '70%',
                       padding: '10px 14px',
-                      borderRadius: 8,
-                      background: isAdmin ? '#f6ffed' : '#f0f0f0',
-                      border: isAdmin ? '1px solid #b7eb8f' : '1px solid #d9d9d9',
+                      borderRadius: 20,
+                      background: isAdmin ? 'rgba(21, 128, 61, 0.08)' : 'rgba(15, 23, 42, 0.08)',
+                      border: isAdmin ? '1px solid #b7eb8f' : '1px solid #c9c1b5',
                     }}
                   >
                     <div style={{ marginBottom: 4 }}>

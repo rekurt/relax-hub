@@ -220,7 +220,7 @@ export default function ComplaintManagement() {
                 type="link"
                 size="small"
                 icon={<CheckOutlined />}
-                style={{ color: '#52c41a' }}
+                style={{ color: '#15803d' }}
                 onClick={() => openResolveModal(record.id!)}
               >
                 Решить

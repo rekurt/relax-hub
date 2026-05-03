@@ -287,7 +287,7 @@ export default function PricingRules() {
         const isDiscount = val < 1
         const percent = Math.round(Math.abs(val - 1) * 100)
         return (
-          <span style={{ color: isDiscount ? '#52c41a' : val > 1 ? '#f5222d' : undefined }}>
+          <span style={{ color: isDiscount ? '#15803d' : val > 1 ? '#b42318' : undefined }}>
             x{val} {percent > 0 && `(${isDiscount ? '-' : '+'}${percent}%)`}
           </span>
         )
@@ -511,7 +511,7 @@ export default function PricingRules() {
         const isDiscount = val < 1
         const percent = Math.round(Math.abs(val - 1) * 100)
         return (
-          <span style={{ color: isDiscount ? '#52c41a' : val > 1 ? '#f5222d' : undefined }}>
+          <span style={{ color: isDiscount ? '#15803d' : val > 1 ? '#b42318' : undefined }}>
             x{val} {percent > 0 && `(${isDiscount ? '-' : '+'}${percent}%)`}
           </span>
         )
@@ -560,7 +560,7 @@ export default function PricingRules() {
     return (
       <div>
         <Title level={3}>Правила ценообразования</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
           Выберите баню для управления ценами
         </div>
       </div>
@@ -607,7 +607,7 @@ export default function PricingRules() {
             <Statistic
               title="Рекомендуемая цена/час"
               value={formatPrice(recommendationData.recommended_price)}
-              styles={{ content: { color: recommendationData.coefficient > 1 ? '#3f8600' : recommendationData.coefficient < 1 ? '#cf1322' : undefined } }}
+              styles={{ content: { color: recommendationData.coefficient > 1 ? '#15803d' : recommendationData.coefficient < 1 ? '#b42318' : undefined } }}
               prefix={recommendationData.coefficient > 1 ? <ArrowUpOutlined /> : recommendationData.coefficient < 1 ? <ArrowDownOutlined /> : undefined}
             />
             <Statistic title="Коэффициент" value={`x${recommendationData.coefficient}`} />

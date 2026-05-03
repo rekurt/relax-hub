@@ -267,7 +267,7 @@ export default function PhotoOrderPage() {
             width: '100%',
             minHeight: 100,
             padding: 8,
-            border: '1px solid #d9d9d9',
+            border: '1px solid #c9c1b5',
             borderRadius: 6,
             fontFamily: 'inherit',
             fontSize: 14,

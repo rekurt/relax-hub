@@ -129,7 +129,7 @@ export default function LoyaltyManagement() {
           <Col xs={12} sm={6} key={level.level}>
             <Card
               size="small"
-              style={{ borderTop: `3px solid ${LEVEL_COLORS[level.level ?? ''] ?? '#d9d9d9'}` }}
+              style={{ borderTop: `3px solid ${LEVEL_COLORS[level.level ?? ''] ?? '#c9c1b5'}` }}
             >
               <Text type="secondary">{LEVEL_NAMES[level.level ?? ''] ?? level.level}</Text>
               <div style={{ fontSize: 20, fontWeight: 600 }}>от {level.min_visits ?? 0} визитов</div>

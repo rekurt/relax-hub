@@ -83,7 +83,7 @@ export default function ApplePayButton({ amount, onToken, disabled, loading }: A
         background: '#000',
         color: '#fff',
         borderColor: '#000',
-        borderRadius: 8,
+        borderRadius: 20,
       }}
     >
       Apple Pay

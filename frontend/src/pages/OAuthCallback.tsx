@@ -66,7 +66,7 @@ export default function OAuthCallback() {
 
   if (error) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f5f5f5' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'rgba(248, 244, 236, 0.78)' }}>
         <Result
           status="error"
           title="Ошибка авторизации"
@@ -80,7 +80,7 @@ export default function OAuthCallback() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f5f5f5', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'rgba(248, 244, 236, 0.78)', gap: 16 }}>
       <Spin size="large" />
       <Text type="secondary">Авторизация через {providerName}...</Text>
     </div>

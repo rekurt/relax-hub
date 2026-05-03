@@ -46,7 +46,7 @@ export default function ConversationList({ selectedId, onSelect }: ConversationL
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--rh-border)' }}>
         <Input
           placeholder="Поиск бесед..."
           prefix={<SearchOutlined />}
@@ -67,8 +67,8 @@ export default function ConversationList({ selectedId, onSelect }: ConversationL
               style={{
                 padding: '12px 16px',
                 cursor: 'pointer',
-                background: selectedId === conv.id ? '#e6f4ff' : 'transparent',
-                borderBottom: '1px solid #f0f0f0',
+                background: selectedId === conv.id ? 'var(--rh-primary-soft)' : 'transparent',
+                borderBottom: '1px solid var(--rh-border)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,

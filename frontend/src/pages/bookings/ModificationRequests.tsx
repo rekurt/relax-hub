@@ -177,7 +177,7 @@ export default function ModificationRequests({ bookingId, open, onClose }: Modif
         )}
 
         {pendingRequests.length > 0 && (
-          <div style={{ marginTop: 16, padding: 8, background: '#fffbe6', borderRadius: 4 }}>
+          <div style={{ marginTop: 16, padding: 8, background: 'rgba(217, 119, 6, 0.10)', borderRadius: 12 }}>
             <Text type="warning">
               {pendingRequests.length} запрос(ов) ожидают вашего решения. Без ответа запрос автоматически отклоняется через 24 часа.
             </Text>

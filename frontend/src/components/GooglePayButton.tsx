@@ -140,7 +140,7 @@ export default function GooglePayButton({ amount, onToken, disabled, loading }: 
         background: '#fff',
         color: '#3c4043',
         borderColor: '#dadce0',
-        borderRadius: 8,
+        borderRadius: 20,
       }}
     >
       Google Pay
