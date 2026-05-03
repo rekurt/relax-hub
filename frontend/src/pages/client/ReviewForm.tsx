@@ -9,7 +9,6 @@ import {
   Space,
   App,
   Spin,
-  Empty,
   Alert,
 } from '@/components/design/system'
 import { ArrowLeftOutlined, SendOutlined } from '@/components/design/icons'
@@ -18,8 +17,9 @@ import { usePostBathhousesIdReviews, usePutReviewsId } from '@/api/generated/rev
 import { usePostReviewsIdMedia, useDeleteMediaId } from '@/api/generated/review-media/review-media'
 import MediaUploader, { type MediaFile } from '@/components/MediaUploader'
 import { useQueryClient } from '@tanstack/react-query'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { TextArea } = Input
 
 export default function ReviewForm() {
@@ -113,46 +113,55 @@ export default function ReviewForm() {
   }
 
   if (!bathhouseId) {
-    return <Empty description="Не указана баня" />
+    return (
+      <div className="rh-admin-empty-state">
+        <div className="rh-admin-empty-state__title">Не указана баня</div>
+        <p className="rh-admin-empty-state__text">
+          Вернитесь к карточке бани и откройте форму отзыва из завершённого бронирования.
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
+    <div className="rh-stack rh-client-narrow-page">
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
         onClick={() => navigate(`/bathhouses/${bathhouse?.slug ?? bathhouseId}`)}
-        style={{ marginBottom: 16 }}
+        className="rh-admin-detail-back"
       >
         Назад к бане
       </Button>
 
-      <Title level={3}>
-        {isEdit ? 'Редактировать отзыв' : 'Оставить отзыв'}
-        {bathhouse?.name && `: ${bathhouse.name}`}
-      </Title>
+      <PageHeader
+        eyebrow="Отзыв"
+        title={`${isEdit ? 'Редактировать отзыв' : 'Оставить отзыв'}${bathhouse?.name ? `: ${bathhouse.name}` : ''}`}
+        description="Оцените визит, добавьте короткое описание и приложите медиа, если это поможет другим гостям."
+        size="compact"
+      />
 
       {!isEdit && !bookingId && (
         <Alert
           type="warning"
           showIcon
           title="Для написания отзыва нужно завершённое бронирование"
-          style={{ marginBottom: 16 }}
+          className="rh-alert-spaced"
         />
       )}
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space orientation="vertical" style={{ width: '100%' }} size={16}>
+      <Card className="rh-admin-detail-card">
+        <Space orientation="vertical" className="rh-full-width" size={16}>
           <div>
             <Text strong>Оценка:</Text>
-            <div style={{ marginTop: 8 }}>
+            <div className="rh-review-rating-row">
               <Rate
                 value={rating}
                 onChange={setRating}
-                style={{ fontSize: 32 }}
+                className="rh-review-rating"
               />
               {rating > 0 && (
-                <Text style={{ marginLeft: 12 }}>
+                <Text className="rh-review-rating-label">
                   {['', 'Ужасно', 'Плохо', 'Нормально', 'Хорошо', 'Отлично'][rating]}
                 </Text>
               )}
@@ -168,13 +177,13 @@ export default function ReviewForm() {
               rows={4}
               maxLength={2000}
               showCount
-              style={{ marginTop: 8 }}
+              className="rh-review-field-control"
             />
           </div>
 
           <div>
             <Text strong>Фото и видео:</Text>
-            <div style={{ marginTop: 8 }}>
+            <div className="rh-review-field-control">
               <MediaUploader
                 files={mediaFiles}
                 onChange={setMediaFiles}

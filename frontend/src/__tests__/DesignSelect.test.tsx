@@ -25,5 +25,10 @@ describe('Design Select', () => {
     expect(screen.getByRole('listbox')).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Все регионы' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Москва' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('option', { name: 'Москва' }))
+
+    expect(onChange).toHaveBeenCalledWith('moscow', expect.objectContaining({ value: 'moscow' }))
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
 })

@@ -10,10 +10,13 @@ import {
   isValidElement,
   useContext,
   useEffect,
+  useId,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
+import { createPortal } from 'react-dom'
 import type {
   ButtonHTMLAttributes,
   ChangeEvent,
@@ -797,8 +800,10 @@ function SelectRoot({
   ...props
 }: SelectProps) {
   const rootRef = useRef<HTMLSpanElement>(null)
+  const dropdownRef = useRef<HTMLSpanElement>(null)
   const [open, setOpen] = useState(false)
   const [internalValue, setInternalValue] = useState(defaultValue ?? (mode ? [] : ''))
+  const [dropdownStyle, setDropdownStyle] = useState<CSSProperties | undefined>(undefined)
   const resolvedOptions = options ?? optionsFromChildren(children)
   const optionByDomValue = new Map(resolvedOptions.map((option) => [String(option.value), option]))
   const selectedValue = value !== undefined ? value : internalValue
@@ -817,11 +822,56 @@ function SelectRoot({
   const popupRootClassName = typeof _classNames?.popup?.root === 'string' ? _classNames.popup.root : undefined
   const dropdownId = id ? `${id}-dropdown` : undefined
 
+  useLayoutEffect(() => {
+    if (!open || typeof window === 'undefined') return
+
+    const updatePosition = () => {
+      const trigger = rootRef.current
+      if (!trigger) return
+
+      const rect = trigger.getBoundingClientRect()
+      const viewportPadding = 12
+      const gap = 8
+      const width = Math.min(Math.max(rect.width, 220), Math.max(220, window.innerWidth - viewportPadding * 2))
+      const left = Math.min(
+        Math.max(rect.left, viewportPadding),
+        Math.max(viewportPadding, window.innerWidth - width - viewportPadding),
+      )
+      const estimatedHeight = Math.min(dropdownOptions.length * 46 + 16, 320)
+      const availableBelow = window.innerHeight - rect.bottom - gap - viewportPadding
+      const availableAbove = rect.top - gap - viewportPadding
+      const placeAbove = availableBelow < estimatedHeight && availableAbove > availableBelow
+      const availableHeight = Math.max(96, placeAbove ? availableAbove : availableBelow)
+      const maxHeight = Math.min(320, availableHeight)
+      const popupHeight = Math.min(estimatedHeight, maxHeight)
+      const top = placeAbove
+        ? Math.max(viewportPadding, rect.top - gap - popupHeight)
+        : rect.bottom + gap
+
+      setDropdownStyle({
+        position: 'fixed',
+        top,
+        left,
+        width,
+        maxHeight,
+      })
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [dropdownOptions.length, open])
+
   useEffect(() => {
     if (!open) return
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (!rootRef.current?.contains(target) && !dropdownRef.current?.contains(target)) {
         setOpen(false)
       }
     }
@@ -891,12 +941,14 @@ function SelectRoot({
           {displayLabel}
         </span>
       </button>
-      {open && !disabled && (
+      {open && !disabled && typeof document !== 'undefined' && createPortal(
         <span
+          ref={dropdownRef}
           id={dropdownId}
           className={cx('rh-select__dropdown ant-select-dropdown', _dropdownClassName, _popupClassName, popupRootClassName)}
           role="listbox"
           aria-multiselectable={Boolean(mode)}
+          style={dropdownStyle}
         >
           {dropdownOptions.map((option) => {
             const selected = mode && Array.isArray(selectedValue)
@@ -925,7 +977,8 @@ function SelectRoot({
               </button>
             )
           })}
-        </span>
+        </span>,
+        document.body,
       )}
       <span className="ant-select-arrow" aria-hidden="true">{suffixIcon ?? '⌄'}</span>
     </span>
@@ -1526,33 +1579,66 @@ export function Modal({
   onOk,
   onCancel,
   className,
+  style,
   children,
   destroyOnClose: _destroyOnClose,
   destroyOnHidden: _destroyOnHidden,
-  closable: _closable,
+  closable = true,
   centered: _centered,
   forceRender: _forceRender,
   ...props
 }: ModalProps) {
-  if (!(open ?? visible)) return null
+  const titleId = useId()
+  const isOpen = Boolean(open ?? visible)
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCancel?.()
+    }
+
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onCancel])
+  if (!isOpen) return null
+  const modalStyle = {
+    ...style,
+    ...(width !== undefined ? { width } : {}),
+  } as CSSProperties
   const defaultFooter = footer === undefined ? (
     <>
       <button type="button" className="rh-btn ant-btn ant-btn-default" onClick={onCancel} {...cancelButtonProps}>{cancelText ?? 'Отмена'}</button>
       <button type="button" className="rh-btn ant-btn ant-btn-primary" disabled={confirmLoading || okButtonProps?.loading || okButtonProps?.disabled} onClick={onOk} {...okButtonProps}>{okText ?? 'OK'}</button>
     </>
   ) : footer
-  return (
+  const modalNode = (
     <div className="rh-modal-root">
       <button type="button" className="rh-modal-mask" aria-label="Закрыть окно" onClick={onCancel} />
-      <div className={cx('rh-modal ant-modal', className)} role="dialog" aria-modal="true" style={{ width }} {...props}>
+      <div
+        className={cx('rh-modal ant-modal', className)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        style={modalStyle}
+        {...props}
+      >
         <div className="ant-modal-content">
-          {title && <div className="ant-modal-header"><div className="ant-modal-title">{title}</div></div>}
+          {closable && (
+            <button type="button" className="rh-modal__close" aria-label="Закрыть" onClick={onCancel}>×</button>
+          )}
+          {title && <div className="ant-modal-header"><div id={titleId} className="ant-modal-title">{title}</div></div>}
           <div className="ant-modal-body">{children}</div>
           {defaultFooter && <div className="ant-modal-footer">{defaultFooter}</div>}
         </div>
       </div>
     </div>
   )
+  return typeof document === 'undefined' ? modalNode : createPortal(modalNode, document.body)
 }
 
 interface DrawerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
@@ -1569,14 +1655,31 @@ interface DrawerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   [key: string]: any
 }
 
-export function Drawer({ open, visible, title, placement = 'right', width = 420, extra, footer, onClose, size: _size, forceRender: _forceRender, className, children, ...props }: DrawerProps) {
-  if (!(open ?? visible)) return null
-  return (
+export function Drawer({ open, visible, title, placement = 'right', width = 420, extra, footer, onClose, size: _size, forceRender: _forceRender, className, style, children, ...props }: DrawerProps) {
+  const titleId = useId()
+  const isOpen = Boolean(open ?? visible)
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose?.()
+    }
+
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
+  if (!isOpen) return null
+  const drawerNode = (
     <div className={cx('rh-drawer-root ant-drawer', `ant-drawer-${placement}`)}>
       <button type="button" className="rh-modal-mask" aria-label="Закрыть панель" onClick={onClose} />
-      <div className={cx('rh-drawer ant-drawer-content', className)} style={{ width }} role="dialog" aria-modal="true" {...props}>
+      <div className={cx('rh-drawer ant-drawer-content', className)} style={{ ...style, width }} role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} {...props}>
         <div className="ant-drawer-header">
-          <div className="ant-drawer-title">{title}</div>
+          <div id={title ? titleId : undefined} className="ant-drawer-title">{title}</div>
           {extra}
           <button type="button" className="rh-drawer__close" aria-label="Закрыть" onClick={onClose}>×</button>
         </div>
@@ -1585,6 +1688,7 @@ export function Drawer({ open, visible, title, placement = 'right', width = 420,
       </div>
     </div>
   )
+  return typeof document === 'undefined' ? drawerNode : createPortal(drawerNode, document.body)
 }
 
 function renderMenuItems(

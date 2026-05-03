@@ -1,17 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { App, Button, DatePicker, Popconfirm, Select, Space, Table, Tag, Typography } from '@/components/design/system'
+import { App, Button, DatePicker, Popconfirm, Select, Space, Table, Tag } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
-import { EyeOutlined, SearchOutlined, StopOutlined } from '@/components/design/icons'
+import { EyeOutlined, StopOutlined } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useGetBookings, usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG } from '@/lib/constants'
 import { useQueryClient } from '@tanstack/react-query'
-import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { RangePicker } = DatePicker
 
 const STATUS_OPTIONS = [
@@ -81,7 +80,7 @@ export default function ClientBookingList() {
       render: (_, record) => (
         <div>
           <div>{record.start_time ? formatDateTime(record.start_time, 'DD.MM.YYYY') : '—'}</div>
-          <div style={{ color: 'var(--rh-text-soft)', fontSize: 12 }}>
+          <div className="rh-table-subtext">
             {record.start_time ? formatDateTime(record.start_time, 'HH:mm') : ''}
             {record.end_time ? ` – ${formatDateTime(record.end_time, 'HH:mm')}` : ''}
           </div>
@@ -160,15 +159,19 @@ export default function ClientBookingList() {
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>Мои бронирования</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Личный кабинет"
+        title="Мои бронирования"
+        description="История заявок и броней с быстрым фильтром по статусу и датам."
+      />
 
-      <Space wrap style={{ marginBottom: 16 }}>
+      <Space wrap className="rh-client-filter-bar">
         <Select
           value={statusFilter}
           onChange={setStatusFilter}
           options={STATUS_OPTIONS}
-          style={{ width: 160 }}
+          className="rh-client-filter-control"
           placeholder="Статус"
         />
         <RangePicker
@@ -176,6 +179,7 @@ export default function ClientBookingList() {
           onChange={(dates) => setDateRange(dates)}
           format="DD.MM.YYYY"
           placeholder={['С', 'По']}
+          className="rh-admin-form-control"
         />
       </Space>
 
@@ -184,7 +188,16 @@ export default function ClientBookingList() {
         dataSource={filteredBookings}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: <EmptyState description="У вас пока нет бронирований" actionText="Найти баню" actionLink="/catalog" icon={<SearchOutlined />} /> }}
+        locale={{
+          emptyText: (
+            <div className="rh-admin-empty-state">
+              <div className="rh-admin-empty-state__title">У вас пока нет бронирований</div>
+              <p className="rh-admin-empty-state__text">
+                Найдите баню в каталоге и оформите первую бронь.
+              </p>
+            </div>
+          ),
+        }}
         pagination={hasActiveFilter ? {
           pageSize: 999,
           hideOnSinglePage: true,

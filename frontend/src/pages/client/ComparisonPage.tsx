@@ -3,7 +3,7 @@ import {
   Typography,
   Table,
   Button,
-  Empty,
+  Card,
   Image,
   Rate,
   Tag,
@@ -15,8 +15,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { usePostApiV1BathhousesCompare } from '@/api/generated/bathhouses/bathhouses'
 import type { InternalHandlerComparisonItem, InternalHandlerCompareResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const AMENITY_LABELS: Record<string, string> = {
   has_sauna: 'Сауна',
@@ -44,20 +45,11 @@ function buildRows(items: InternalHandlerComparisonItem[]): ComparisonRow[] {
             src={item.images[0]}
             alt={item.name}
             height={120}
-            style={{ objectFit: 'cover', borderRadius: 20 }}
+            className="rh-comparison-image"
             preview={false}
           />
         ) : (
-          <div
-            style={{
-              height: 120,
-              background: 'rgba(248, 244, 236, 0.78)',
-              borderRadius: 20,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+          <div className="rh-comparison-image-placeholder">
             <Text type="secondary">Нет фото</Text>
           </div>
         ),
@@ -68,7 +60,7 @@ function buildRows(items: InternalHandlerComparisonItem[]): ComparisonRow[] {
       label: 'Цена за час',
       values: items.map((item) =>
         item.price_per_hour ? (
-          <Text strong style={{ fontSize: 16 }}>
+          <Text strong className="rh-comparison-price">
             {formatPrice(item.price_per_hour)}
           </Text>
         ) : (
@@ -81,7 +73,7 @@ function buildRows(items: InternalHandlerComparisonItem[]): ComparisonRow[] {
       label: 'Рейтинг',
       values: items.map((item) => (
         <Space>
-          <Rate disabled allowHalf value={item.rating ?? 0} style={{ fontSize: 14 }} />
+          <Rate disabled allowHalf value={item.rating ?? 0} className="rh-comparison-rating" />
           <Text type="secondary">
             {item.rating?.toFixed(1)} ({item.review_count ?? 0})
           </Text>
@@ -172,16 +164,17 @@ export default function ComparisonPage() {
 
   if (ids.length < 2) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px 0' }}>
-        <Empty description="Выберите минимум 2 бани для сравнения" />
-        <Button
-          type="primary"
-          style={{ marginTop: 16 }}
-          onClick={() => navigate('/client/search')}
-        >
-          Перейти к поиску
-        </Button>
-      </div>
+      <Card>
+        <div className="rh-admin-empty-state">
+          <div className="rh-admin-empty-state__title">Выберите минимум 2 бани для сравнения</div>
+          <p className="rh-admin-empty-state__text">
+            Добавьте бани из поиска, чтобы увидеть различия по цене, рейтингу и удобствам.
+          </p>
+          <Button type="primary" onClick={() => navigate('/client/search')}>
+            Перейти к поиску
+          </Button>
+        </div>
+      </Card>
     )
   }
 
@@ -201,7 +194,7 @@ export default function ComparisonPage() {
         <Space orientation="vertical" size={4} align="center">
           <Button
             type="link"
-            style={{ padding: 0, fontSize: 16, fontWeight: 600 }}
+            className="rh-comparison-title-link"
             onClick={() => navigate(`/client/bathhouse/${item.slug ?? item.id}`)}
           >
             {item.name}
@@ -225,20 +218,13 @@ export default function ComparisonPage() {
   ]
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-        }}
-      >
-        <Title level={3} style={{ margin: 0 }}>
-          Сравнение бань
-        </Title>
-        <Button onClick={() => navigate('/client/search')}>Назад к поиску</Button>
-      </div>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Каталог"
+        title="Сравнение бань"
+        description="Сравните ключевые параметры выбранных объектов в одной таблице."
+        extra={<Button onClick={() => navigate('/client/search')}>Назад к поиску</Button>}
+      />
 
       <Table
         dataSource={rows}

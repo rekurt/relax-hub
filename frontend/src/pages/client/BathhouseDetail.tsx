@@ -14,7 +14,6 @@ import {
   Descriptions,
   Divider,
   DatePicker,
-  Empty,
   Pagination,
   Avatar,
   Alert,
@@ -60,7 +59,7 @@ import ContiguousSlotSelector from '@/components/ContiguousSlotSelector'
 import { resolveAssetUrl } from '@/lib/asset-url'
 import { formatSlotTimeLabel, getRangeHours, resolveSlotRangeSelection, type SlotRangeSelection } from '@/lib/slot-selection'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 const REVIEW_PREVIEW_LIMIT = 3
 
 const AMENITY_LIST = [
@@ -281,7 +280,7 @@ export default function BathhouseDetail() {
             <div className="rh-hero-panel__eyebrow">Публичное бронирование</div>
             <h1 className="rh-hero-panel__title">
               {bathhouse.name}
-              {bathhouse.is_photo_verified && <CheckCircleOutlined style={{ marginLeft: 10, fontSize: 22 }} />}
+              {bathhouse.is_photo_verified && <CheckCircleOutlined className="rh-bathhouse-verified-icon" />}
             </h1>
             <div className="rh-detail-hero__lead">
               {bathhouse.address && (
@@ -343,25 +342,25 @@ export default function BathhouseDetail() {
                       <Image
                         src={url}
                         alt={`${bathhouse.name} фото ${i + 1}`}
-                        style={{ borderRadius: 20, objectFit: 'cover', width: '100%', height: i === 0 ? 300 : 100 }}
+                        className={i === 0 ? 'rh-bathhouse-gallery__image rh-bathhouse-gallery__image--primary' : 'rh-bathhouse-gallery__image'}
                       />
                     </Col>
                   ))}
                 </Row>
                 {uniquePhotos.slice(5).map((url) => (
-                  <Image key={url} src={url} style={{ display: 'none' }} />
+                  <Image key={url} src={url} className="rh-hidden-preview-image" />
                 ))}
               </Image.PreviewGroup>
             ) : (
-              <div style={{ height: 200, background: 'rgba(248, 244, 236, 0.78)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="rh-bathhouse-gallery__empty">
                 <Text type="secondary">Нет фото</Text>
               </div>
             )}
 
-            <div style={{ marginTop: 16 }}>
+            <div className="rh-detail-section">
               <div className="rh-toolbar">
                 <div>
-                  <Title level={3} style={{ margin: 0 }}>Описание и условия</Title>
+                  <h2 className="rh-section-card__title">Описание и условия</h2>
                   <Text type="secondary">Сначала то, что влияет на бронирование, затем вторичные детали объекта.</Text>
                 </div>
                 <Space>
@@ -387,7 +386,7 @@ export default function BathhouseDetail() {
 
               <Paragraph>{bathhouse.description}</Paragraph>
 
-              <Descriptions column={{ xs: 1, sm: 2 }} bordered size="small" style={{ marginTop: 16 }}>
+              <Descriptions column={{ xs: 1, sm: 2 }} bordered size="small" className="rh-detail-descriptions">
                 <Descriptions.Item label="Цена за час">
                   {bathhouse.price_per_hour ? formatPrice(bathhouse.price_per_hour) : '—'}
                 </Descriptions.Item>
@@ -413,7 +412,7 @@ export default function BathhouseDetail() {
                   <div>
                     <Text strong>{cancellationDetails.label}</Text>
                     <br />
-                    <Text type="secondary" style={{ fontSize: 12 }}>{cancellationDetails.description}</Text>
+                    <Text type="secondary" className="rh-detail-small-note">{cancellationDetails.description}</Text>
                   </div>
                 </Descriptions.Item>
                 {depositPercent && depositPercent > 0 ? (
@@ -424,11 +423,11 @@ export default function BathhouseDetail() {
               </Descriptions>
 
               {amenities.length > 0 && (
-                <div style={{ marginTop: 16 }}>
+                <div className="rh-detail-section">
                   <Text strong>Удобства:</Text>
-                  <div style={{ marginTop: 8 }}>
+                  <div className="rh-detail-tag-list">
                     {amenities.map((a) => (
-                      <Tag key={a.key} color="blue" style={{ marginBottom: 4 }}>
+                      <Tag key={a.key} color="blue" className="rh-detail-tag">
                         {a.label}
                       </Tag>
                     ))}
@@ -437,9 +436,9 @@ export default function BathhouseDetail() {
               )}
 
               {bathhouse.working_hours && bathhouse.working_hours.length > 0 && (
-                <div style={{ marginTop: 16 }}>
+                <div className="rh-detail-section">
                   <Text strong>Режим работы:</Text>
-                  <div style={{ marginTop: 8 }}>
+                  <div className="rh-detail-section__body">
                     {bathhouse.working_hours.map((wh) => (
                       <div key={wh.day_of_week}>
                         <Text>
@@ -452,7 +451,7 @@ export default function BathhouseDetail() {
               )}
 
               {transportIsError ? (
-                <div style={{ marginTop: 16 }}>
+                <div className="rh-detail-section">
                   <PublicState
                     kind="degraded"
                     compact
@@ -467,14 +466,14 @@ export default function BathhouseDetail() {
               )}
 
               {!!(bathhouse as Record<string, unknown>).visiting_rules && (
-                <div id="bathhouse-rules" style={{ marginTop: 16 }}>
+                <div id="bathhouse-rules" className="rh-detail-section">
                   <Text strong>Правила посещения:</Text>
                   <Alert
                     type="info"
                     showIcon={false}
-                    style={{ marginTop: 8 }}
+                    className="rh-detail-alert"
                     title={
-                      <Paragraph style={{ margin: 0, whiteSpace: 'pre-line' }}>
+                      <Paragraph className="rh-detail-rules-text">
                         {(bathhouse as Record<string, unknown>).visiting_rules as string}
                       </Paragraph>
                     }
@@ -483,9 +482,9 @@ export default function BathhouseDetail() {
               )}
 
               {bathhouse.owner_profile && (
-                <div style={{ marginTop: 16 }}>
+                <div className="rh-detail-section">
                   <Text strong>Владелец:</Text>
-                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="rh-owner-card">
                     <Avatar
                       size={48}
                       src={resolveAssetUrl(bathhouse.owner_profile.avatar_url)}
@@ -495,11 +494,11 @@ export default function BathhouseDetail() {
                       <Text strong>{bathhouse.owner_profile.name || 'Владелец'}</Text>
                       <div>
                         {(bathhouse.owner_profile.rating ?? 0) > 0 && (
-                          <Text type="secondary" style={{ marginRight: 12 }}>
+                          <Text type="secondary" className="rh-owner-card__meta">
                             Рейтинг: {bathhouse.owner_profile.rating!.toFixed(1)}
                           </Text>
                         )}
-                        <Text type="secondary" style={{ marginRight: 12 }}>
+                        <Text type="secondary" className="rh-owner-card__meta">
                           Объектов: {bathhouse.owner_profile.object_count}
                         </Text>
                         {bathhouse.owner_profile.member_since && (
@@ -531,7 +530,7 @@ export default function BathhouseDetail() {
                     setSelectedSlotRange(null)
                   }}
                   disabledDate={(d) => d.isBefore(dayjs(), 'day')}
-                  style={{ width: '100%' }}
+                  className="rh-full-width"
                 />
                 <Spin spinning={slotsLoading && !slotsIsError}>
                   {slotsIsError ? (
@@ -544,9 +543,14 @@ export default function BathhouseDetail() {
                       onAction={() => void refetchSlots()}
                     />
                 ) : slots.length === 0 ? (
-                  <Empty description="Нет доступных слотов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                  <div className="rh-admin-empty-state">
+                    <div className="rh-admin-empty-state__title">Нет доступных слотов</div>
+                    <p className="rh-admin-empty-state__text">
+                      Выберите другую дату или вернитесь к объекту позже.
+                    </p>
+                  </div>
                 ) : (
-                  <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+                  <Space orientation="vertical" className="rh-full-width" size={12}>
                     <ContiguousSlotSelector
                       slots={slots}
                       value={selectedSlotRange}
@@ -629,8 +633,8 @@ export default function BathhouseDetail() {
 
             {currentUser?.role === 'client' && walletBalance?.balance != null && walletBalance.balance > 0 && bathhouse.price_per_hour && walletBalance.balance >= bathhouse.price_per_hour && (
               <Card size="small">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <WalletOutlined style={{ fontSize: 18, color: '#15803d' }} />
+                <div className="rh-wallet-inline-balance">
+                  <WalletOutlined className="rh-wallet-inline-balance__icon" />
                   <Text>Баланс кошелька: <Text strong>{formatPrice(walletBalance.balance)}</Text></Text>
                 </div>
                 <Button
@@ -650,9 +654,14 @@ export default function BathhouseDetail() {
 
       <Divider />
 
-      <Title level={4}>Отзывы ({displayedReviewCount})</Title>
+      <h2 className="rh-section-card__title">Отзывы ({displayedReviewCount})</h2>
       {reviews.length === 0 ? (
-        <Empty description="Нет отзывов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <div className="rh-admin-empty-state">
+          <div className="rh-admin-empty-state__title">Нет отзывов</div>
+          <p className="rh-admin-empty-state__text">
+            Первый отзыв появится после завершённого визита.
+          </p>
+        </div>
       ) : (
         <>
           {visibleReviews.map((review) => (
@@ -681,7 +690,7 @@ export default function BathhouseDetail() {
               pageSize={reviewPageSize}
               total={reviewMeta.total_count}
               onChange={(page) => setReviewView({ bathhouseId: reviewBathhouseId, page, expanded: true })}
-              style={{ marginTop: 16 }}
+              className="rh-pagination-center"
             />
           )}
         </>

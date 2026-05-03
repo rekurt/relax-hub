@@ -237,7 +237,7 @@ export default function NotificationPreferences() {
       </div>
 
       <Card title="Каналы доставки">
-        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+        <Text type="secondary" className="rh-card-intro-text">
           Включите или выключите каналы доставки уведомлений
         </Text>
         <div className="rh-toggle-grid">
@@ -286,7 +286,7 @@ export default function NotificationPreferences() {
           )
         }
       >
-        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+        <Text type="secondary" className="rh-card-intro-text">
           Настройте каналы для каждого типа уведомлений. Обязательные уведомления нельзя отключить.
         </Text>
 
@@ -308,7 +308,7 @@ export default function NotificationPreferences() {
                     <Space>
                       <Text>{EVENT_LABELS[et] ?? et}</Text>
                       {record.is_mandatory && (
-                        <Tag color="red" style={{ fontSize: 10 }}>
+                        <Tag color="red" className="rh-micro-tag">
                           обязательно
                         </Tag>
                       )}

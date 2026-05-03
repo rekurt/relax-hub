@@ -48,7 +48,7 @@ import PublicState from '@/components/PublicState'
 import { useAuthStore } from '@/stores/auth'
 import { PUBLIC_SHORTCUT_CARDS } from '@/navigation/menu'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 type ViewMode = 'list' | 'map' | 'split'
 type GeoMode = 'radius' | 'travel_time'
@@ -791,7 +791,7 @@ export default function BathhouseSearch() {
   const listContent = (
     <>
       {geoError && (
-        <div style={{ marginBottom: 16 }}>
+        <div className="rh-catalog__status-block">
           <PublicState
             kind="degraded"
             compact
@@ -856,7 +856,7 @@ export default function BathhouseSearch() {
               ))}
             </Row>
             {meta && meta.total_pages && meta.total_pages > 1 && (
-              <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <div className="rh-catalog__pagination">
                 <Pagination
                   current={page}
                   pageSize={pageSize}
@@ -877,7 +877,7 @@ export default function BathhouseSearch() {
       <section className="rh-catalog__hero">
         <div className="rh-catalog__hero-copy">
           <Text className="rh-catalog__eyebrow">Публичный каталог</Text>
-          <Title level={2} className="rh-catalog__title">Поиск бань</Title>
+          <h1 className="rh-catalog__title">Поиск бань</h1>
           <Typography.Text className="rh-catalog__description">
             Каталог остаётся list-first: сначала понятная выдача, затем карта и сплит для уточнения. Основные фильтры вынесены наверх, активные параметры всегда видны в URL и на экране.
           </Typography.Text>
@@ -903,11 +903,11 @@ export default function BathhouseSearch() {
         ))}
       </section>
 
-      <Space orientation="vertical" size="middle" style={{ width: '100%', marginBottom: 24 }}>
+      <Space orientation="vertical" size="middle" className="rh-catalog__filter-stack">
         <Card variant="borderless" className="rh-catalog__filter-card">
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} lg={10}>
-              <div ref={searchWrapperRef} style={{ position: 'relative' }}>
+              <div ref={searchWrapperRef} className="rh-search-suggestions-anchor">
                 <Input
                   placeholder="Поиск по названию..."
                   prefix={<SearchOutlined />}
@@ -938,7 +938,7 @@ export default function BathhouseSearch() {
             <Col xs={12} lg={4}>
               <Select
                 placeholder="Город"
-                style={{ width: '100%' }}
+                className="rh-full-width"
                 allowClear
                 value={filters.city_slug as string | undefined}
                 onChange={(slug) => updateFilter('city_slug', slug)}
@@ -950,14 +950,14 @@ export default function BathhouseSearch() {
                 min={1}
                 max={50}
                 placeholder="Гости"
-                style={{ width: '100%' }}
+                className="rh-full-width"
                 value={filters.guest_count}
                 onChange={(value) => updateFilter('guest_count', value)}
               />
             </Col>
             <Col xs={12} lg={3}>
               <DatePicker
-                style={{ width: '100%' }}
+                className="rh-full-width"
                 placeholder="Дата"
                 value={availableDate}
                 onChange={(dateValue) => {
@@ -970,7 +970,7 @@ export default function BathhouseSearch() {
             </Col>
             <Col xs={12} lg={4}>
               <Select
-                style={{ width: '100%' }}
+                className="rh-full-width"
                 value={sortValue}
                 onChange={setSortValue}
                 options={sortOptions}
@@ -1032,7 +1032,7 @@ export default function BathhouseSearch() {
           </div>
 
           {isCitiesError && !isError && (
-            <div style={{ marginTop: 16 }}>
+            <div className="rh-detail-section">
               <PublicState
                 kind="degraded"
                 compact
@@ -1103,7 +1103,7 @@ export default function BathhouseSearch() {
                               ]}
                               value={geoMode}
                               onChange={(value) => handleGeoModeChange(value as GeoMode)}
-                              style={{ marginTop: 4 }}
+                              className="rh-catalog__field-control"
                             />
                           </Col>
                         )}
@@ -1115,7 +1115,7 @@ export default function BathhouseSearch() {
                               max={100}
                               value={radius_km ?? 10}
                               onChange={(value) => updateFilter('radius_km', value)}
-                              style={{ width: '100%' }}
+                              className="rh-full-width"
                             />
                           </Col>
                         )}
@@ -1124,7 +1124,7 @@ export default function BathhouseSearch() {
                             <Col xs={12} sm={6}>
                               <Typography.Text type="secondary">Способ</Typography.Text>
                               <Select
-                                style={{ width: '100%' }}
+                                className="rh-full-width"
                                 value={travelMode}
                                 onChange={handleTravelModeChange}
                                 options={TRAVEL_MODE_OPTIONS}
@@ -1133,7 +1133,7 @@ export default function BathhouseSearch() {
                             <Col xs={12} sm={6}>
                               <Typography.Text type="secondary">Время в пути</Typography.Text>
                               <Select
-                                style={{ width: '100%' }}
+                                className="rh-full-width"
                                 value={travelMinutes}
                                 onChange={handleTravelMinutesChange}
                                 options={TRAVEL_TIME_OPTIONS}
@@ -1144,7 +1144,7 @@ export default function BathhouseSearch() {
                         <Col xs={12} sm={6}>
                           <Typography.Text type="secondary">Время с</Typography.Text>
                           <TimePicker
-                            style={{ width: '100%' }}
+                            className="rh-full-width"
                             format="HH:mm"
                             minuteStep={30}
                             placeholder="С"
@@ -1159,7 +1159,7 @@ export default function BathhouseSearch() {
                         <Col xs={12} sm={6}>
                           <Typography.Text type="secondary">Время до</Typography.Text>
                           <TimePicker
-                            style={{ width: '100%' }}
+                            className="rh-full-width"
                             format="HH:mm"
                             minuteStep={30}
                             placeholder="До"
@@ -1174,7 +1174,7 @@ export default function BathhouseSearch() {
                         <Col xs={24} sm={12}>
                           <Typography.Text type="secondary">Мин. рейтинг</Typography.Text>
                           <Select
-                            style={{ width: '100%' }}
+                            className="rh-full-width"
                             placeholder="Любой"
                             allowClear
                             value={minRating}
@@ -1192,7 +1192,7 @@ export default function BathhouseSearch() {
                           />
                         </Col>
                         <Col xs={24}>
-                          <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                          <Typography.Text type="secondary" className="rh-catalog__field-label">
                             Удобства
                           </Typography.Text>
                           <Space wrap>
@@ -1245,7 +1245,7 @@ export default function BathhouseSearch() {
           <Space>
             <SwapOutlined />
             <span>
-              Выбрано для сравнения: <Badge count={compareIds.length} style={{ backgroundColor: '#0f766e' }} />
+              Выбрано для сравнения: <Badge count={compareIds.length} className="rh-catalog__compare-count" />
             </span>
           </Space>
           <Space>
@@ -1267,7 +1267,7 @@ export default function BathhouseSearch() {
       {meta?.total_count != null && (
         <div className="rh-catalog__result-toolbar">
           <div className="rh-catalog__result-summary">
-            <Tag color="blue" style={{ fontSize: 14, padding: '2px 10px' }} data-testid="result-counter">
+            <Tag color="blue" className="rh-catalog__result-counter" data-testid="result-counter">
               {isLoading ? '...' : `Найдено: ${pluralizeBathhouse(meta.total_count)}`}
             </Tag>
             <Text type="secondary">Сортировка: {selectedSortLabel}</Text>

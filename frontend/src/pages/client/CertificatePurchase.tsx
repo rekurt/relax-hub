@@ -388,7 +388,7 @@ export default function CertificatePurchase() {
                         ]}
                       >
                         <InputNumber
-                          style={{ width: '100%' }}
+                          className="rh-admin-form-control"
                           min={100}
                           max={100000}
                           placeholder="Введите сумму"
