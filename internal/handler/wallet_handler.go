@@ -146,8 +146,8 @@ func (h *WalletHandler) GetWallet(w http.ResponseWriter, r *http.Request) {
 	summary, err := h.walletService.GetBalance(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, domain.ErrWalletNotFound) {
-			if _, createErr := h.walletService.CreateWallet(r.Context(), userID, domain.WalletCurrencyRUB); createErr != nil {
-				handleServiceError(w, createErr)
+			if _, ensureErr := h.walletService.EnsureWallet(r.Context(), userID); ensureErr != nil {
+				handleServiceError(w, ensureErr)
 				return
 			}
 			summary, err = h.walletService.GetBalance(r.Context(), userID)

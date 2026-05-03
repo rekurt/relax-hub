@@ -143,6 +143,9 @@ type noopWalletService struct{}
 func (n *noopWalletService) CreateWallet(_ context.Context, _ uuid.UUID, _ domain.WalletCurrency) (*domain.Wallet, error) {
 	return &domain.Wallet{ID: uuid.New()}, nil
 }
+func (n *noopWalletService) EnsureWallet(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
+	return &domain.Wallet{ID: uuid.New()}, nil
+}
 func (n *noopWalletService) GetWallet(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
 	return &domain.Wallet{ID: uuid.New(), Balance: 1000000}, nil
 }

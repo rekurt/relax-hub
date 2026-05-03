@@ -582,7 +582,7 @@ func TestAuthService_Register_WelcomeBonus(t *testing.T) {
 	walletRepo := mock.NewWalletRepo()
 	cfg := newTestConfig()
 	log := logger.New(logger.LevelWarn)
-	walletSvc := service.NewWalletService(walletRepo, log)
+	walletSvc := service.NewWalletService(walletRepo, userRepo, log)
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, nil, cfg, log)
 
 	user, _, err := svc.Register(context.Background(), service.RegisterInput{
@@ -645,7 +645,7 @@ func TestAuthService_Register_WelcomeBonusDisabled(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.WelcomeBonus.Amount = 0 // disable welcome bonus
 	log := logger.New(logger.LevelWarn)
-	walletSvc := service.NewWalletService(walletRepo, log)
+	walletSvc := service.NewWalletService(walletRepo, userRepo, log)
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, nil, cfg, log)
 
 	user, _, err := svc.Register(context.Background(), service.RegisterInput{
@@ -674,7 +674,7 @@ func TestAuthService_Register_WelcomeBonus_BY_Region(t *testing.T) {
 	walletRepo := mock.NewWalletRepo()
 	cfg := newTestConfig()
 	log := logger.New(logger.LevelWarn)
-	walletSvc := service.NewWalletService(walletRepo, log)
+	walletSvc := service.NewWalletService(walletRepo, userRepo, log)
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, nil, cfg, log)
 
 	user, _, err := svc.Register(context.Background(), service.RegisterInput{
@@ -710,7 +710,7 @@ func TestAuthService_Register_WelcomeBonus_ExplicitRegion(t *testing.T) {
 	walletRepo := mock.NewWalletRepo()
 	cfg := newTestConfig()
 	log := logger.New(logger.LevelWarn)
-	walletSvc := service.NewWalletService(walletRepo, log)
+	walletSvc := service.NewWalletService(walletRepo, userRepo, log)
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, nil, cfg, log)
 
 	// Explicit region BY overrides phone detection
