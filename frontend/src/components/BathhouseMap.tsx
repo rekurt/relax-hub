@@ -77,6 +77,7 @@ interface BathhouseMapProps {
   zoom?: number
   isochronePolygon?: number[][] | null // [lat, lng] pairs for Yandex Maps
   style?: React.CSSProperties
+  className?: string
 }
 
 const YMAPS_API_KEY = import.meta.env.VITE_YMAPS_API_KEY || ''
@@ -119,6 +120,7 @@ export default function BathhouseMap({
   zoom,
   isochronePolygon,
   style,
+  className,
 }: BathhouseMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<YMap | null>(null)
@@ -319,7 +321,7 @@ export default function BathhouseMap({
   }, [isochronePolygon])
 
   return (
-    <div style={{ position: 'relative', ...style }}>
+    <div className={className} style={{ position: 'relative', ...style }}>
       <Spin spinning={loading} style={{ width: '100%', height: '100%' }}>
         <div
           ref={containerRef}

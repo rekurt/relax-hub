@@ -1291,7 +1291,7 @@ export default function BathhouseSearch() {
             showMiniCard
             center={geoCoords ?? undefined}
             isochronePolygon={isochronePolygon}
-            style={{ height: 600, borderRadius: 24, overflow: 'hidden' }}
+            className="rh-catalog__map-canvas rh-catalog__map-canvas--standard"
           />
         </div>
       )}
@@ -1312,7 +1312,7 @@ export default function BathhouseSearch() {
                 showMiniCard
                 center={geoCoords ?? undefined}
                 isochronePolygon={isochronePolygon}
-                style={{ height: 700, borderRadius: 24, overflow: 'hidden' }}
+                className="rh-catalog__map-canvas rh-catalog__map-canvas--split"
               />
             </div>
           </Col>
