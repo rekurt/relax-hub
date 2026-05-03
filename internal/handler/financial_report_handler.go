@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -17,6 +19,14 @@ type FinancialReportHandler struct {
 
 func NewFinancialReportHandler(reportService service.FinancialReportService) *FinancialReportHandler {
 	return &FinancialReportHandler{reportService: reportService}
+}
+
+func writeExportBytes(w http.ResponseWriter, contentType, disposition string, data []byte) {
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", disposition)
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusOK)
+	_, _ = io.Copy(w, bytes.NewReader(data))
 }
 
 // ExportWalletTransactions godoc
@@ -55,10 +65,7 @@ func (h *FinancialReportHandler) ExportWalletTransactions(w http.ResponseWriter,
 			handleServiceError(w, err)
 			return
 		}
-		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-		w.Header().Set("Content-Disposition", "attachment; filename=wallet_transactions.csv")
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
+		writeExportBytes(w, "text/csv; charset=utf-8", "attachment; filename=wallet_transactions.csv", data)
 
 	case "pdf":
 		data, err := h.reportService.ExportWalletTransactionsPDF(r.Context(), userID, dateFrom, dateTo)
@@ -66,10 +73,7 @@ func (h *FinancialReportHandler) ExportWalletTransactions(w http.ResponseWriter,
 			handleServiceError(w, err)
 			return
 		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("Content-Disposition", "attachment; filename=wallet_transactions.html")
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
+		writeExportBytes(w, "text/html; charset=utf-8", "attachment; filename=wallet_transactions.html", data)
 	}
 }
 
@@ -125,10 +129,7 @@ func (h *FinancialReportHandler) GenerateAct(w http.ResponseWriter, r *http.Requ
 	}
 
 	filename := fmt.Sprintf("act_%s_%s_%s.html", bathhouseIDStr[:8], dateFromStr, dateToStr)
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	writeExportBytes(w, "text/html; charset=utf-8", fmt.Sprintf("attachment; filename=%s", filename), data)
 }
 
 // ExportXML1C godoc
@@ -174,10 +175,7 @@ func (h *FinancialReportHandler) ExportXML1C(w http.ResponseWriter, r *http.Requ
 	}
 
 	filename := fmt.Sprintf("finance_%s_%s.xml", dateFromStr, dateToStr)
-	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	writeExportBytes(w, "application/xml; charset=utf-8", fmt.Sprintf("attachment; filename=%s", filename), data)
 }
 
 // ExportPayouts godoc
@@ -216,10 +214,7 @@ func (h *FinancialReportHandler) ExportPayouts(w http.ResponseWriter, r *http.Re
 			handleServiceError(w, err)
 			return
 		}
-		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-		w.Header().Set("Content-Disposition", "attachment; filename=payouts.csv")
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
+		writeExportBytes(w, "text/csv; charset=utf-8", "attachment; filename=payouts.csv", data)
 
 	case "pdf":
 		data, err := h.reportService.ExportPayoutsPDF(r.Context(), userID, dateFrom, dateTo)
@@ -227,10 +222,7 @@ func (h *FinancialReportHandler) ExportPayouts(w http.ResponseWriter, r *http.Re
 			handleServiceError(w, err)
 			return
 		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("Content-Disposition", "attachment; filename=payouts.html")
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
+		writeExportBytes(w, "text/html; charset=utf-8", "attachment; filename=payouts.html", data)
 	}
 }
 

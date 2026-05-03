@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import { Button, Empty } from 'antd'
+import { Empty } from 'antd'
 import { useNavigate } from 'react-router-dom'
+import { DesignButton } from '@/components/design'
 
 interface EmptyStateProps {
   description: ReactNode
@@ -36,9 +37,9 @@ export default function EmptyState({
       description={description}
     >
       {actionText && (
-        <Button type="primary" icon={icon} onClick={handleAction}>
+        <DesignButton variant="primary" icon={icon} onClick={handleAction}>
           {actionText}
-        </Button>
+        </DesignButton>
       )}
     </Empty>
   )

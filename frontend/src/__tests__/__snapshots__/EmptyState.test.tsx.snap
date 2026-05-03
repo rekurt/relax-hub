@@ -103,12 +103,10 @@ exports[`EmptyState > snapshot: empty state with action 1`] = `
     class="ant-empty-footer"
   >
     <button
-      class="ant-btn css-dev-only-do-not-override-1daqxe2 css-var-root ant-btn-primary ant-btn-color-primary ant-btn-variant-solid"
+      class="rh-btn rh-btn--primary"
       type="button"
     >
-      <span>
-        Найти баню
-      </span>
+      Найти баню
     </button>
   </div>
 </div>

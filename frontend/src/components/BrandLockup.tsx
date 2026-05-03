@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { PLATFORM_NAME } from '@/content/support'
+import DesignBrandLockup from '@/components/design/BrandLockup'
 
 type BrandLockupTone = 'default' | 'inverse'
 type BrandLockupSize = 'header' | 'footer' | 'auth'
@@ -29,11 +29,11 @@ export default function BrandLockup({
   ].filter(Boolean).join(' ')
 
   return (
-    <div className={classes}>
-      <div className="bani-brand-lockup__copy">
-        <span className="bani-brand-lockup__title">{PLATFORM_NAME}</span>
-        {subtitle && <span className="bani-brand-lockup__subtitle">{subtitle}</span>}
-      </div>
-    </div>
+    <DesignBrandLockup
+      className={classes}
+      dark={tone === 'inverse'}
+      size={size}
+      subtitle={subtitle}
+    />
   )
 }

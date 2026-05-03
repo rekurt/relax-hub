@@ -1,12 +1,5 @@
-import { Card, Tag, Rate, Typography, Space, Button, Image, App, Checkbox } from 'antd'
-import {
-  EnvironmentOutlined,
-  HeartOutlined,
-  HeartFilled,
-  CheckCircleOutlined,
-  SwapOutlined,
-  ThunderboltOutlined,
-} from '@ant-design/icons'
+import type { MouseEvent } from 'react'
+import { App, Checkbox } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
@@ -14,8 +7,7 @@ import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites
 import { resolveAssetUrl } from '@/lib/asset-url'
 import { formatPrice } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
-
-const { Text, Title } = Typography
+import { DesignButton, DesignIcon, DesignListingCard } from '@/components/design'
 
 const AMENITY_LABELS: Record<string, string> = {
   has_sauna: 'Сауна',
@@ -62,7 +54,7 @@ export default function BathhouseCard({
 
   const coverImage = resolveAssetUrl(bathhouse.images?.[0] ?? bathhouse.gallery_preview?.[0]?.url)
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = (e: MouseEvent) => {
     e.stopPropagation()
     if (bathhouse.id) {
       favoriteMutation.mutate({ id: bathhouse.id })
@@ -72,15 +64,23 @@ export default function BathhouseCard({
   const cardActions: React.ReactNode[] = []
   if (showFavorite && currentUser?.role === 'client') {
     cardActions.push(
-      <Button
+      <DesignButton
         key="favorite"
-        type="text"
-        icon={bathhouse.is_favorite ? <HeartFilled style={{ color: '#b42318' }} /> : <HeartOutlined />}
+        variant="ghost"
+        size="sm"
+        icon={(
+          <DesignIcon
+            name="heart"
+            size={16}
+            fill={bathhouse.is_favorite ? 'currentColor' : 'none'}
+            style={{ color: bathhouse.is_favorite ? 'var(--rh-error)' : undefined }}
+          />
+        )}
         onClick={handleFavoriteClick}
-        loading={favoriteMutation.isPending}
+        disabled={favoriteMutation.isPending}
       >
         {bathhouse.is_favorite ? 'В избранном' : 'В избранное'}
-      </Button>,
+      </DesignButton>,
     )
   }
   if (showCompare) {
@@ -94,80 +94,34 @@ export default function BathhouseCard({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <SwapOutlined /> Сравнить
+        <DesignIcon name="grid" size={15} /> Сравнить
       </Checkbox>,
     )
   }
 
+  const badge = bathhouse.last_minute_active
+    ? `Срочная скидка ${bathhouse.last_minute_discount_percent ? `-${bathhouse.last_minute_discount_percent}%` : ''}`.trim()
+    : undefined
+
   return (
-    <Card
-      hoverable
+    <DesignListingCard
       className="bani-listing-card"
       onClick={() => navigate(`/bathhouses/${bathhouse.slug ?? bathhouse.id}`)}
-      cover={
-        coverImage ? (
-          <Image
-            className="bani-listing-card__image"
-            alt={bathhouse.name}
-            src={coverImage}
-            height={200}
-            style={{ objectFit: 'cover' }}
-            preview={false}
-          />
-        ) : (
-          <div className="bani-listing-card__image-placeholder">
-            <Text type="secondary">Фото объекта</Text>
-          </div>
-        )
-      }
+      name={bathhouse.name}
+      address={bathhouse.address}
+      price={bathhouse.price_per_hour ? `${formatPrice(bathhouse.price_per_hour)}/ч` : undefined}
+      rating={bathhouse.rating ?? 0}
+      reviewCount={bathhouse.review_count ?? 0}
+      verified={bathhouse.is_photo_verified}
+      imageUrl={coverImage}
+      imageAlt={bathhouse.name}
+      badge={badge}
+      badgeTone="red"
+      tags={[
+        ...amenities.slice(0, 4),
+        ...(amenities.length > 4 ? [`+${amenities.length - 4}`] : []),
+      ]}
       actions={cardActions.length > 0 ? cardActions : undefined}
-    >
-      <Space orientation="vertical" size={8} className="bani-listing-card__body">
-        <div className="bani-listing-card__head">
-          <Title level={5} className="bani-listing-card__title">
-            {bathhouse.name}
-            {bathhouse.is_photo_verified && (
-              <CheckCircleOutlined className="bani-listing-card__verified" />
-            )}
-          </Title>
-          <Text strong className="bani-listing-card__price">
-            {bathhouse.price_per_hour ? formatPrice(bathhouse.price_per_hour) + '/ч' : ''}
-          </Text>
-        </div>
-
-        {bathhouse.last_minute_active && (
-          <Tag className="bani-listing-card__deal-tag" icon={<ThunderboltOutlined />}>
-            Срочная скидка {bathhouse.last_minute_discount_percent ? `-${bathhouse.last_minute_discount_percent}%` : ''}
-          </Tag>
-        )}
-
-        {bathhouse.address && (
-          <Text type="secondary" className="bani-listing-card__address">
-            <EnvironmentOutlined />
-            {bathhouse.address}
-          </Text>
-        )}
-
-        <div className="bani-listing-card__rating">
-          <Rate disabled allowHalf value={bathhouse.rating ?? 0} className="bani-listing-card__stars" />
-          <Text type="secondary" className="bani-listing-card__rating-text">
-            {bathhouse.rating?.toFixed(1)} ({bathhouse.review_count ?? 0})
-          </Text>
-        </div>
-
-        {amenities.length > 0 && (
-          <div className="bani-listing-card__tags">
-            {amenities.slice(0, 4).map((label) => (
-              <Tag key={label} className="bani-listing-card__tag">
-                {label}
-              </Tag>
-            ))}
-            {amenities.length > 4 && (
-              <Tag className="bani-listing-card__tag">+{amenities.length - 4}</Tag>
-            )}
-          </div>
-        )}
-      </Space>
-    </Card>
+    />
   )
 }

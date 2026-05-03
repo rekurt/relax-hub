@@ -180,7 +180,9 @@ func (s *bookingExtensionService) RequestExtension(ctx context.Context, userID u
 	}
 
 	// Notify owner
-	go s.notifyOwner(context.Background(), bh.OwnerID, booking, req)
+	runDetached(ctx, 10*time.Second, func(notificationCtx context.Context) {
+		s.notifyOwner(notificationCtx, bh.OwnerID, booking, req)
+	})
 
 	s.logger.Info("booking extension requested",
 		"request_id", req.ID,
@@ -255,7 +257,9 @@ func (s *bookingExtensionService) ApproveExtension(ctx context.Context, ownerID 
 	booking.TotalPrice = newTotalPrice
 
 	// Notify client
-	go s.notifyClient(context.Background(), req.UserID, req, domain.NotifBookingExtensionApproved, "")
+	runDetached(ctx, 10*time.Second, func(notificationCtx context.Context) {
+		s.notifyClient(notificationCtx, req.UserID, req, domain.NotifBookingExtensionApproved, "")
+	})
 
 	s.logger.Info("booking extension approved",
 		"request_id", requestID,
@@ -292,7 +296,9 @@ func (s *bookingExtensionService) RejectExtension(ctx context.Context, ownerID u
 		return err
 	}
 
-	go s.notifyClient(context.Background(), req.UserID, req, domain.NotifBookingExtensionRejected, reason)
+	runDetached(ctx, 10*time.Second, func(notificationCtx context.Context) {
+		s.notifyClient(notificationCtx, req.UserID, req, domain.NotifBookingExtensionRejected, reason)
+	})
 
 	s.logger.Info("booking extension rejected",
 		"request_id", requestID,
@@ -342,7 +348,10 @@ func (s *bookingExtensionService) ExpireTimedOutRequests(ctx context.Context) (i
 			continue
 		}
 
-		go s.notifyClient(context.Background(), req.UserID, &req, domain.NotifBookingExtensionExpired, "")
+		expiredReq := req
+		runDetached(ctx, 10*time.Second, func(notificationCtx context.Context) {
+			s.notifyClient(notificationCtx, expiredReq.UserID, &expiredReq, domain.NotifBookingExtensionExpired, "")
+		})
 
 		count++
 	}

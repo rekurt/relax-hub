@@ -315,10 +315,19 @@ func (h *WidgetHandler) ServeScript(w http.ResponseWriter, r *http.Request) {
 		exePath, _ = os.Getwd()
 	}
 	execDir := filepath.Dir(exePath)
-	scriptPath := filepath.Join(execDir, "widget/dist/widget.min.js")
 
 	// Read the minified JavaScript file
-	content, err := os.ReadFile(scriptPath)
+	root, err := os.OpenRoot(execDir)
+	if err != nil {
+		if h.log != nil {
+			h.log.Error("failed to open widget root", "error", err)
+		}
+		writeError(w, http.StatusNotFound, "not_found", "widget script not found")
+		return
+	}
+	defer root.Close()
+
+	content, err := root.ReadFile("widget/dist/widget.min.js")
 	if err != nil {
 		if h.log != nil {
 			h.log.Error("failed to read widget script", "error", err)
@@ -346,10 +355,19 @@ func (h *WidgetHandler) ServeStyles(w http.ResponseWriter, r *http.Request) {
 		exePath, _ = os.Getwd()
 	}
 	execDir := filepath.Dir(exePath)
-	stylesPath := filepath.Join(execDir, "widget/dist/widget.min.css")
 
 	// Read the minified CSS file
-	content, err := os.ReadFile(stylesPath)
+	root, err := os.OpenRoot(execDir)
+	if err != nil {
+		if h.log != nil {
+			h.log.Error("failed to open widget root", "error", err)
+		}
+		writeError(w, http.StatusNotFound, "not_found", "widget styles not found")
+		return
+	}
+	defer root.Close()
+
+	content, err := root.ReadFile("widget/dist/widget.min.css")
 	if err != nil {
 		if h.log != nil {
 			h.log.Error("failed to read widget styles", "error", err)

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import { Alert, Button, Card, Result, Space, Spin, Typography } from 'antd'
+import { Alert, Result, Space, Spin, Typography } from 'antd'
 import EmptyState from '@/components/EmptyState'
+import { DesignButton, DesignCard } from '@/components/design'
 
 const { Paragraph, Text } = Typography
 
@@ -53,13 +54,13 @@ export default function PublicState({
 
   if (kind === 'loading') {
     return (
-      <Card className="bani-public-state-card">
+      <DesignCard className="bani-public-state-card">
         <Space orientation="vertical" size={16} style={{ width: '100%' }}>
           <Spin size="large" />
           <Text strong>{resolvedTitle}</Text>
           <Paragraph style={{ marginBottom: 0 }}>{resolvedDescription}</Paragraph>
         </Space>
-      </Card>
+      </DesignCard>
     )
   }
 
@@ -70,7 +71,7 @@ export default function PublicState({
         showIcon
         title={resolvedTitle}
         description={resolvedDescription}
-        action={actionText ? <Button size="small" onClick={onAction}>{actionText}</Button> : undefined}
+        action={actionText ? <DesignButton size="sm" onClick={onAction}>{actionText}</DesignButton> : undefined}
       />
     )
   }
@@ -98,14 +99,14 @@ export default function PublicState({
       subTitle={typeof resolvedDescription === 'string' ? resolvedDescription : undefined}
       extra={[
         actionText ? (
-          <Button key="primary" type="primary" onClick={onAction}>
+          <DesignButton key="primary" variant="primary" onClick={onAction}>
             {actionText}
-          </Button>
+          </DesignButton>
         ) : null,
         secondaryActionText ? (
-          <Button key="secondary" href={secondaryActionLink} onClick={onSecondaryAction}>
+          <DesignButton key="secondary" href={secondaryActionLink} onClick={onSecondaryAction}>
             {secondaryActionText}
-          </Button>
+          </DesignButton>
         ) : null,
       ].filter(Boolean)}
     >

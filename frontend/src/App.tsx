@@ -11,9 +11,9 @@ function AppWithAuth() {
   }, [loadProfile])
 
   useEffect(() => {
-    document.body.classList.add('bani-app')
+    document.body.classList.add('bani-app', 'rh-app')
     return () => {
-      document.body.classList.remove('bani-app')
+      document.body.classList.remove('bani-app', 'rh-app')
     }
   }, [])
 

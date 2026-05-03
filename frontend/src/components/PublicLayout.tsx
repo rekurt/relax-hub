@@ -30,7 +30,7 @@ export default function PublicLayout() {
     () => cities.find((city) => city.slug === 'moscow' || city.slug === 'moskva' || city.name === 'Москва') ?? cities[0],
     [cities],
   )
-  const selectedCityValue = selectedCitySlug ?? preferredCity?.slug
+  const selectedCityValue = selectedCitySlug
 
   useEffect(() => {
     const titles: Array<[string, string]> = [

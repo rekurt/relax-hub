@@ -47,7 +47,7 @@ export default function AuthShell({
           </Link>
 
           <div className="bani-auth-aside__copy">
-            <Text className="bani-auth-badge">Быстрый вход</Text>
+            <Text className="rh-tag rh-tag--gold bani-auth-badge">Быстрый вход</Text>
             <Title level={2} className="bani-auth-aside__title">
               {asideTitle}
             </Title>
@@ -58,14 +58,14 @@ export default function AuthShell({
 
           <div className="bani-auth-highlights">
             {highlights.map((highlight, index) => (
-              <div key={index} className="bani-auth-highlight">
+              <div key={index} className="rh-card rh-card--flat bani-auth-highlight">
                 {highlight}
               </div>
             ))}
           </div>
         </aside>
 
-        <section className="bani-auth-panel">
+        <section className="rh-card bani-auth-panel">
           <div className="bani-auth-panel__intro">
             {eyebrow && <Text className="bani-auth-panel__eyebrow">{eyebrow}</Text>}
             <Title level={3} className="bani-auth-panel__title">

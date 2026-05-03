@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Layout, Button, Drawer, Dropdown, Grid, Space, Typography, theme } from 'antd'
+import { Layout, Drawer, Dropdown, Grid, Space, Typography } from 'antd'
 import type { MenuProps } from 'antd'
-import { LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores/auth'
 import type { NavigationItem, NavigationSection } from '@/navigation/menu'
 import NotificationBell from '@/components/NotificationBell'
+import { DesignAvatar, DesignButton, DesignIcon } from '@/components/design'
 
 const { Header, Content, Footer } = Layout
 const { useBreakpoint } = Grid
@@ -77,13 +77,13 @@ function NavButton({
   onClick: (to: string) => void
 }) {
   return (
-    <Button
-      className={`bani-topnav__nav-button${active ? ' bani-topnav__nav-button--active' : ''}`}
-      type="text"
+    <button
+      type="button"
+      className={`rh-nav__link bani-topnav__nav-button${active ? ' rh-nav__link--active bani-topnav__nav-button--active' : ''}`}
       onClick={() => onClick(item.to)}
     >
       {item.label}
-    </Button>
+    </button>
   )
 }
 
@@ -109,7 +109,6 @@ export default function TopNavigationLayout({
   const navigate = useNavigate()
   const location = useLocation()
   const screens = useBreakpoint()
-  const { token } = theme.useToken()
   const isMobile = !screens.lg
   const showBrandSubtitle = !isMobile && (navigationMode === 'dropdown' ? !!screens.xxl : !!screens.xl)
   const { user, logout } = useAuthStore()
@@ -125,7 +124,7 @@ export default function TopNavigationLayout({
   const fallbackProfileMenuItems = profilePath
     ? [{
         key: 'profile',
-        icon: <UserOutlined />,
+        icon: <DesignIcon name="user" size={16} />,
         label: 'Профиль',
         onClick: () => navigate(profilePath),
       } satisfies NonNullable<MenuProps['items']>[number]]
@@ -135,7 +134,7 @@ export default function TopNavigationLayout({
     { type: 'divider' as const },
     {
       key: 'logout',
-      icon: <LogoutOutlined />,
+      icon: <DesignIcon name="out" size={16} />,
       label: 'Выйти',
       danger: true,
       onClick: () => {
@@ -159,10 +158,9 @@ export default function TopNavigationLayout({
       }}
     >
       <Header
-        className="bani-topnav"
+        className="rh-nav bani-topnav"
         style={{
           height: 'auto',
-          borderBottomColor: token.colorBorderSecondary,
         }}
       >
         <div className="bani-topnav__inner" style={{ maxWidth: contentWidth }}>
@@ -194,19 +192,19 @@ export default function TopNavigationLayout({
                   trigger={['click']}
                   placement="bottomRight"
                 >
-                  <Button
-                    className="bani-topnav__workspace-button bani-topnav__profile-button"
-                    type="default"
-                    icon={<MenuOutlined />}
+                  <button
+                    type="button"
+                    className="rh-nav__user bani-topnav__workspace-button bani-topnav__profile-button"
                     aria-label={`Раздел: ${activeNavigationItem?.label ?? 'Разделы'}`}
                   >
+                    <DesignIcon name="grid" size={16} />
                     <span className="bani-topnav__workspace-label">
                       {activeNavigationItem?.label ?? 'Разделы'}
                     </span>
-                  </Button>
+                  </button>
                 </Dropdown>
               ) : (
-                <Space size={8} wrap={false}>
+                <div className="rh-nav__links bani-topnav__nav-links">
                   {primaryItems.map((item) => (
                     <NavButton
                       key={item.key}
@@ -217,21 +215,21 @@ export default function TopNavigationLayout({
                   ))}
                   {overflowItems.length > 0 && (
                     <Dropdown menu={{ items: overflowMenuItems }} trigger={['click']} placement="bottomRight">
-                      <Button
-                        className={`bani-topnav__nav-button${overflowActive ? ' bani-topnav__nav-button--active' : ''}`}
-                        type="text"
-                        icon={<MenuOutlined />}
+                      <button
+                        type="button"
+                        className={`rh-nav__link bani-topnav__nav-button${overflowActive ? ' rh-nav__link--active bani-topnav__nav-button--active' : ''}`}
                       >
+                        <DesignIcon name="more" size={16} />
                         Разделы
-                      </Button>
+                      </button>
                     </Dropdown>
                   )}
-                </Space>
+                </div>
               )}
             </div>
           )}
 
-          <div className="bani-topnav__actions">
+          <div className="rh-nav__actions bani-topnav__actions">
             {!isMobile && headerAccessory && (
               <div className={`bani-topnav__accessory bani-topnav__accessory--${headerAccessoryVariant}`}>
                 {headerAccessory}
@@ -247,33 +245,37 @@ export default function TopNavigationLayout({
                   placement="bottomRight"
                   classNames={{ root: 'bani-topnav__profile-dropdown' }}
                 >
-                  <Button type="text" icon={<UserOutlined />} className="bani-topnav__profile-button">
+                  <button type="button" className="rh-nav__user bani-topnav__profile-button">
+                    <DesignAvatar name={user.name ?? user.email ?? 'Профиль'} size={32} />
                     {!isMobile && (
                       <span className="bani-topnav__profile-label">
                         {user.name ?? user.email ?? 'Профиль'}
                       </span>
                     )}
-                  </Button>
+                  </button>
                 </Dropdown>
               </>
             ) : (
-              <Button
-                type="default"
-                icon={<UserOutlined />}
+              <DesignButton
+                variant="primary"
+                size="sm"
                 onClick={() => navigate('/login')}
                 className="bani-topnav__profile-button bani-topnav__login-button"
+                icon={<DesignIcon name="user" size={16} />}
               >
                 Войти
-              </Button>
+              </DesignButton>
             )}
 
             {isMobile && (
-              <Button
-                type="text"
-                icon={<MenuOutlined />}
+              <button
+                type="button"
+                className="rh-nav__icon-button bani-topnav__menu-button"
                 aria-label="Открыть меню"
                 onClick={() => setDrawerOpen(true)}
-              />
+              >
+                <DesignIcon name="grid" size={18} />
+              </button>
             )}
           </div>
         </div>
@@ -320,18 +322,17 @@ export default function TopNavigationLayout({
               )}
               <Space orientation="vertical" style={{ width: '100%' }} size={8}>
                 {section.items.map((item) => (
-                  <Button
+                  <button
                     key={item.key}
-                    className={`bani-topnav__drawer-button${isActive(item) ? ' bani-topnav__drawer-button--active' : ''}`}
-                    type="text"
-                    block
+                    type="button"
+                    className={`rh-nav__link bani-topnav__drawer-button${isActive(item) ? ' rh-nav__link--active bani-topnav__drawer-button--active' : ''}`}
                     onClick={() => {
                       navigate(item.to)
                       setDrawerOpen(false)
                     }}
                   >
                     {item.label}
-                  </Button>
+                  </button>
                 ))}
               </Space>
             </div>
