@@ -170,7 +170,7 @@ export default function PromotionCampaign() {
       title: 'Период',
       key: 'period',
       render: (_: unknown, record: Promotion) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text>{dayjs(record.start_date).format('DD.MM.YYYY')}</Text>
           <Text type="secondary">{dayjs(record.end_date).format('DD.MM.YYYY')}</Text>
         </Space>
@@ -264,7 +264,7 @@ export default function PromotionCampaign() {
   ]
 
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+    <Space orientation="vertical" size="large" style={{ width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={3} style={{ margin: 0 }}>
           <RocketOutlined /> Рекламные кампании

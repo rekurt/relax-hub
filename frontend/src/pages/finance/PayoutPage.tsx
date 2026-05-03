@@ -2,14 +2,10 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Card,
-  Col,
   Form,
   InputNumber,
-  Row,
   Select,
   Space,
-  Statistic,
   Switch,
   Table,
   Tag,
@@ -30,8 +26,9 @@ import {
 import type { InternalHandlerPayoutResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const PAYOUT_STATUS_CONFIG: Record<string, { color: string; text: string }> = {
   pending: { color: 'orange', text: 'В обработке' },
@@ -148,45 +145,59 @@ export default function PayoutPage() {
   ]
 
   const availableRubles = wallet?.available ? wallet.available / 100 : 0
+  const payoutMetricTiles = [
+    {
+      label: 'Доступно к выводу',
+      value: formatPrice(wallet?.available ?? 0),
+      hint: 'Средства, которые можно отправить на выплату сейчас',
+      icon: <SendOutlined />,
+      loading: walletLoading,
+    },
+    {
+      label: 'Дневной лимит',
+      value: formatPrice(DAILY_LIMIT),
+      hint: 'Максимум в день',
+      icon: <ThunderboltOutlined />,
+      loading: false,
+    },
+    {
+      label: 'Месячный лимит',
+      value: formatPrice(MONTHLY_LIMIT),
+      hint: 'Максимум в месяц',
+      icon: <BankOutlined />,
+      loading: false,
+    },
+  ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>Выплаты</Title>
+    <div className="bani-stack">
+      <PageHeader
+        size="compact"
+        eyebrow="Финансы"
+        title="Выплаты"
+        description="Запросы на вывод, лимиты и история выплат владельца в одном рабочем экране."
+      />
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={8}>
-          <Card loading={walletLoading}>
-            <Statistic
-              title="Доступно к выводу"
-              value={availableRubles}
-              suffix="\u20BD"
-              styles={{ content: { color: '#52c41a' } }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8}>
-          <Card>
-            <Statistic
-              title="Дневной лимит"
-              value={DAILY_LIMIT / 100}
-              suffix="\u20BD"
-            />
-            <Text type="secondary" style={{ fontSize: 12 }}>Максимум в день</Text>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8}>
-          <Card>
-            <Statistic
-              title="Месячный лимит"
-              value={MONTHLY_LIMIT / 100}
-              suffix="\u20BD"
-            />
-            <Text type="secondary" style={{ fontSize: 12 }}>Максимум в месяц</Text>
-          </Card>
-        </Col>
-      </Row>
+      <div className="bani-admin-metric-grid">
+        {payoutMetricTiles.map((tile) => (
+          <div className="bani-admin-metric" key={tile.label} aria-busy={tile.loading}>
+            <div className="bani-admin-metric__head">
+              <span className="bani-admin-metric__label">{tile.label}</span>
+              <span className="bani-admin-metric__icon">{tile.icon}</span>
+            </div>
+            <div className="bani-admin-metric__value">{tile.value}</div>
+            <div className="bani-admin-metric__hint">{tile.hint}</div>
+          </div>
+        ))}
+      </div>
 
-      <Card title="Запросить выплату" style={{ marginTop: 16 }}>
+      <section className="bani-admin-panel">
+        <div className="bani-admin-toolbar" style={{ marginBottom: 18 }}>
+          <div className="bani-admin-toolbar__copy">
+            <h2 className="bani-admin-toolbar__title">Запросить выплату</h2>
+            <div className="bani-admin-toolbar__hint">Сумма не может превышать доступный баланс: {formatPrice(wallet?.available ?? 0)}.</div>
+          </div>
+        </div>
         <Form
           form={form}
           layout="inline"
@@ -227,9 +238,15 @@ export default function PayoutPage() {
             </Button>
           </Form.Item>
         </Form>
-      </Card>
+      </section>
 
-      <Card title="Автовыплата" size="small" style={{ marginTop: 16 }}>
+      <section className="bani-admin-panel">
+        <div className="bani-admin-toolbar" style={{ marginBottom: 14 }}>
+          <div className="bani-admin-toolbar__copy">
+            <h2 className="bani-admin-toolbar__title">Автовыплата</h2>
+            <div className="bani-admin-toolbar__hint">Автоматический вывод при достижении заданного порога.</div>
+          </div>
+        </div>
         <Space>
           <Switch
             checked={autoPayoutEnabled}
@@ -238,28 +255,34 @@ export default function PayoutPage() {
           />
           <Text>Автоматически выводить при достижении порога (5 000 \u20BD)</Text>
         </Space>
-      </Card>
+      </section>
 
-      <Title level={4} style={{ marginTop: 24, marginBottom: 12 }}>История выплат</Title>
-
-      <Table
-        columns={payoutColumns}
-        dataSource={payouts}
-        rowKey="id"
-        loading={payoutsLoading}
-        locale={{ emptyText: <EmptyState description="Нет выплат" /> }}
-        pagination={{
-          current: page,
-          pageSize: pageSize,
-          total: payoutsMeta?.total_count ?? 0,
-          showSizeChanger: true,
-          showTotal: (total) => `Всего: ${total}`,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-          },
-        }}
-      />
+      <section className="bani-admin-table-card">
+        <div className="bani-admin-toolbar">
+          <div className="bani-admin-toolbar__copy">
+            <h2 className="bani-admin-toolbar__title">История выплат</h2>
+            <div className="bani-admin-toolbar__hint">Статусы, метод и причина ошибки по всем заявкам.</div>
+          </div>
+        </div>
+        <Table
+          columns={payoutColumns}
+          dataSource={payouts}
+          rowKey="id"
+          loading={payoutsLoading}
+          locale={{ emptyText: <EmptyState description="Нет выплат" /> }}
+          pagination={{
+            current: page,
+            pageSize: pageSize,
+            total: payoutsMeta?.total_count ?? 0,
+            showSizeChanger: true,
+            showTotal: (total) => `Всего: ${total}`,
+            onChange: (p, ps) => {
+              setPage(p)
+              setPageSize(ps)
+            },
+          }}
+        />
+      </section>
     </div>
   )
 }

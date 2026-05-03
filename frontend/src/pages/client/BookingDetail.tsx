@@ -339,7 +339,7 @@ export default function ClientBookingDetail() {
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
-          message="Политика отмены"
+          title="Политика отмены"
           description={getRefundInfo()}
         />
       )}
@@ -451,7 +451,7 @@ export default function ClientBookingDetail() {
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
-          message={`Осталось изменений: ${3 - (booking.modification_count ?? 0)}`}
+          title={`Осталось изменений: ${3 - (booking.modification_count ?? 0)}`}
           description="Цена будет пересчитана автоматически. При увеличении стоимости потребуется доплата, при уменьшении — разница будет возвращена."
         />
         <Form

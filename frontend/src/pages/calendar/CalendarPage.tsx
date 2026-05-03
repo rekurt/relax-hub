@@ -799,7 +799,7 @@ export default function CalendarPage() {
       <div>
         <Title level={3}>Календарь</Title>
         <Alert
-          message="Выберите баню"
+          title="Выберите баню"
           description="Для просмотра календаря выберите баню в верхнем меню."
           type="info"
           showIcon
@@ -958,7 +958,7 @@ export default function CalendarPage() {
               Apple Calendar или другие приложения.
             </Text>
             {calendarToken?.url ? (
-              <Space direction="vertical" style={{ width: '100%' }}>
+              <Space orientation="vertical" style={{ width: '100%' }}>
                 <Input
                   readOnly
                   value={`${window.location.origin}${calendarToken.url}`}
@@ -1115,7 +1115,7 @@ export default function CalendarPage() {
           </Form.Item>
         </Form>
         <Alert
-          message="Блокировка запретит бронирование на указанный период."
+          title="Блокировка запретит бронирование на указанный период."
           type="info"
           showIcon
           style={{ marginTop: 8 }}
@@ -1155,7 +1155,7 @@ export default function CalendarPage() {
           </Form.Item>
         </Form>
         <Alert
-          message="Занятые слоты из внешнего календаря будут автоматически блокировать бронирования."
+          title="Занятые слоты из внешнего календаря будут автоматически блокировать бронирования."
           type="info"
           showIcon
           style={{ marginTop: 8 }}

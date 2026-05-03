@@ -329,7 +329,7 @@ export default function AdminTicketDetail() {
                     {msg.attachments && msg.attachments.length > 0 && (
                       <>
                         <Divider style={{ margin: '8px 0' }} />
-                        <Space direction="vertical" size={2}>
+                        <Space orientation="vertical" size={2}>
                           {msg.attachments.map((url, idx) => (
                             <a
                               key={idx}
@@ -358,7 +358,7 @@ export default function AdminTicketDetail() {
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Ответ пользователю..."
-                autoSize={{ minRows: 2, maxRows: 6 }}
+                rows={2}
                 maxLength={5000}
                 onPressEnter={(e) => {
                   if (e.ctrlKey || e.metaKey) {

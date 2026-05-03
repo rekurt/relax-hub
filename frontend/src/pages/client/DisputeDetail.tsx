@@ -294,7 +294,7 @@ export default function DisputeDetail() {
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
-          message="Вы можете подать апелляцию"
+          title="Вы можете подать апелляцию"
           description={`Срок подачи апелляции истекает ${formatDateTime(dispute.appeal_deadline!)}. После этого решение станет окончательным.`}
           action={
             <Button
@@ -331,7 +331,7 @@ export default function DisputeDetail() {
             type="warning"
             showIcon
             style={{ marginBottom: 16 }}
-            message={`Окно подачи доказательств закрывается через ${evidenceTimeLeft}ч (${formatDateTime(dispute.evidence_deadline!)})`}
+            title={`Окно подачи доказательств закрывается через ${evidenceTimeLeft}ч (${formatDateTime(dispute.evidence_deadline!)})`}
           />
         )}
 

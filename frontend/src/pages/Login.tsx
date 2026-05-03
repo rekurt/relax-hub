@@ -167,7 +167,7 @@ export default function Login() {
       )}
     >
       <Card bordered={false} className="bani-auth-surface">
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Segmented
             className="bani-auth-segmented"
             options={AUTH_METHOD_OPTIONS}

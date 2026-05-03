@@ -151,7 +151,7 @@ export default function ActivePromoCodes() {
 
         {validateMutation.isError && (
           <Alert
-            message="Промокод недействителен"
+            title="Промокод недействителен"
             description="Проверьте правильность ввода или срок действия промокода."
             type="error"
             showIcon

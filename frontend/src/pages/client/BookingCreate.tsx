@@ -503,7 +503,7 @@ export default function BookingCreate() {
       {/* Step 1: Date/Time/Guests */}
       {currentStep === 0 && (
         <Card title="Дата и время" style={{ marginBottom: 16 }}>
-          <Space direction="vertical" style={{ width: '100%' }} size={16}>
+          <Space orientation="vertical" style={{ width: '100%' }} size={16}>
             <div>
               <Text strong>Дата:</Text>
               <DatePicker
@@ -525,7 +525,7 @@ export default function BookingCreate() {
                 {slots.length === 0 ? (
                   <Empty description="Нет доступных слотов" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: '16px 0' }} />
                 ) : (
-                  <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size="middle">
+                  <Space orientation="vertical" style={{ width: '100%', marginTop: 8 }} size="middle">
                     <ContiguousSlotSelector
                       slots={slots}
                       value={selectedSlotRange}
@@ -580,7 +580,7 @@ export default function BookingCreate() {
           {addons.length === 0 ? (
             <Empty description="Нет доступных дополнительных услуг" image={Empty.PRESENTED_IMAGE_SIMPLE} />
           ) : (
-            <Space direction="vertical" style={{ width: '100%' }} size={12}>
+            <Space orientation="vertical" style={{ width: '100%' }} size={12}>
               {addons.map((addon) => {
                 const selected = selectedAddons.find((s) => s.addon_id === addon.id)
                 const unitLabel = addon.unit === 'per_hour' ? '/час' : addon.unit === 'per_person' ? '/чел.' : '/шт.'
@@ -633,7 +633,7 @@ export default function BookingCreate() {
       {/* Step 3: Promo/Certificate/Wallet discounts */}
       {currentStep === 2 && (
         <Card title="Скидки и бонусы" style={{ marginBottom: 16 }}>
-          <Space direction="vertical" style={{ width: '100%' }} size={16}>
+          <Space orientation="vertical" style={{ width: '100%' }} size={16}>
             {/* Promo code */}
             <div>
               <Text strong><TagOutlined /> Промокод:</Text>
@@ -782,7 +782,7 @@ export default function BookingCreate() {
               }}
               style={{ width: '100%' }}
             >
-              <Space direction="vertical" style={{ width: '100%' }} size={8}>
+              <Space orientation="vertical" style={{ width: '100%' }} size={8}>
                 {walletBalance > 0 && walletBalance >= totalPrice && (
                   <Radio.Button
                     value="wallet"
@@ -843,7 +843,7 @@ export default function BookingCreate() {
                   onChange={(e) => setSelectedSavedCardId(e.target.value)}
                   style={{ width: '100%' }}
                 >
-                  <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                  <Space orientation="vertical" style={{ width: '100%' }} size={8}>
                     {savedCards.map((card) => (
                       <Radio key={card.id} value={card.id} style={{ display: 'block' }}>
                         <CreditCardOutlined style={{ marginRight: 8 }} />

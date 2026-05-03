@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/mail"
 	"net/smtp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -82,7 +83,7 @@ func (s *smtpEmailSender) Send(_ context.Context, to, subject, body string) erro
 // deliver picks the right transport (implicit TLS vs STARTTLS vs plain) based
 // on the configured port.
 func (s *smtpEmailSender) deliver(fromEnvelope, to string, auth smtp.Auth, msg []byte) error {
-	addr := fmt.Sprintf("%s:%d", s.cfg.Host, s.cfg.Port)
+	addr := net.JoinHostPort(s.cfg.Host, strconv.Itoa(s.cfg.Port))
 
 	// Implicit TLS (SMTPS) — standard for port 465. stdlib smtp.SendMail does
 	// not handle this, so we wrap the dial in tls.Dial.

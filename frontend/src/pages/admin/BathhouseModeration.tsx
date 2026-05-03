@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Button, Checkbox, Descriptions, Drawer, Input, Segmented, Space, Table, Tag, Typography } from 'antd'
+import { App, Button, Checkbox, Descriptions, Drawer, Input, Segmented, Space, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -11,8 +11,8 @@ import {
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { Search } = Input
 
 const STATUS_LABELS: Record<string, { color: string; text: string }> = {
@@ -61,6 +61,33 @@ export default function BathhouseModeration() {
 
   const bathhouses = data?.data ?? []
   const meta = data?.meta
+
+  const updateStatusFilter = (value: string) => {
+    setStatusFilter(value)
+    setPage(1)
+    setSelectedIds([])
+  }
+
+  const filterRailItems = STATUS_OPTIONS.map((option) => {
+    const count = option.value
+      ? bathhouses.filter((bathhouse) => bathhouse.status === option.value).length
+      : meta?.total_count ?? bathhouses.length
+    const railLabel = option.value === ''
+      ? 'Все заявки'
+      : option.value === 'pending'
+        ? 'Ожидают проверки'
+        : option.value === 'active'
+          ? 'Активные объекты'
+          : option.value === 'rejected'
+            ? 'Отклонённые заявки'
+            : 'Заблокированные'
+
+    return {
+      ...option,
+      railLabel,
+      count,
+    }
+  })
 
   const filteredBathhouses = search
     ? bathhouses.filter((b) => {
@@ -240,62 +267,86 @@ export default function BathhouseModeration() {
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Модерация бань
-      </Title>
+    <div className="bani-stack">
+      <PageHeader
+        size="compact"
+        eyebrow="Модерация"
+        title="Модерация бань"
+        description="Проверка объектов, публичных обещаний и статусов в плотном рабочем интерфейсе."
+      />
 
-      <div style={{ marginBottom: 16 }}>
-        <Segmented
-          options={STATUS_OPTIONS}
-          value={statusFilter}
-          onChange={(val) => {
-            setStatusFilter(val as string)
-            setPage(1)
-            setSelectedIds([])
-          }}
-        />
+      <div className="bani-admin-grid bani-admin-grid--filters">
+        <aside className="bani-admin-filter-rail">
+          <span className="bani-admin-filter-rail__title">Фильтры</span>
+          {filterRailItems.map((item) => (
+            <button
+              className={`bani-admin-filter-rail__item${statusFilter === item.value ? ' bani-admin-filter-rail__item--active' : ''}`}
+              key={item.value || 'all'}
+              type="button"
+              onClick={() => updateStatusFilter(item.value)}
+            >
+              <span>{item.railLabel}</span>
+              <span className="bani-admin-filter-rail__count">{item.count}</span>
+            </button>
+          ))}
+        </aside>
+
+        <section className="bani-admin-table-card">
+          <div className="bani-admin-toolbar">
+            <div className="bani-admin-toolbar__copy">
+              <h2 className="bani-admin-toolbar__title">Реестр объектов</h2>
+              <div className="bani-admin-toolbar__hint">Фильтры, поиск и решение модератора находятся рядом с таблицей.</div>
+            </div>
+            <div className="bani-admin-toolbar__actions">
+              <Search
+                placeholder="Поиск по названию или адресу"
+                allowClear
+                onSearch={setSearch}
+                onChange={(e) => !e.target.value && setSearch('')}
+                style={{ width: 320 }}
+              />
+            </div>
+          </div>
+
+          <Segmented
+            options={STATUS_OPTIONS}
+            value={statusFilter}
+            onChange={(val) => updateStatusFilter(val as string)}
+          />
+
+          {selectedIds.length > 0 && (
+            <Space wrap>
+              <span>Выбрано: {selectedIds.length}</span>
+              <Button type="primary" loading={batchLoading} onClick={() => handleBatchAction('approve')}>
+                Одобрить выбранные
+              </Button>
+              <Button danger loading={batchLoading} onClick={() => handleBatchAction('reject')}>
+                Отклонить выбранные
+              </Button>
+            </Space>
+          )}
+
+          <Table
+            columns={columns}
+            dataSource={filteredBathhouses}
+            rowKey="id"
+            loading={isLoading}
+            locale={{ emptyText: 'Нет бань' }}
+            pagination={{
+              current: page,
+              pageSize: pageSize,
+              total: meta?.total_count ?? 0,
+              showSizeChanger: true,
+              showTotal: (total) => `Всего: ${total}`,
+              onChange: (p, ps) => {
+                setPage(p)
+                setPageSize(ps)
+                setSelectedIds([])
+              },
+            }}
+          />
+        </section>
       </div>
-
-      <Search
-        placeholder="Поиск по названию или адресу"
-        allowClear
-        onSearch={setSearch}
-        onChange={(e) => !e.target.value && setSearch('')}
-        style={{ maxWidth: 400, marginBottom: 16 }}
-      />
-
-      {selectedIds.length > 0 && (
-        <Space style={{ marginBottom: 16 }}>
-          <span>Выбрано: {selectedIds.length}</span>
-          <Button type="primary" loading={batchLoading} onClick={() => handleBatchAction('approve')}>
-            Одобрить выбранные
-          </Button>
-          <Button danger loading={batchLoading} onClick={() => handleBatchAction('reject')}>
-            Отклонить выбранные
-          </Button>
-        </Space>
-      )}
-
-      <Table
-        columns={columns}
-        dataSource={filteredBathhouses}
-        rowKey="id"
-        loading={isLoading}
-        locale={{ emptyText: 'Нет бань' }}
-        pagination={{
-          current: page,
-          pageSize: pageSize,
-          total: meta?.total_count ?? 0,
-          showSizeChanger: true,
-          showTotal: (total) => `Всего: ${total}`,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-            setSelectedIds([])
-          },
-        }}
-      />
 
       <Drawer
         title="Информация о бане"

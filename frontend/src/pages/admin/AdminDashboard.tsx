@@ -1,11 +1,15 @@
 import { useState } from 'react'
-import { Card, Col, Row, Segmented, Spin, Statistic, Table } from 'antd'
+import { Button, Segmented, Spin, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
+  AlertOutlined,
   CalendarOutlined,
+  CheckCircleOutlined,
   CustomerServiceOutlined,
   DollarOutlined,
+  ExclamationCircleOutlined,
   EyeOutlined,
+  FieldTimeOutlined,
   ShopOutlined,
   StarOutlined,
   TeamOutlined,
@@ -67,6 +71,115 @@ export default function AdminDashboard() {
 
   const dashboard = analyticsData?.data
   const topBathhouses = topData?.data?.bathhouses ?? []
+  const moderationQueueSize = supportMetrics?.queue_size ?? 0
+  const slaCompliance = supportMetrics?.sla_compliance_percent ?? 0
+
+  const metricTiles = [
+    {
+      label: 'Бронирования',
+      value: (dashboard?.total_bookings ?? 0).toLocaleString('en-US'),
+      hint: 'Суммарный объём заказов по платформе',
+      icon: <CalendarOutlined />,
+    },
+    {
+      label: 'Выручка',
+      value: ((dashboard?.total_revenue ?? 0) / 100).toLocaleString('en-US'),
+      hint: 'Валовая сумма по заказам, ₽',
+      icon: <DollarOutlined />,
+    },
+    {
+      label: 'Пользователи',
+      value: (dashboard?.total_users ?? 0).toLocaleString('en-US'),
+      hint: 'Все зарегистрированные клиенты и владельцы',
+      icon: <TeamOutlined />,
+    },
+    {
+      label: 'Бани',
+      value: (dashboard?.total_bathhouses ?? 0).toLocaleString('en-US'),
+      hint: 'Активные объекты в каталоге',
+      icon: <ShopOutlined />,
+    },
+    {
+      label: 'Просмотры',
+      value: (dashboard?.total_views ?? 0).toLocaleString('en-US'),
+      hint: 'Интерес к каталогу и карточкам объектов',
+      icon: <EyeOutlined />,
+    },
+    {
+      label: 'Средний рейтинг',
+      value: (dashboard?.avg_rating ?? 0).toFixed(1),
+      hint: 'Средняя оценка сервиса по платформе',
+      icon: <StarOutlined />,
+    },
+    {
+      label: 'Новые пользователи',
+      value: (dashboard?.new_users ?? 0).toLocaleString('en-US'),
+      hint: 'Прирост за выбранный период',
+      icon: <UserOutlined />,
+    },
+    {
+      label: 'DAU',
+      value: (dashboard?.dau ?? 0).toLocaleString('en-US'),
+      hint: `WAU: ${dashboard?.wau ?? 0} · MAU: ${dashboard?.mau ?? 0}`,
+      icon: <FieldTimeOutlined />,
+    },
+  ]
+
+  const supportMetricTiles = supportMetrics
+    ? [
+        {
+          label: 'FCR',
+          value: `${supportMetrics.fcr_percent.toFixed(1)}%`,
+          hint: 'Решено при первом обращении',
+          icon: <CustomerServiceOutlined />,
+        },
+        {
+          label: 'AHT',
+          value: formatDuration(supportMetrics.aht_seconds),
+          hint: 'Среднее время обработки',
+          icon: <FieldTimeOutlined />,
+        },
+        {
+          label: 'SLA (24ч)',
+          value: `${supportMetrics.sla_compliance_percent.toFixed(1)}%`,
+          hint: 'Соблюдение регламента ответа',
+          icon: <CheckCircleOutlined />,
+        },
+        {
+          label: 'В очереди',
+          value: supportMetrics.queue_size.toLocaleString('en-US'),
+          hint: 'Открытые обращения поддержки',
+          icon: <AlertOutlined />,
+        },
+      ]
+    : []
+
+  const queueRows = [
+    {
+      type: 'Модерация',
+      title: `${dashboard?.total_bathhouses ?? 0} объектов в контуре каталога`,
+      time: 'сейчас',
+      action: 'Открыть',
+    },
+    {
+      type: 'Обращения',
+      title: `${moderationQueueSize} обращений ждут ответа`,
+      time: supportMetrics ? formatDuration(supportMetrics.aht_seconds) : '—',
+      action: 'Разобрать',
+    },
+    {
+      type: 'Финансы',
+      title: `${((dashboard?.total_revenue ?? 0) / 100).toLocaleString('en-US')} ₽ оборота за период`,
+      time: period,
+      action: 'Сверить',
+    },
+    {
+      type: 'Рост',
+      title: `${dashboard?.new_users ?? 0} новых пользователей за выбранный период`,
+      time: 'динамика',
+      action: 'Смотреть',
+    },
+  ]
 
   const topColumns: ColumnsType<GithubComRekurtRelaxHubInternalServiceTopBathhouseInfo> = [
     {
@@ -107,9 +220,10 @@ export default function AdminDashboard() {
   return (
     <div className="bani-stack">
       <PageHeader
+        size="compact"
         eyebrow="Администрирование"
         title="Панель администратора"
-        description="Первый экран собран как обзор платформы: объёмы, выручка, рост аудитории, операционные метрики поддержки и топ объектов по ключевому показателю."
+        description="Операционная сводка без маркетингового шума: очереди, риски, поддержка, финансы и топ объектов."
         extra={(
           <Segmented
             options={PERIOD_OPTIONS}
@@ -119,110 +233,97 @@ export default function AdminDashboard() {
         )}
       />
 
-      <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Платформа</div>
-        <h2 className="bani-hero-panel__title">Главные числа за выбранный период</h2>
-        <div className="bani-hero-panel__description">
-          Админу не нужен «красивый набор карточек». Нужен быстрый ответ: сколько бронирований, сколько денег, как растёт платформа и где могут появляться операционные риски.
+      <Spin spinning={analyticsLoading}>
+        <div className="bani-admin-metric-grid">
+          {metricTiles.map((tile) => (
+            <div className="bani-admin-metric" key={tile.label}>
+              <div className="bani-admin-metric__head">
+                <span className="bani-admin-metric__label">{tile.label}</span>
+                <span className="bani-admin-metric__icon">{tile.icon}</span>
+              </div>
+              <div className="bani-admin-metric__value">{tile.value}</div>
+              <div className="bani-admin-metric__hint">{tile.hint}</div>
+            </div>
+          ))}
         </div>
+      </Spin>
 
-        <Spin spinning={analyticsLoading}>
-          <div className="bani-stat-grid">
-            <div className="bani-stat-tile">
-              <span className="bani-stat-tile__eyebrow">Бронирования</span>
-              <div className="bani-stat-tile__value">{(dashboard?.total_bookings ?? 0).toLocaleString('en-US')}</div>
-              <span className="bani-stat-tile__hint"><CalendarOutlined /> Суммарный объём заказов по платформе</span>
+      <div className="bani-admin-grid bani-admin-grid--split">
+        <section className="bani-admin-panel">
+          <div className="bani-admin-toolbar">
+            <div className="bani-admin-toolbar__copy">
+              <h2 className="bani-admin-toolbar__title">Очередь модерации</h2>
+              <div className="bani-admin-toolbar__hint">Сначала объекты, обращения и финансовые события с влиянием на сервис.</div>
             </div>
-            <div className="bani-stat-tile">
-              <span className="bani-stat-tile__eyebrow">Выручка</span>
-              <div className="bani-stat-tile__value">{((dashboard?.total_revenue ?? 0) / 100).toLocaleString('en-US')}</div>
-              <span className="bani-stat-tile__hint"><DollarOutlined /> Валовая сумма по заказам, ₽</span>
-            </div>
-            <div className="bani-stat-tile">
-              <span className="bani-stat-tile__eyebrow">Пользователи</span>
-              <div className="bani-stat-tile__value">{(dashboard?.total_users ?? 0).toLocaleString('en-US')}</div>
-              <span className="bani-stat-tile__hint"><TeamOutlined /> Все зарегистрированные клиенты и владельцы</span>
-            </div>
-            <div className="bani-stat-tile">
-              <span className="bani-stat-tile__eyebrow">Бани</span>
-              <div className="bani-stat-tile__value">{(dashboard?.total_bathhouses ?? 0).toLocaleString('en-US')}</div>
-              <span className="bani-stat-tile__hint"><ShopOutlined /> Активные объекты в каталоге</span>
-            </div>
-            <div className="bani-stat-tile">
-              <span className="bani-stat-tile__eyebrow">Просмотры</span>
-              <div className="bani-stat-tile__value">{(dashboard?.total_views ?? 0).toLocaleString('en-US')}</div>
-              <span className="bani-stat-tile__hint"><EyeOutlined /> Интерес к каталогу и карточкам объектов</span>
-            </div>
-            <div className="bani-stat-tile">
-              <span className="bani-stat-tile__eyebrow">Средний рейтинг</span>
-              <div className="bani-stat-tile__value">{(dashboard?.avg_rating ?? 0).toFixed(1)}</div>
-              <span className="bani-stat-tile__hint"><StarOutlined /> Средняя оценка сервиса по платформе</span>
-            </div>
-            <div className="bani-stat-tile">
-              <span className="bani-stat-tile__eyebrow">Новые пользователи</span>
-              <div className="bani-stat-tile__value">{(dashboard?.new_users ?? 0).toLocaleString('en-US')}</div>
-              <span className="bani-stat-tile__hint"><UserOutlined /> Прирост за выбранный период</span>
-            </div>
-            <div className="bani-stat-tile">
-              <span className="bani-stat-tile__eyebrow">DAU</span>
-              <div className="bani-stat-tile__value">{(dashboard?.dau ?? 0).toLocaleString('en-US')}</div>
-              <span className="bani-stat-tile__hint">WAU: {dashboard?.wau ?? 0} · MAU: {dashboard?.mau ?? 0}</span>
+            <Button size="small">Открыть всё</Button>
+          </div>
+
+          <div className="bani-admin-queue">
+            {queueRows.map((row) => (
+              <div className="bani-admin-queue__row" key={`${row.type}-${row.title}`}>
+                <Tag>{row.type}</Tag>
+                <div className="bani-admin-queue__title">{row.title}</div>
+                <div className="bani-admin-queue__meta">{row.time}</div>
+                <Button size="small">{row.action}</Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="bani-admin-panel">
+          <div className="bani-admin-toolbar">
+            <div className="bani-admin-toolbar__copy">
+              <h2 className="bani-admin-toolbar__title">Риски</h2>
+              <div className="bani-admin-toolbar__hint">Сигналы, которые нужно видеть рядом с цифрами платформы.</div>
             </div>
           </div>
-        </Spin>
-      </section>
+
+          <div className="bani-admin-risk-list">
+            <div className="bani-admin-risk-note bani-admin-risk-note--warning">
+              <ExclamationCircleOutlined className="bani-admin-risk-note__icon" />
+              <span className="bani-admin-risk-note__text">SLA поддержки: {slaCompliance.toFixed(1)} %. Ниже 90 % требует ручной проверки нагрузки.</span>
+            </div>
+            <div className="bani-admin-risk-note">
+              <CheckCircleOutlined className="bani-admin-risk-note__icon" />
+              <span className="bani-admin-risk-note__text">DAU: {dashboard?.dau ?? 0}. Сравните активность с WAU и MAU перед промо-решениями.</span>
+            </div>
+            <div className="bani-admin-risk-note bani-admin-risk-note--error">
+              <AlertOutlined className="bani-admin-risk-note__icon" />
+              <span className="bani-admin-risk-note__text">Очередь поддержки: {moderationQueueSize}. При росте выше 20 нужно усилить первую линию.</span>
+            </div>
+          </div>
+        </section>
+      </div>
 
       {supportMetrics && (
-        <Card data-testid="support-metrics-widget">
-          <div className="bani-toolbar" style={{ marginBottom: 18 }}>
-            <div>
-              <h2 className="bani-section-card__title"><CustomerServiceOutlined /> Поддержка</h2>
-              <div className="bani-section-card__description">
-                Операционные показатели поддержки рядом с бизнес-метриками помогают вовремя заметить просадку качества сервиса.
-              </div>
+        <section className="bani-admin-panel" data-testid="support-metrics-widget">
+          <div className="bani-admin-toolbar" style={{ marginBottom: 18 }}>
+            <div className="bani-admin-toolbar__copy">
+              <h2 className="bani-admin-toolbar__title"><CustomerServiceOutlined /> Поддержка</h2>
+              <div className="bani-admin-toolbar__hint">Операционные показатели поддержки рядом с бизнес-метриками помогают вовремя заметить просадку качества сервиса.</div>
             </div>
           </div>
-          <Row gutter={[16, 16]}>
-            <Col xs={12} sm={6}>
-              <Statistic
-                title="FCR"
-                value={supportMetrics.fcr_percent}
-                precision={1}
-                suffix="%"
-                valueStyle={{ color: supportMetrics.fcr_percent >= 70 ? '#52c41a' : '#fa8c16' }}
-              />
-            </Col>
-            <Col xs={12} sm={6}>
-              <Statistic title="AHT" value={formatDuration(supportMetrics.aht_seconds)} />
-            </Col>
-            <Col xs={12} sm={6}>
-              <Statistic
-                title="SLA (24ч)"
-                value={supportMetrics.sla_compliance_percent}
-                precision={1}
-                suffix="%"
-                valueStyle={{ color: supportMetrics.sla_compliance_percent >= 90 ? '#52c41a' : '#fa8c16' }}
-              />
-            </Col>
-            <Col xs={12} sm={6}>
-              <Statistic
-                title="В очереди"
-                value={supportMetrics.queue_size}
-                valueStyle={{ color: supportMetrics.queue_size > 20 ? '#f5222d' : supportMetrics.queue_size > 10 ? '#fa8c16' : undefined }}
-              />
-            </Col>
-          </Row>
-        </Card>
+          <div className="bani-admin-metric-grid">
+            {supportMetricTiles.map((tile) => (
+              <div className="bani-admin-metric" key={tile.label}>
+                <div className="bani-admin-metric__head">
+                  <span className="bani-admin-metric__label">{tile.label}</span>
+                  <span className="bani-admin-metric__icon">{tile.icon}</span>
+                </div>
+                <div className="bani-admin-metric__value">{tile.value}</div>
+                <div className="bani-admin-metric__hint">{tile.hint}</div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
-      <Card>
+      <section className="bani-admin-table-card">
         <div className="bani-table-shell">
-          <div className="bani-toolbar">
-            <div>
-              <h2 className="bani-section-card__title">Топ бань</h2>
-              <div className="bani-section-card__description">
-                Сортировка по ключевому показателю позволяет быстро увидеть лидеров и понять, какие объекты тянут рост платформы.
-              </div>
+          <div className="bani-admin-toolbar">
+            <div className="bani-admin-toolbar__copy">
+              <h2 className="bani-admin-toolbar__title">Топ бань</h2>
+              <div className="bani-admin-toolbar__hint">Сортировка по ключевому показателю позволяет быстро увидеть лидеров роста.</div>
             </div>
             <Segmented
               options={METRIC_OPTIONS}
@@ -240,7 +341,7 @@ export default function AdminDashboard() {
             locale={{ emptyText: 'Нет данных' }}
           />
         </div>
-      </Card>
+      </section>
     </div>
   )
 }

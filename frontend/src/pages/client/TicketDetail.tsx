@@ -206,7 +206,7 @@ export default function TicketDetail() {
             </Space>
           }
         >
-          <Space direction="vertical" align="center" style={{ width: '100%' }}>
+          <Space orientation="vertical" align="center" style={{ width: '100%' }}>
             <Rate
               value={csatScore}
               onChange={setCsatScore}
@@ -265,7 +265,7 @@ export default function TicketDetail() {
                     {msg.attachments && msg.attachments.length > 0 && (
                       <>
                         <Divider style={{ margin: '8px 0' }} />
-                        <Space direction="vertical" size={2}>
+                        <Space orientation="vertical" size={2}>
                           {msg.attachments.map((url, idx) => (
                             <a
                               key={idx}
@@ -294,7 +294,7 @@ export default function TicketDetail() {
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Введите сообщение..."
-                autoSize={{ minRows: 2, maxRows: 6 }}
+                rows={2}
                 maxLength={5000}
                 onPressEnter={(e) => {
                   if (e.ctrlKey || e.metaKey) {

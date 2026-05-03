@@ -223,7 +223,7 @@ export default function ReviewCard({
         confirmLoading={reportMutation.isPending}
         okButtonProps={{ disabled: !reportReason }}
       >
-        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
           <div>
             <Text strong>Причина:</Text>
             <Select

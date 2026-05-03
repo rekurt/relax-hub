@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Col, Row, Spin, Statistic, Table, Tag, Typography, Button, App, Space } from 'antd'
+import { Spin, Table, Tag, Button, App, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   WalletOutlined,
@@ -21,8 +21,7 @@ import type {
   InternalHandlerFloatSnapshotResponse,
 } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 function reconciliationStatusTag(status?: string) {
   switch (status) {
@@ -56,6 +55,33 @@ export default function AdminFinanceDashboard() {
   const reportsMeta = reportsData?.meta
   const snapshots = snapshotsData?.data ?? []
   const snapshotsMeta = snapshotsData?.meta
+
+  const summaryMetricTiles = [
+    {
+      label: 'Кошельки клиентов',
+      value: formatPrice(summary?.client_wallets_total ?? 0),
+      hint: `${summary?.client_wallets_count ?? 0} кошельков`,
+      icon: <WalletOutlined />,
+    },
+    {
+      label: 'Кошельки владельцев',
+      value: formatPrice(summary?.owner_wallets_total ?? 0),
+      hint: `${summary?.owner_wallets_count ?? 0} кошельков`,
+      icon: <DollarOutlined />,
+    },
+    {
+      label: 'Эскроу',
+      value: formatPrice(summary?.escrow_held_total ?? 0),
+      hint: `${summary?.escrow_count ?? 0} записей`,
+      icon: <SafetyOutlined />,
+    },
+    {
+      label: 'Холды',
+      value: formatPrice(summary?.wallet_holds_total ?? 0),
+      hint: `Итого на платформе: ${formatPrice(summary?.platform_total ?? 0)}`,
+      icon: <WarningOutlined />,
+    },
+  ]
 
   const handleSnapshot = () => {
     snapshotMutation.mutate(undefined, {
@@ -147,10 +173,14 @@ export default function AdminFinanceDashboard() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>Финансовый дашборд</Title>
-        <Space>
+    <div className="bani-stack">
+      <PageHeader
+        size="compact"
+        eyebrow="Финансы"
+        title="Финансовый дашборд"
+        description="Сверка выплат, возвратов и кошельков в плотном операционном интерфейсе."
+        extra={(
+          <Space wrap>
           <Button
             icon={<CameraOutlined />}
             onClick={handleSnapshot}
@@ -165,112 +195,98 @@ export default function AdminFinanceDashboard() {
           >
             Сверка с провайдером
           </Button>
-        </Space>
-      </div>
+          </Space>
+        )}
+      />
 
       <Spin spinning={summaryLoading}>
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Кошельки клиентов"
-                value={summary?.client_wallets_total ? summary.client_wallets_total / 100 : 0}
-                precision={0}
-                suffix="₽"
-                prefix={<WalletOutlined />}
-              />
-              <div style={{ marginTop: 8, fontSize: 12, color: '#888' }}>
-                {summary?.client_wallets_count ?? 0} кошельков
+        <div className="bani-admin-metric-grid">
+          {summaryMetricTiles.map((tile) => (
+            <div className="bani-admin-metric" key={tile.label}>
+              <div className="bani-admin-metric__head">
+                <span className="bani-admin-metric__label">{tile.label}</span>
+                <span className="bani-admin-metric__icon">{tile.icon}</span>
               </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Кошельки владельцев"
-                value={summary?.owner_wallets_total ? summary.owner_wallets_total / 100 : 0}
-                precision={0}
-                suffix="₽"
-                prefix={<DollarOutlined />}
-              />
-              <div style={{ marginTop: 8, fontSize: 12, color: '#888' }}>
-                {summary?.owner_wallets_count ?? 0} кошельков
-              </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Эскроу"
-                value={summary?.escrow_held_total ? summary.escrow_held_total / 100 : 0}
-                precision={0}
-                suffix="₽"
-                prefix={<SafetyOutlined />}
-              />
-              <div style={{ marginTop: 8, fontSize: 12, color: '#888' }}>
-                {summary?.escrow_count ?? 0} записей
-              </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Холды"
-                value={summary?.wallet_holds_total ? summary.wallet_holds_total / 100 : 0}
-                precision={0}
-                suffix="₽"
-                prefix={<WarningOutlined />}
-              />
-              <div style={{ marginTop: 8, fontSize: 12, color: '#888' }}>
-                Итого на платформе: {formatPrice(summary?.platform_total ?? 0)}
-              </div>
-            </Card>
-          </Col>
-        </Row>
+              <div className="bani-admin-metric__value">{tile.value}</div>
+              <div className="bani-admin-metric__hint">{tile.hint}</div>
+            </div>
+          ))}
+        </div>
       </Spin>
 
       {summary?.last_report && (
-        <Card style={{ marginBottom: 24 }}>
-          <Title level={5}>Последняя сверка</Title>
-          <Row gutter={16}>
-            <Col span={6}>Статус: {reconciliationStatusTag(summary.last_report.status)}</Col>
-            <Col span={6}>Платежи: {summary.last_report.internal_payments_count ?? 0} внутр. / {summary.last_report.provider_payments_count ?? 0} провайдер</Col>
-            <Col span={6}>Расхождение: {formatPrice(summary.last_report.payment_discrepancy ?? 0)}</Col>
-            <Col span={6}>Дата: {summary.last_report.created_at ? formatDateTime(summary.last_report.created_at) : '—'}</Col>
-          </Row>
-        </Card>
+        <section className="bani-admin-panel">
+          <div className="bani-admin-toolbar" style={{ marginBottom: 16 }}>
+            <div className="bani-admin-toolbar__copy">
+              <h2 className="bani-admin-toolbar__title">Последняя сверка</h2>
+              <div className="bani-admin-toolbar__hint">Короткая сводка по последнему отчёту перед просмотром таблицы.</div>
+            </div>
+          </div>
+          <div className="bani-info-grid">
+            <div className="bani-info-card">
+              <span className="bani-info-card__label">Статус</span>
+              <div className="bani-info-card__value">{reconciliationStatusTag(summary.last_report.status)}</div>
+            </div>
+            <div className="bani-info-card">
+              <span className="bani-info-card__label">Платежи</span>
+              <div className="bani-info-card__value">{summary.last_report.internal_payments_count ?? 0} / {summary.last_report.provider_payments_count ?? 0}</div>
+              <div className="bani-info-card__hint">внутр. / провайдер</div>
+            </div>
+            <div className="bani-info-card">
+              <span className="bani-info-card__label">Расхождение</span>
+              <div className="bani-info-card__value">{formatPrice(summary.last_report.payment_discrepancy ?? 0)}</div>
+            </div>
+            <div className="bani-info-card">
+              <span className="bani-info-card__label">Дата</span>
+              <div className="bani-info-card__value">{summary.last_report.created_at ? formatDateTime(summary.last_report.created_at) : '—'}</div>
+            </div>
+          </div>
+        </section>
       )}
 
-      <Title level={4} style={{ marginBottom: 16 }}>Отчёты сверки</Title>
-      <Table
-        columns={reportColumns}
-        dataSource={reports}
-        rowKey="id"
-        loading={reportsLoading}
-        pagination={{
-          current: reportsPage,
-          pageSize: 10,
-          total: reportsMeta?.total_count,
-          onChange: setReportsPage,
-        }}
-        locale={{ emptyText: 'Нет отчётов' }}
-        style={{ marginBottom: 24 }}
-      />
+      <section className="bani-admin-table-card">
+        <div className="bani-admin-toolbar">
+          <div className="bani-admin-toolbar__copy">
+            <h2 className="bani-admin-toolbar__title">Отчёты сверки</h2>
+            <div className="bani-admin-toolbar__hint">Строки расхождений и статусы по операциям провайдера.</div>
+          </div>
+        </div>
+        <Table
+          columns={reportColumns}
+          dataSource={reports}
+          rowKey="id"
+          loading={reportsLoading}
+          pagination={{
+            current: reportsPage,
+            pageSize: 10,
+            total: reportsMeta?.total_count,
+            onChange: setReportsPage,
+          }}
+          locale={{ emptyText: 'Нет отчётов' }}
+        />
+      </section>
 
-      <Title level={4} style={{ marginBottom: 16 }}>Снимки флоата</Title>
-      <Table
-        columns={snapshotColumns}
-        dataSource={snapshots}
-        rowKey="id"
-        loading={snapshotsLoading}
-        pagination={{
-          current: snapshotsPage,
-          pageSize: 10,
-          total: snapshotsMeta?.total_count,
-          onChange: setSnapshotsPage,
-        }}
-        locale={{ emptyText: 'Нет снимков' }}
-      />
+      <section className="bani-admin-table-card">
+        <div className="bani-admin-toolbar">
+          <div className="bani-admin-toolbar__copy">
+            <h2 className="bani-admin-toolbar__title">Снимки флоата</h2>
+            <div className="bani-admin-toolbar__hint">Ожидаемые и фактические остатки платформы по дням.</div>
+          </div>
+        </div>
+        <Table
+          columns={snapshotColumns}
+          dataSource={snapshots}
+          rowKey="id"
+          loading={snapshotsLoading}
+          pagination={{
+            current: snapshotsPage,
+            pageSize: 10,
+            total: snapshotsMeta?.total_count,
+            onChange: setSnapshotsPage,
+          }}
+          locale={{ emptyText: 'Нет снимков' }}
+        />
+      </section>
     </div>
   )
 }

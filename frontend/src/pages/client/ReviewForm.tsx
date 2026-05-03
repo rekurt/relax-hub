@@ -132,13 +132,13 @@ export default function ReviewForm() {
         <Alert
           type="warning"
           showIcon
-          message="Для написания отзыва нужно завершённое бронирование"
+          title="Для написания отзыва нужно завершённое бронирование"
           style={{ marginBottom: 16 }}
         />
       )}
 
       <Card style={{ marginBottom: 16 }}>
-        <Space direction="vertical" style={{ width: '100%' }} size={16}>
+        <Space orientation="vertical" style={{ width: '100%' }} size={16}>
           <div>
             <Text strong>Оценка:</Text>
             <div style={{ marginTop: 8 }}>

@@ -197,7 +197,7 @@ export default function CertificateManagement() {
       <Alert
         type="warning"
         showIcon
-        message="Раздел в разработке"
+        title="Раздел в разработке"
         description="Сейчас страница показывает только сертификаты, привязанные к текущему админу (через /api/v1/my/certificates). Платформенный admin-эндпоинт со списком всех сертификатов ещё не реализован — найдено в аудите A1.8. Для конкретного кода используйте поиск ниже."
         style={{ marginBottom: 16 }}
       />

@@ -82,11 +82,11 @@ export default function ReportModal({ open, targetType, targetId, onClose }: Rep
       okButtonProps={{ disabled: !reason, loading: isPending }}
       destroyOnClose
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
         <div>
           <div style={{ marginBottom: 8, fontWeight: 500 }}>Причина жалобы</div>
           <Radio.Group value={reason} onChange={(e) => setReason(e.target.value)}>
-            <Space direction="vertical">
+            <Space orientation="vertical">
               {REASON_OPTIONS.map((opt) => (
                 <Radio key={opt.value} value={opt.value}>
                   {opt.label}

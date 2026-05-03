@@ -229,7 +229,7 @@ export default function SubscriptionManagement() {
       <Alert
         type="warning"
         showIcon
-        message="Раздел в разработке"
+        title="Раздел в разработке"
         description="Сейчас страница показывает только подписки, привязанные к текущему админу (через /api/v1/my/subscriptions). Платформенный admin-эндпоинт со списком всех подписок ещё не реализован — найдено в аудите A1.7."
         style={{ marginBottom: 16 }}
       />

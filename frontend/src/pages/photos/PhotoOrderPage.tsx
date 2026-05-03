@@ -221,7 +221,7 @@ export default function PhotoOrderPage() {
           }
           expandable={{
             expandedRowRender: (record) => (
-              <Space direction="vertical" size="small">
+              <Space orientation="vertical" size="small">
                 {record.notes && (
                   <Text>
                     <strong>Ваши пожелания:</strong> {record.notes}

@@ -461,7 +461,7 @@ export default function TicketManagement() {
         </Card>
       )}
 
-      <Space direction="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
+      <Space orientation="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
         <Segmented
           options={STATUS_OPTIONS}
           value={statusFilter}

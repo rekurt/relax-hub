@@ -129,7 +129,7 @@ export default function GuestCardDetail() {
       </Card>
 
       <Card title="Заметки и теги" style={{ marginTop: 16 }}>
-        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+        <Space orientation="vertical" style={{ width: '100%' }} size="middle">
           <div>
             <Text strong>Заметки</Text>
             <Input.TextArea

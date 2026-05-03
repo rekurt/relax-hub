@@ -87,7 +87,7 @@ export default function ForgotPassword() {
       footer={<Link to="/login">Вернуться к входу</Link>}
     >
       <Card bordered={false} className="bani-auth-surface">
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Form
             form={form}
             className="bani-auth-form"

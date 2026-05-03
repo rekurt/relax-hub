@@ -143,7 +143,7 @@ export default function AdminProfile() {
               src={user?.avatar_url}
               icon={!user?.avatar_url && <UserOutlined />}
             />
-            <Space direction="vertical">
+            <Space orientation="vertical">
               <Text type="secondary">
                 Используется в карточках профиля и служебных действиях администратора.
               </Text>

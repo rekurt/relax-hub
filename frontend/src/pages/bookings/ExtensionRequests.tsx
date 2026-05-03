@@ -107,14 +107,14 @@ export default function ExtensionRequests({ bookingId, open, onClose }: Extensio
         ) : requests.length === 0 ? (
           <Empty description="Нет запросов на продление" />
         ) : (
-          <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          <Space orientation="vertical" style={{ width: '100%' }} size="middle">
             {requests.map((req) => {
               const statusConfig = STATUS_MAP[req.status] ?? { color: 'default', text: req.status }
               const isPending = req.status === 'pending'
 
               return (
                 <Card key={req.id} size="small">
-                  <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space orientation="vertical" style={{ width: '100%' }}>
                     <Space>
                       <Tag color={statusConfig.color}>{statusConfig.text}</Tag>
                       <Text type="secondary">

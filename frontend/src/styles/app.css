@@ -2780,6 +2780,347 @@ body.bani-app .bani-shell--owner .ant-card .ant-card-body {
   padding-right: 20px;
 }
 
+body.bani-app .bani-admin-grid {
+  display: grid;
+  gap: 22px;
+  align-items: flex-start;
+}
+
+body.bani-app .bani-admin-grid--split {
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.9fr);
+}
+
+body.bani-app .bani-admin-grid--filters {
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+
+body.bani-app .bani-admin-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+body.bani-app .bani-admin-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 118px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 244, 236, 0.78));
+  box-shadow: var(--bani-shadow-soft);
+}
+
+body.bani-app .bani-admin-metric__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body.bani-app .bani-admin-metric__label {
+  color: var(--bani-text-soft);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body.bani-app .bani-admin-metric__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bani-primary-strong);
+  background: var(--bani-primary-soft);
+}
+
+body.bani-app .bani-admin-metric__value {
+  color: var(--bani-text);
+  font-size: clamp(24px, 2.2vw, 32px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+body.bani-app .bani-admin-metric__hint {
+  color: var(--bani-text-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+body.bani-app .bani-admin-panel,
+body.bani-app .bani-admin-table-card {
+  padding: 24px;
+  border-radius: 28px;
+  border: 1px solid var(--bani-border);
+  background: var(--bani-card-bg);
+  box-shadow: var(--bani-shadow-soft);
+  backdrop-filter: blur(18px);
+  min-width: 0;
+}
+
+body.bani-app .bani-admin-table-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+body.bani-app .bani-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+body.bani-app .bani-admin-toolbar__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+body.bani-app .bani-admin-toolbar__title {
+  margin: 0;
+  color: var(--bani-text);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: 0;
+}
+
+body.bani-app .bani-admin-toolbar__hint {
+  color: var(--bani-text-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+body.bani-app .bani-admin-toolbar__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+body.bani-app .bani-admin-queue {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+}
+
+body.bani-app .bani-admin-queue__row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) 72px auto;
+  gap: 14px;
+  align-items: center;
+  padding: 13px 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+body.bani-app .bani-admin-queue__row:first-child {
+  border-top: 0;
+}
+
+body.bani-app .bani-admin-queue__title {
+  color: var(--bani-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  min-width: 0;
+}
+
+body.bani-app .bani-admin-queue__meta {
+  color: var(--bani-text-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+body.bani-app .bani-admin-risk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+body.bani-app .bani-admin-risk-note {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+body.bani-app .bani-admin-risk-note--error {
+  border-color: rgba(180, 35, 24, 0.16);
+  background: rgba(180, 35, 24, 0.08);
+}
+
+body.bani-app .bani-admin-risk-note--warning {
+  border-color: rgba(217, 119, 6, 0.18);
+  background: rgba(217, 119, 6, 0.10);
+}
+
+body.bani-app .bani-admin-risk-note__icon {
+  margin-top: 2px;
+  color: var(--bani-primary-strong);
+}
+
+body.bani-app .bani-admin-risk-note--error .bani-admin-risk-note__icon {
+  color: var(--bani-error);
+}
+
+body.bani-app .bani-admin-risk-note--warning .bani-admin-risk-note__icon {
+  color: var(--bani-warning);
+}
+
+body.bani-app .bani-admin-risk-note__text {
+  color: var(--bani-text);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+body.bani-app .bani-admin-filter-rail {
+  position: sticky;
+  top: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid var(--bani-border);
+  background: var(--bani-card-bg);
+  box-shadow: var(--bani-shadow-soft);
+}
+
+body.bani-app .bani-admin-filter-rail__title {
+  color: var(--bani-text-soft);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body.bani-app .bani-admin-filter-rail__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--bani-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+body.bani-app .bani-admin-filter-rail__item--active {
+  border-color: rgba(15, 118, 110, 0.18);
+  background: var(--bani-primary-soft);
+  color: var(--bani-primary-strong);
+}
+
+body.bani-app .bani-admin-filter-rail__count {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+body.bani-app .bani-admin-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+body.bani-app .bani-admin-photo-card {
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+body.bani-app .bani-admin-photo-card__media {
+  aspect-ratio: 4 / 3;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(15, 118, 110, 0.16), transparent 32%),
+    radial-gradient(circle at 78% 68%, rgba(217, 119, 6, 0.14), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(238, 231, 220, 0.82));
+}
+
+body.bani-app .bani-admin-photo-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+}
+
+body.bani-app .bani-admin-photo-card__title {
+  color: var(--bani-text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+body.bani-app .bani-admin-photo-card__meta {
+  color: var(--bani-text-soft);
+  font-size: 12px;
+}
+
+body.bani-app .bani-admin-photo-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+body.bani-app .bani-admin-photo-card__actions .ant-btn {
+  flex: 1;
+}
+
+@media (max-width: 1023px) {
+  body.bani-app .bani-admin-grid--split,
+  body.bani-app .bani-admin-grid--filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.bani-app .bani-admin-filter-rail {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  body.bani-app .bani-admin-panel,
+  body.bani-app .bani-admin-table-card {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  body.bani-app .bani-admin-queue__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  body.bani-app .bani-admin-toolbar {
+    align-items: stretch;
+  }
+
+  body.bani-app .bani-admin-toolbar__actions,
+  body.bani-app .bani-admin-toolbar__actions .ant-btn,
+  body.bani-app .bani-admin-toolbar__actions .ant-input-search {
+    width: 100%;
+  }
+}
+
 body.bani-app .bani-feed-empty {
   padding: 28px;
   border-radius: 24px;

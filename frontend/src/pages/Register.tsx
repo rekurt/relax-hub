@@ -163,7 +163,7 @@ export default function Register() {
       )}
     >
       <Card bordered={false} className="bani-auth-surface">
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Segmented
             className="bani-auth-segmented"
             options={ROLE_OPTIONS}

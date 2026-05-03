@@ -144,7 +144,7 @@ export default function KYCSettings() {
 
       {hasKyc && (
         <Card title="Текущий статус">
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
             <Space>
               <Text strong>Статус:</Text>
               {statusInfo ? (
@@ -197,7 +197,7 @@ export default function KYCSettings() {
               <Alert
                 type="error"
                 showIcon
-                message="Причина отклонения"
+                title="Причина отклонения"
                 description={kyc.rejection_reason}
               />
             )}
@@ -206,7 +206,7 @@ export default function KYCSettings() {
               <Alert
                 type="success"
                 showIcon
-                message="Верификация пройдена"
+                title="Верификация пройдена"
                 description="Вы можете создавать объявления на платформе."
               />
             )}
@@ -215,7 +215,7 @@ export default function KYCSettings() {
               <Alert
                 type="info"
                 showIcon
-                message="Заявка на рассмотрении"
+                title="Заявка на рассмотрении"
                 description="Обычно проверка занимает 1-3 рабочих дня."
               />
             )}

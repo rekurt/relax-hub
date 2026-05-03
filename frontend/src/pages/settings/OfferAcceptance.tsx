@@ -57,7 +57,7 @@ export default function OfferAcceptance() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card title="Статус принятия">
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
             <Space>
               <Text strong>Статус:</Text>
               {isAccepted ? (
@@ -96,7 +96,7 @@ export default function OfferAcceptance() {
             <Alert
               type="warning"
               showIcon
-              message="Оферта не принята"
+              title="Оферта не принята"
               description="Для создания объявлений на платформе необходимо принять оферту. Пожалуйста, ознакомьтесь с условиями и нажмите кнопку ниже."
             />
 

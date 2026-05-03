@@ -495,7 +495,7 @@ export default function SecuritySettings() {
                       <Alert
                         type="info"
                         showIcon
-                        message="Отсканируйте QR-код"
+                        title="Отсканируйте QR-код"
                         description="Откройте приложение-аутентификатор и добавьте новый аккаунт по коду справа."
                       />
                       <div className="bani-security-secret">
@@ -542,7 +542,7 @@ export default function SecuritySettings() {
                     <Alert
                       type="success"
                       showIcon
-                      message="TOTP уже активирован"
+                      title="TOTP уже активирован"
                       description="При следующем входе потребуется одноразовый код из приложения."
                     />
                     <div className="bani-inline-form">
@@ -594,7 +594,7 @@ export default function SecuritySettings() {
                   <Alert
                     type="success"
                     showIcon
-                    message="SMS 2FA включена"
+                    title="SMS 2FA включена"
                     description="Коды подтверждения будут приходить на подтверждённый номер телефона."
                   />
                 ) : user?.phone ? (
@@ -621,7 +621,7 @@ export default function SecuritySettings() {
                   <Alert
                     type="warning"
                     showIcon
-                    message="Сначала добавьте номер телефона"
+                    title="Сначала добавьте номер телефона"
                     description="Подтверждённый номер нужен, чтобы включить SMS-подтверждение как резервный фактор."
                   />
                 )}
@@ -647,7 +647,7 @@ export default function SecuritySettings() {
                   <Alert
                     type="success"
                     showIcon
-                    message="Ссылка отправлена"
+                    title="Ссылка отправлена"
                     description={`Проверьте почту ${user?.email ?? ''} и перейдите по ссылке для сброса пароля.`}
                   />
                 ) : (
@@ -707,7 +707,7 @@ export default function SecuritySettings() {
               <Alert
                 type="success"
                 showIcon
-                message="Контур защиты уже собран"
+                title="Контур защиты уже собран"
                 description="Сейчас не видно срочных слабых мест. Остаётся только периодически проверять список сессий."
               />
             )}

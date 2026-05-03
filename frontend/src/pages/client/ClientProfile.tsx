@@ -391,13 +391,13 @@ export default function ClientProfile() {
             type="warning"
             showIcon
             style={{ marginBottom: 12 }}
-            message="Период восстановления — 30 дней"
+            title="Период восстановления — 30 дней"
             description="После подтверждения ваш аккаунт будет деактивирован. В течение 30 дней вы можете отменить удаление."
           />
           <Alert
             type="info"
             showIcon
-            message="Что произойдёт с вашими средствами"
+            title="Что произойдёт с вашими средствами"
             description="Средства, внесённые пополнением, будут возвращены. Бонусы и промо-баланс будут утеряны."
           />
         </div>
@@ -499,7 +499,7 @@ export default function ClientProfile() {
                       {user?.name ?? 'Профиль клиента'}
                     </Title>
 
-                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                    <Space orientation="vertical" size={4} style={{ width: '100%' }}>
                       <Text type="secondary">{user?.email ?? 'Email не указан'}</Text>
                       <Text type="secondary">{user?.phone ?? 'Телефон не указан'}</Text>
                       {user?.bio ? (
@@ -804,7 +804,7 @@ export default function ClientProfile() {
               {regionLoading ? (
                 <Skeleton active paragraph={{ rows: 2 }} />
               ) : (
-                <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                   <div>
                     <Text type="secondary">Текущий регион: </Text>
                     <Tag color="blue" style={{ fontSize: 14 }}>
@@ -815,7 +815,7 @@ export default function ClientProfile() {
                   <Alert
                     type="info"
                     showIcon
-                    message="Смена региона"
+                    title="Смена региона"
                     description="При смене создаётся новый кошелёк в другой валюте, а старый архивируется. Смена недоступна при ненулевом балансе, активных бронированиях, спорах или неактивированных сертификатах."
                   />
 
@@ -843,14 +843,14 @@ export default function ClientProfile() {
                 cancelText="Отмена"
                 confirmLoading={switchRegion.isPending}
               >
-                <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                <Space orientation="vertical" size={12} style={{ width: '100%' }}>
                   <Text>
                     Вы хотите сменить регион с <strong>{currentRegionLabel}</strong> на <strong>{targetRegionLabel}</strong>?
                   </Text>
                   <Alert
                     type="warning"
                     showIcon
-                    message="Последствия смены региона"
+                    title="Последствия смены региона"
                     description={
                       <ul style={{ paddingLeft: 20, margin: 0 }}>
                         <li>Текущий кошелёк ({currentCurrency}) будет архивирован</li>
@@ -860,7 +860,7 @@ export default function ClientProfile() {
                     }
                   />
                   {regionError && (
-                    <Alert type="error" showIcon message={regionError} />
+                    <Alert type="error" showIcon title={regionError} />
                   )}
                 </Space>
               </Modal>
@@ -893,7 +893,7 @@ export default function ClientProfile() {
                   }
                 />
               ) : (
-                <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
                   <Text type="secondary">
                     После подтверждения ваш аккаунт будет деактивирован. В течение 30 дней вы можете отменить удаление.
                     Средства, внесённые пополнением, будут возвращены. Бонусы и промо-баланс будут утеряны.

@@ -273,7 +273,7 @@ export default function GeoHeatmap() {
       {error && (
         <Alert
           type="error"
-          message="Ошибка загрузки данных"
+          title="Ошибка загрузки данных"
           description="Не удалось загрузить данные тепловой карты"
           style={{ marginBottom: 16 }}
         />

@@ -44,7 +44,7 @@ export default function TwoFactorChallenge({ partialToken, onSuccess, onCancel }
   }
 
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+    <Space orientation="vertical" size="large" style={{ width: '100%' }}>
       <div style={{ textAlign: 'center' }}>
         <SafetyOutlined style={{ fontSize: 48, color: '#1677ff', marginBottom: 16 }} />
         <Typography.Title level={4}>Двухфакторная аутентификация</Typography.Title>

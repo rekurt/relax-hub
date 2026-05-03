@@ -300,7 +300,7 @@ export default function ProfileSettings() {
                 src={user?.avatar_url}
                 icon={!user?.avatar_url && <UserOutlined />}
               />
-              <Space direction="vertical">
+              <Space orientation="vertical">
                 <Upload
                   showUploadList={false}
                   accept="image/jpeg,image/png"

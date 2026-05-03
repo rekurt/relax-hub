@@ -105,7 +105,7 @@ export default function OnboardingTour({ open, onComplete, region }: OnboardingT
             type="success"
             showIcon
             icon={<GiftOutlined />}
-            message={
+            title={
               <Text strong>
                 Приветственный бонус: {formatPrice(region === 'BY' ? WELCOME_BONUS_BY : WELCOME_BONUS_RU)}
               </Text>

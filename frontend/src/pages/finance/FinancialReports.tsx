@@ -141,7 +141,7 @@ export default function FinancialReports() {
             <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
               PDF-акт для выбранной бани за период
             </Text>
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space orientation="vertical" style={{ width: '100%' }}>
               <Select
                 value={selectedBathhouse || undefined}
                 onChange={setSelectedBathhouse}

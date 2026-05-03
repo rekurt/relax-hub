@@ -247,7 +247,7 @@ export default function ComplaintManagement() {
         Управление жалобами
       </Title>
 
-      <Space direction="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
+      <Space orientation="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
         <Space wrap>
           <Segmented
             options={STATUS_OPTIONS}

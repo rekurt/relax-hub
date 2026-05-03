@@ -199,7 +199,7 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
 
       {filterWarning && (
         <Alert
-          message="Контактные данные скрыты"
+          title="Контактные данные скрыты"
           description="Телефоны, email и ссылки автоматически скрываются в чате для вашей безопасности. Обмен контактами возможен после бронирования."
           type="warning"
           showIcon
@@ -223,7 +223,7 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Введите сообщение..."
-            autoSize={{ minRows: 1, maxRows: 4 }}
+            rows={1}
             style={{ resize: 'none' }}
           />
           <Button

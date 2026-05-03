@@ -101,7 +101,7 @@ export default function Dashboard() {
           description="Аналитика жёстко привязана к конкретной бане, поэтому сначала нужно выбрать объект в верхнем меню."
         />
         <Alert
-          message="Выберите баню"
+          title="Выберите баню"
           description="Для просмотра аналитики выберите баню в верхнем меню."
           type="info"
           showIcon
@@ -124,7 +124,7 @@ export default function Dashboard() {
           description="Если аналитика недоступна, пользователь всё равно должен видеть понятное состояние ошибки, а не пустой экран."
         />
         <Alert
-          message="Ошибка загрузки"
+          title="Ошибка загрузки"
           description={errorMessage}
           type="error"
           showIcon

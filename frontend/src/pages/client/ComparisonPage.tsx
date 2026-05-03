@@ -198,7 +198,7 @@ export default function ComparisonPage() {
     },
     ...items.map((item, index) => ({
       title: (
-        <Space direction="vertical" size={4} align="center">
+        <Space orientation="vertical" size={4} align="center">
           <Button
             type="link"
             style={{ padding: 0, fontSize: 16, fontWeight: 600 }}

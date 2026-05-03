@@ -59,7 +59,7 @@ export default function OAuthButtons({ referralCode }: OAuthButtonsProps) {
       <Divider plain style={{ margin: '8px 0 16px' }}>
         или войдите через
       </Divider>
-      <Space direction="vertical" style={{ width: '100%' }} size="small">
+      <Space orientation="vertical" style={{ width: '100%' }} size="small">
         {visibleProviders.map((provider) => (
           <Button
             key={provider.key}

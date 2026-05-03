@@ -1,12 +1,8 @@
 import { useState, useMemo } from 'react'
 import {
   Alert,
-  Card,
-  Col,
-  Row,
   Segmented,
   Skeleton,
-  Statistic,
   Table,
   Typography,
 } from 'antd'
@@ -29,8 +25,9 @@ import {
 } from '@/api/generated/analytics/analytics'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 type Period = '7d' | '30d' | '90d'
 
@@ -78,10 +75,15 @@ export default function OwnerAnalytics() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Аналитика</Title>
+      <div className="bani-stack">
+        <PageHeader
+          size="compact"
+          eyebrow="Владелец"
+          title="Аналитика"
+          description="Метрики объекта появятся после выбора бани в верхнем меню."
+        />
         <Alert
-          message="Выберите баню"
+          title="Выберите баню"
           description="Для просмотра аналитики выберите баню в верхнем меню."
           type="info"
           showIcon
@@ -136,181 +138,125 @@ export default function OwnerAnalytics() {
     },
   ]
 
+  const renderChange = (change?: number) => {
+    if (change === undefined) return null
+
+    return (
+      <Text style={{ color: changeColor(change), fontSize: 13 }}>
+        {changeIcon(change)} {change > 0 ? '+' : ''}
+        {change.toFixed(1)}%
+      </Text>
+    )
+  }
+
+  const kpiTiles = [
+    {
+      label: 'Бронирования',
+      value: dashboard?.bookings ?? 0,
+      hint: renderChange(dashboard?.bookings_change),
+      icon: <ShoppingOutlined />,
+    },
+    {
+      label: 'Выручка',
+      value: formatPrice(dashboard?.revenue ?? 0),
+      hint: renderChange(dashboard?.revenue_change),
+      icon: <DollarOutlined />,
+    },
+    {
+      label: 'Просмотры',
+      value: dashboard?.views ?? 0,
+      hint: dashboard?.unique_views !== undefined ? `${dashboard.unique_views} уник.` : 'Уникальные просмотры появятся после накопления данных',
+      icon: <EyeOutlined />,
+    },
+    {
+      label: 'Конверсия',
+      value: `${((dashboard?.conversion_rate ?? 0) * 100).toFixed(1)}%`,
+      hint: 'Доля просмотров, которые дошли до бронирования',
+      icon: <FunnelPlotOutlined />,
+    },
+    {
+      label: 'Рейтинг',
+      value: `${dashboard?.rating?.toFixed(1) ?? '0.0'} / 5`,
+      hint: renderChange(dashboard?.rating_change),
+      icon: <StarOutlined />,
+    },
+    {
+      label: 'Средний чек',
+      value: formatPrice(dashboard?.avg_check ?? 0),
+      hint: 'Средняя сумма бронирования',
+      icon: <CalculatorOutlined />,
+    },
+  ]
+
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <Title level={3} style={{ margin: 0 }}>
-          Аналитика
-        </Title>
-        <Segmented
-          options={PERIOD_OPTIONS}
-          value={period}
-          onChange={(val) => setPeriod(val as Period)}
-        />
+    <div className="bani-stack">
+      <PageHeader
+        size="compact"
+        eyebrow="Владелец"
+        title="Аналитика"
+        description="Показывает спрос, выручку, конверсию и сравнение объекта с городом."
+        extra={(
+          <Segmented
+            options={PERIOD_OPTIONS}
+            value={period}
+            onChange={(val) => setPeriod(val as Period)}
+          />
+        )}
+      />
+
+      <div className="bani-stat-grid">
+        {kpiTiles.map((tile) => (
+          <div className="bani-stat-tile" key={tile.label}>
+            {dashLoading ? (
+              <Skeleton active paragraph={{ rows: 1 }} />
+            ) : (
+              <>
+                <span className="bani-stat-tile__eyebrow">{tile.icon} {tile.label}</span>
+                <div className="bani-stat-tile__value">{tile.value}</div>
+                <div className="bani-stat-tile__hint">{tile.hint}</div>
+              </>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* KPI Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            {dashLoading ? (
-              <Skeleton active paragraph={{ rows: 1 }} />
-            ) : (
-              <>
-                <Statistic
-                  title={<><ShoppingOutlined /> Бронирования</>}
-                  value={dashboard?.bookings ?? 0}
-                />
-                {dashboard?.bookings_change !== undefined && (
-                  <Text style={{ color: changeColor(dashboard.bookings_change), fontSize: 13 }}>
-                    {changeIcon(dashboard.bookings_change)} {dashboard.bookings_change > 0 ? '+' : ''}
-                    {dashboard.bookings_change.toFixed(1)}%
-                  </Text>
-                )}
-              </>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            {dashLoading ? (
-              <Skeleton active paragraph={{ rows: 1 }} />
-            ) : (
-              <>
-                <Statistic
-                  title={<><DollarOutlined /> Выручка</>}
-                  value={formatPrice(dashboard?.revenue ?? 0)}
-                />
-                {dashboard?.revenue_change !== undefined && (
-                  <Text style={{ color: changeColor(dashboard.revenue_change), fontSize: 13 }}>
-                    {changeIcon(dashboard.revenue_change)} {dashboard.revenue_change > 0 ? '+' : ''}
-                    {dashboard.revenue_change.toFixed(1)}%
-                  </Text>
-                )}
-              </>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            {dashLoading ? (
-              <Skeleton active paragraph={{ rows: 1 }} />
-            ) : (
-              <Statistic
-                title={<><EyeOutlined /> Просмотры</>}
-                value={dashboard?.views ?? 0}
-                suffix={
-                  dashboard?.unique_views !== undefined
-                    ? <Text type="secondary" style={{ fontSize: 14 }}> / {dashboard.unique_views} уник.</Text>
-                    : undefined
-                }
-              />
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            {dashLoading ? (
-              <Skeleton active paragraph={{ rows: 1 }} />
-            ) : (
-              <>
-                <Statistic
-                  title={<><FunnelPlotOutlined /> Конверсия</>}
-                  value={`${((dashboard?.conversion_rate ?? 0) * 100).toFixed(1)}%`}
-                />
-              </>
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Second row: rating, avg check */}
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            {dashLoading ? (
-              <Skeleton active paragraph={{ rows: 1 }} />
-            ) : (
-              <>
-                <Statistic
-                  title={<><StarOutlined /> Рейтинг</>}
-                  value={dashboard?.rating?.toFixed(1) ?? '0.0'}
-                  suffix="/ 5"
-                />
-                {dashboard?.rating_change !== undefined && (
-                  <Text style={{ color: changeColor(dashboard.rating_change), fontSize: 13 }}>
-                    {changeIcon(dashboard.rating_change)} {dashboard.rating_change > 0 ? '+' : ''}
-                    {dashboard.rating_change.toFixed(1)}%
-                  </Text>
-                )}
-              </>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            {dashLoading ? (
-              <Skeleton active paragraph={{ rows: 1 }} />
-            ) : (
-              <Statistic
-                title={<><CalculatorOutlined /> Средний чек</>}
-                value={formatPrice(dashboard?.avg_check ?? 0)}
-              />
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Competitor Comparison */}
-      <Card title="Сравнение с конкурентами" style={{ marginTop: 24 }} loading={perfLoading}>
+      <section className="bani-admin-panel" aria-busy={perfLoading}>
+        <div className="bani-admin-toolbar" style={{ marginBottom: 18 }}>
+          <div className="bani-admin-toolbar__copy">
+            <h2 className="bani-admin-toolbar__title">Сравнение с конкурентами</h2>
+            <div className="bani-admin-toolbar__hint">Сравните загрузку, конверсию и рейтинг с городским средним.</div>
+          </div>
+        </div>
         {performance ? (
-          <Row gutter={[24, 16]}>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title="Ваша загрузка"
-                value={`${((performance.occupancy_rate ?? 0) * 100).toFixed(1)}%`}
-                prefix={<UserOutlined />}
-              />
-              <Text type="secondary">
-                Среднее в городе: {((performance.avg_city_occupancy_rate ?? 0) * 100).toFixed(1)}%
-              </Text>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title="Ваша конверсия"
-                value={`${((performance.conversion_rate ?? 0) * 100).toFixed(1)}%`}
-              />
-              <Text type="secondary">
-                Среднее в городе: {((performance.avg_city_conversion_rate ?? 0) * 100).toFixed(1)}%
-              </Text>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title="Ваш рейтинг"
-                value={performance.avg_rating?.toFixed(1) ?? '—'}
-                suffix="/ 5"
-              />
-              <Text type="secondary">
-                Среднее в городе: {performance.avg_city_rating?.toFixed(1) ?? '—'}
-              </Text>
-            </Col>
-          </Row>
+          <div className="bani-info-grid">
+            <div className="bani-info-card">
+              <span className="bani-info-card__label"><UserOutlined /> Ваша загрузка</span>
+              <div className="bani-info-card__value">{`${((performance.occupancy_rate ?? 0) * 100).toFixed(1)}%`}</div>
+              <div className="bani-info-card__hint">Среднее в городе: {((performance.avg_city_occupancy_rate ?? 0) * 100).toFixed(1)}%</div>
+            </div>
+            <div className="bani-info-card">
+              <span className="bani-info-card__label">Ваша конверсия</span>
+              <div className="bani-info-card__value">{`${((performance.conversion_rate ?? 0) * 100).toFixed(1)}%`}</div>
+              <div className="bani-info-card__hint">Среднее в городе: {((performance.avg_city_conversion_rate ?? 0) * 100).toFixed(1)}%</div>
+            </div>
+            <div className="bani-info-card">
+              <span className="bani-info-card__label">Ваш рейтинг</span>
+              <div className="bani-info-card__value">{performance.avg_rating?.toFixed(1) ?? '—'} / 5</div>
+              <div className="bani-info-card__hint">Среднее в городе: {performance.avg_city_rating?.toFixed(1) ?? '—'}</div>
+            </div>
+          </div>
         ) : (
-          <Alert message="Нет данных о конкурентах" type="info" showIcon />
+          <Alert title="Нет данных о конкурентах" type="info" showIcon />
         )}
-      </Card>
+      </section>
 
-      {/* Daily Breakdown Table */}
-      <Card title="Динамика по дням" style={{ marginTop: 24 }}>
+      <section className="bani-admin-table-card">
+        <div className="bani-admin-toolbar">
+          <div className="bani-admin-toolbar__copy">
+            <h2 className="bani-admin-toolbar__title">Динамика по дням</h2>
+            <div className="bani-admin-toolbar__hint">Ежедневные бронирования, выручка, просмотры и рейтинг.</div>
+          </div>
+        </div>
         <Table
           dataSource={dailySnapshots}
           columns={dailyColumns}
@@ -320,7 +266,7 @@ export default function OwnerAnalytics() {
           locale={{ emptyText: 'Нет данных за выбранный период' }}
           size="small"
         />
-      </Card>
+      </section>
     </div>
   )
 }

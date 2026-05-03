@@ -187,7 +187,7 @@ export default function GlobalPromoCodes() {
       {createdPromos.length === 0 && !formVisible ? (
         <Empty description="Нет созданных промокодов в этой сессии" />
       ) : (
-        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={16} style={{ width: '100%' }}>
           {createdPromos.map((promo) => (
             <Card key={promo.id} size="small">
               <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small">

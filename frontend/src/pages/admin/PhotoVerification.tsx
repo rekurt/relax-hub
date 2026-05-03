@@ -2,14 +2,11 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Card,
-  Col,
   Empty,
   Image,
   Input,
   Modal,
   Pagination,
-  Row,
   Space,
   Spin,
   Tag,
@@ -28,8 +25,9 @@ import {
 } from '@/api/generated/admin-photos/admin-photos'
 import type { InternalHandlerPhotoResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 export default function PhotoVerification() {
   const { modal, message } = App.useApp()
@@ -88,54 +86,75 @@ export default function PhotoVerification() {
   }
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Верификация фото
-      </Title>
+    <div className="bani-stack">
+      <PageHeader
+        size="compact"
+        eyebrow="Модерация"
+        title="Верификация фото"
+        description="Проверяйте кадры объектов рядом с позицией, датой загрузки и быстрым решением модератора."
+      />
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
+        <section className="bani-admin-panel" style={{ textAlign: 'center', padding: 48 }}>
           <Spin size="large" />
-        </div>
+        </section>
       ) : photos.length === 0 ? (
-        <Empty description="Нет фото на рассмотрении" />
+        <section className="bani-admin-panel">
+          <Empty description="Нет фото на рассмотрении" />
+        </section>
       ) : (
-        <>
-          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-            Ожидают проверки: {meta?.total_count ?? photos.length}
-          </Text>
+        <section className="bani-admin-panel">
+          <div className="bani-admin-toolbar" style={{ marginBottom: 18 }}>
+            <div className="bani-admin-toolbar__copy">
+              <h2 className="bani-admin-toolbar__title">Фото на проверке</h2>
+              <div className="bani-admin-toolbar__hint">Ожидают проверки: {meta?.total_count ?? photos.length}</div>
+            </div>
+            <Tag color="orange">В очереди</Tag>
+          </div>
 
           <Image.PreviewGroup>
-            <Row gutter={[16, 16]}>
+            <div className="bani-admin-photo-grid">
               {photos.map((photo) => (
-                <Col key={photo.id} xs={24} sm={12} md={8} lg={6}>
-                  <Card
-                    hoverable
-                    cover={
-                      <Image
-                        src={photo.url}
-                        alt="Фото бани"
-                        height={200}
-                        style={{ objectFit: 'cover' }}
-                        fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSIxMDAiIHk9IjEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
-                      />
-                    }
-                    actions={[
+                <article className="bani-admin-photo-card" key={photo.id}>
+                  <div className="bani-admin-photo-card__media">
+                    <Image
+                      src={photo.url}
+                      alt="Фото бани"
+                      height="100%"
+                      width="100%"
+                      style={{ objectFit: 'cover', display: 'block' }}
+                      fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSIxMDAiIHk9IjEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
+                    />
+                  </div>
+                  <div className="bani-admin-photo-card__body">
+                    <div className="bani-admin-photo-card__title">
+                      <Space>
+                        <Tag color="orange">Ожидает</Tag>
+                        {photo.position !== undefined && (
+                          <Text type="secondary">#{photo.position + 1}</Text>
+                        )}
+                      </Space>
+                    </div>
+                    <div className="bani-admin-photo-card__meta">
+                      Баня: {photo.bathhouse_id?.slice(0, 8)}...
+                    </div>
+                    {photo.uploaded_at && (
+                      <div className="bani-admin-photo-card__meta">
+                        {formatDateTime(photo.uploaded_at)}
+                      </div>
+                    )}
+                    <div className="bani-admin-photo-card__actions">
                       <Button
-                        key="verify"
-                        type="text"
+                        type="primary"
                         icon={<CheckOutlined />}
-                        style={{ color: '#52c41a' }}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleVerify(photo)
                         }}
                       >
                         Подтвердить
-                      </Button>,
+                      </Button>
                       <Button
-                        key="reject"
-                        type="text"
                         icon={<CloseOutlined />}
                         danger
                         onClick={(e) => {
@@ -144,35 +163,12 @@ export default function PhotoVerification() {
                         }}
                       >
                         Отклонить
-                      </Button>,
-                    ]}
-                  >
-                    <Card.Meta
-                      title={
-                        <Space>
-                          <Tag color="orange">Ожидает</Tag>
-                          {photo.position !== undefined && (
-                            <Text type="secondary">#{photo.position + 1}</Text>
-                          )}
-                        </Space>
-                      }
-                      description={
-                        <Space direction="vertical" size={4} style={{ width: '100%' }}>
-                          <Text type="secondary" ellipsis>
-                            Баня: {photo.bathhouse_id?.slice(0, 8)}...
-                          </Text>
-                          {photo.uploaded_at && (
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {formatDateTime(photo.uploaded_at)}
-                            </Text>
-                          )}
-                        </Space>
-                      }
-                    />
-                  </Card>
-                </Col>
+                      </Button>
+                    </div>
+                  </div>
+                </article>
               ))}
-            </Row>
+            </div>
           </Image.PreviewGroup>
 
           {meta && meta.total_pages! > 1 && (
@@ -191,7 +187,7 @@ export default function PhotoVerification() {
               />
             </div>
           )}
-        </>
+        </section>
       )}
 
       <Modal

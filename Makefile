@@ -4,6 +4,9 @@ APP_NAME := bani-server
 BUILD_DIR := ./bin
 VERSION ?= dev
 SWAG ?= go run github.com/swaggo/swag/cmd/swag@v1.16.6
+GOLANGCI_LINT ?= go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1
+GO_PACKAGES ?= $$(go list ./... | grep -v '/frontend/node_modules/')
+GO_PACKAGE_DIRS ?= $$(go list -f '{{.Dir}}' ./... | grep -v '/frontend/node_modules/')
 
 build:
 	go build -ldflags "-X main.Version=$(VERSION) -X main.Commit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o $(BUILD_DIR)/$(APP_NAME) ./cmd/server
@@ -12,16 +15,16 @@ run: build
 	$(BUILD_DIR)/$(APP_NAME) serve
 
 test:
-	go test ./... -v
+	go test $(GO_PACKAGES) -v
 
 test-hurl:
 	bash tests/hurl/run_all_tests.sh
 
 lint:
-	golangci-lint run ./...
+	$(GOLANGCI_LINT) run $(GO_PACKAGE_DIRS)
 
 vet:
-	go vet ./...
+	go vet $(GO_PACKAGES)
 
 migrate-up:
 	go run ./cmd/server migrate up
