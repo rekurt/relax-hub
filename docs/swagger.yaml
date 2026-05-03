@@ -2318,6 +2318,28 @@ definitions:
       user_email:
         type: string
     type: object
+  internal_handler.isochroneResponse:
+    properties:
+      center_lat:
+        type: number
+      center_lng:
+        type: number
+      coordinates:
+        description: '[lng, lat] pairs'
+        items:
+          items:
+            format: float64
+            type: number
+          type: array
+        type: array
+      minutes:
+        type: integer
+      mode:
+        type: string
+      wkt:
+        description: WKT polygon for use with search filter
+        type: string
+    type: object
   internal_handler.kycResponse:
     properties:
       company_name:
@@ -15493,6 +15515,50 @@ paths:
       summary: List public FAQ entries
       tags:
       - faq
+  /isochrone:
+    get:
+      description: Returns a polygon representing the area reachable within the specified
+        travel time from a point
+      parameters:
+      - description: Latitude of the origin point
+        in: query
+        name: lat
+        required: true
+        type: number
+      - description: Longitude of the origin point
+        in: query
+        name: lon
+        required: true
+        type: number
+      - description: 'Travel mode: car or transit'
+        in: query
+        name: mode
+        required: true
+        type: string
+      - description: Travel time in minutes (1-60)
+        in: query
+        name: minutes
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.isochroneResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      summary: Get isochrone polygon
+      tags:
+      - geo
   /media/{id}:
     delete:
       description: Deletes a media attachment from a review. Only the review author

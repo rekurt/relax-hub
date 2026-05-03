@@ -38,6 +38,8 @@ type Config struct {
 }
 
 type GeoConfig struct {
+	IsochroneAPIURL    string `mapstructure:"isochrone_api_url"`     // OpenRouteService base URL
+	IsochroneAPIKey    string `mapstructure:"isochrone_api_key"`     // ORS API key
 	YandexSearchAPIKey string `mapstructure:"yandex_search_api_key"` // Yandex Maps Search API key for transport/POI lookups
 }
 

@@ -56,6 +56,7 @@ import ClientChat from '@/pages/client/ClientChat'
 import ClientNotifications from '@/pages/client/ClientNotifications'
 import NotificationPreferences from '@/pages/client/NotificationPreferences'
 import LoyaltyDashboard from '@/pages/client/LoyaltyDashboard'
+import ComparisonPage from '@/pages/client/ComparisonPage'
 import ReferralProgram from '@/pages/client/ReferralProgram'
 import SavedSearches from '@/pages/client/SavedSearches'
 import ActivePromoCodes from '@/pages/client/ActivePromoCodes'
@@ -236,7 +237,7 @@ export default function AppRouter() {
         <Route path="referral" element={<ReferralProgram />} />
         <Route path="saved-searches" element={<SavedSearches />} />
         <Route path="promos" element={<ActivePromoCodes />} />
-        <Route path="comparison" element={<Navigate to="/catalog" replace />} />
+        <Route path="comparison" element={<ComparisonPage />} />
       </Route>
 
       <Route

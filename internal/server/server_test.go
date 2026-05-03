@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/geo"
 	"github.com/rekurt/relax-hub/internal/handler"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/middleware"
@@ -149,6 +150,7 @@ func testRouterParams() server.RouterParams {
 		SessionHandler:     handler.NewSessionHandler(nil),
 		SavedSearchHandler:  handler.NewSavedSearchHandler(nil, nil),
 		ClientReviewHandler: handler.NewClientReviewHandler(nil, logger.New(logger.LevelError)),
+		IsochroneHandler:    handler.NewIsochroneHandler(geo.NewIsochroneService(nil, log, "", "")),
 	}
 }
 

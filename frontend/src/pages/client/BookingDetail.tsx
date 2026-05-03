@@ -391,15 +391,21 @@ export default function ClientBookingDetail() {
               type="primary"
               size="large"
               icon={<DollarOutlined />}
-              onClick={() => id && payMutation.mutate({
-                id,
-                data: {
-                  payment_method: routeState?.paymentMethod ?? 'card',
-                  ...(routeState?.walletApplied && routeState.walletApplied > 0
-                    ? { wallet_amount: routeState.walletApplied, card_amount: Math.max(0, (booking.total_price ?? 0) - routeState.walletApplied) }
-                    : {}),
-                },
-              })}
+              onClick={() => {
+                if (!id) return
+                const walletAmount = routeState?.walletApplied && routeState.walletApplied > 0 ? routeState.walletApplied : 0
+                const cardAmount = Math.max(0, (booking.total_price ?? 0) - walletAmount)
+                const isCombo = walletAmount > 0 && cardAmount > 0
+                payMutation.mutate({
+                  id,
+                  data: {
+                    payment_method: isCombo ? 'combo' : (routeState?.paymentMethod ?? 'card'),
+                    ...(walletAmount > 0
+                      ? { wallet_amount: walletAmount, card_amount: cardAmount }
+                      : {}),
+                  },
+                })
+              }}
               loading={payMutation.isPending}
             >
               {routeState?.paymentMethod === 'sbp' ? 'Оплатить через СБП'

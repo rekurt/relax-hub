@@ -92,6 +92,7 @@ type RouterParams struct {
 	FAQHandler                 *handler.FAQHandler
 	WebhookHandler             *handler.WebhookHandler
 	PMSHandler                 *handler.PMSHandler
+	IsochroneHandler           *handler.IsochroneHandler
 	TransportHandler           *handler.TransportHandler
 	PhotoOrderHandler          *handler.PhotoOrderHandler
 	BookingModificationHandler *handler.BookingModificationHandler

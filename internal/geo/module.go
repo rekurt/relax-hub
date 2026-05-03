@@ -9,6 +9,9 @@ import (
 
 var Module = fx.Module("geo",
 	fx.Provide(
+		func(redisClient *redis.Client, log *logger.Logger, cfg *config.Config) *IsochroneService {
+			return NewIsochroneService(redisClient, log, cfg.Geo.IsochroneAPIURL, cfg.Geo.IsochroneAPIKey)
+		},
 		func(redisClient *redis.Client, log *logger.Logger, cfg *config.Config) *TransportService {
 			return NewTransportService(redisClient, log, cfg.Geo.YandexSearchAPIKey)
 		},
