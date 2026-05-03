@@ -2,8 +2,7 @@
 
 exports[`EmptyState > snapshot: basic empty state 1`] = `
 <div
-  class="css-dev-only-do-not-override-1daqxe2 css-var-root ant-empty ant-empty-normal"
-  style="padding: 48px 0px;"
+  class="css-dev-only-do-not-override-1daqxe2 css-var-root ant-empty ant-empty-normal bani-empty-state"
 >
   <div
     class="ant-empty-image"
@@ -54,8 +53,7 @@ exports[`EmptyState > snapshot: basic empty state 1`] = `
 
 exports[`EmptyState > snapshot: empty state with action 1`] = `
 <div
-  class="css-dev-only-do-not-override-1daqxe2 css-var-root ant-empty ant-empty-normal"
-  style="padding: 48px 0px;"
+  class="css-dev-only-do-not-override-1daqxe2 css-var-root ant-empty ant-empty-normal bani-empty-state"
 >
   <div
     class="ant-empty-image"

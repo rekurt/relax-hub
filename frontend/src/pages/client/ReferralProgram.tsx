@@ -96,7 +96,7 @@ export default function ReferralProgram() {
               >
                 <Text
                   strong
-                  style={{ fontSize: 28, letterSpacing: 4 }}
+                  style={{ fontSize: 28 }}
                   copyable={{ tooltips: false }}
                 >
                   {referralCode}

@@ -105,7 +105,11 @@ export default function ReviewForm() {
   }
 
   if (bathhouseLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
+    return (
+      <div className="bani-fullscreen-state">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   if (!bathhouseId) {

@@ -90,7 +90,7 @@
   color: var(--bani-widget-text-soft);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 .bani-widget-calendar-date {

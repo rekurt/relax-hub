@@ -62,7 +62,11 @@ export default function PublicFAQ() {
   }, [items])
 
   if (isLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '96px auto' }} />
+    return (
+      <div className="bani-fullscreen-state">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   return (
@@ -103,7 +107,7 @@ export default function PublicFAQ() {
       <Row gutter={[16, 16]}>
         {HELP_SCENARIO_CARDS.map((card) => (
           <Col key={card.key} xs={24} md={12}>
-            <Card style={{ borderRadius: 24, height: '100%' }}>
+            <Card className="bani-equal-card">
               <div className="bani-section-card">
                 <div className="bani-shell-footer__eyebrow" style={{ color: 'var(--bani-text-soft)' }}>{card.eyebrow}</div>
                 <h2 className="bani-section-card__title">{card.title}</h2>
@@ -126,7 +130,7 @@ export default function PublicFAQ() {
                   </span>
                 )}
                 extra={<Text type="secondary">{categoryItems.length} ответов</Text>}
-                style={{ borderRadius: 24, height: '100%' }}
+                className="bani-equal-card"
               >
                 <Collapse
                   ghost

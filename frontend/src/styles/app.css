@@ -219,7 +219,7 @@ body.bani-app .ant-divider {
 body.bani-app .ant-divider-plain {
   color: var(--bani-text);
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 body.bani-app .ant-divider-plain::before,
@@ -841,7 +841,7 @@ body.bani-app .bani-brand-lockup__title {
 body.bani-app .bani-brand-lockup__subtitle {
   font-size: 12px;
   line-height: 1.35;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   color: var(--bani-text-soft);
 }
 
@@ -860,7 +860,7 @@ body.bani-app .bani-brand-lockup--header .bani-brand-lockup__title {
 body.bani-app .bani-brand-lockup--header .bani-brand-lockup__subtitle {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-brand-lockup--footer .bani-brand-lockup__title {
@@ -869,7 +869,7 @@ body.bani-app .bani-brand-lockup--footer .bani-brand-lockup__title {
 
 body.bani-app .bani-brand-lockup--footer .bani-brand-lockup__subtitle {
   font-size: 12px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1153,7 +1153,7 @@ body.bani-app .bani-topnav__profile-dropdown .ant-dropdown-menu-item-group-title
   padding: 8px 12px 6px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: rgba(22, 33, 43, 0.48);
 }
@@ -1315,7 +1315,7 @@ body.bani-app .bani-shell-footer__column--brand {
 body.bani-app .bani-shell-footer__eyebrow {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.56);
 }
@@ -1350,7 +1350,7 @@ body.bani-app .bani-shell-footer__support-hours {
 body.bani-app .bani-shell-footer__section-title {
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
 }
@@ -1429,7 +1429,7 @@ body.bani-app .bani-stat-tile__eyebrow {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1665,7 +1665,7 @@ body.bani-app .bani-auth-badge {
   background: rgba(255, 255, 255, 0.08);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1717,7 +1717,7 @@ body.bani-app .bani-auth-panel__eyebrow {
   color: var(--bani-primary) !important;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1753,7 +1753,7 @@ body.bani-app .bani-auth-field__label {
   color: var(--bani-text-soft) !important;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1826,7 +1826,7 @@ body.bani-app .bani-auth-form.ant-form-vertical .ant-form-item-label > label {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1884,7 +1884,7 @@ body.bani-app .bani-page-header__eyebrow {
   color: var(--bani-primary) !important;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1974,7 +1974,7 @@ body.bani-app .bani-profile-avatar-card {
 }
 
 body.bani-app .bani-profile-avatar-card .ant-card-head-title {
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 body.bani-app .bani-profile-form-actions {
@@ -2027,7 +2027,7 @@ body.bani-app .bani-notification-toggle__eyebrow {
   color: var(--bani-primary);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -2209,7 +2209,7 @@ body.bani-app .bani-profile-metric__label {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -2357,7 +2357,7 @@ body.bani-app .bani-catalog__eyebrow {
   color: var(--bani-primary) !important;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -2427,7 +2427,7 @@ body.bani-app .bani-home__proof-eyebrow {
   color: var(--bani-primary) !important;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -2500,7 +2500,7 @@ body.bani-app .bani-home__listing-card-amenities-label {
   color: var(--bani-text-soft) !important;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -2744,7 +2744,7 @@ body.bani-app .bani-hero-panel__eyebrow {
   color: var(--bani-primary);
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -2757,7 +2757,7 @@ body.bani-app .bani-hero-panel--dark .bani-hero-panel__eyebrow {
 body.bani-app .bani-hero-panel__title {
   margin: 0;
   font-size: 38px;
-  line-height: 1.04;
+  line-height: 1.18;
   letter-spacing: 0;
   color: inherit;
   overflow-wrap: anywhere;
@@ -2798,7 +2798,7 @@ body.bani-app .bani-hero-panel__meta-label {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -2910,7 +2910,7 @@ body.bani-app .bani-info-card__label {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -2937,6 +2937,7 @@ body.bani-app .bani-section-card__title {
   margin: 0;
   font-size: 20px;
   font-weight: 800;
+  line-height: 1.28;
   letter-spacing: 0;
   color: var(--bani-text);
 }
@@ -3093,7 +3094,7 @@ body.bani-app .bani-admin-metric__label {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -3272,7 +3273,7 @@ body.bani-app .bani-admin-filter-rail__title {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -3446,7 +3447,7 @@ body.bani-app .bani-security-hero__panel-eyebrow {
   color: rgba(236, 228, 214, 0.78);
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -3489,7 +3490,7 @@ body.bani-app .bani-security-hero__pill-label {
   color: rgba(240, 235, 226, 0.64);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -3754,7 +3755,7 @@ body.bani-app .bani-security-method-card__eyebrow {
   color: var(--bani-text-soft);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.11em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -3853,7 +3854,7 @@ body.bani-app .bani-security-secret__label {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -3931,7 +3932,7 @@ body.bani-app .bani-security-rail-item__status {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -4256,7 +4257,7 @@ body.bani-app .bani-certificates-section-eyebrow {
   color: var(--bani-primary);
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -4474,7 +4475,7 @@ body.bani-app .bani-certificates-balance-panel__eyebrow {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -4510,26 +4511,30 @@ body.bani-app .bani-certificate-summary__card-top {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 body.bani-app .bani-certificate-summary__brand {
   font-size: 32px;
   font-weight: 900;
   letter-spacing: 0;
+  min-width: 0;
 }
 
 body.bani-app .bani-certificate-summary__chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
   padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.14);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
+  white-space: normal;
 }
 
 body.bani-app .bani-certificate-summary__amount {
@@ -4574,7 +4579,7 @@ body.bani-app .bani-certificate-summary__meta-label {
   color: rgba(255, 255, 255, 0.62);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -4679,7 +4684,7 @@ body.bani-app .bani-certificates-status__detail-label {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -4771,7 +4776,7 @@ body.bani-app .bani-certificates-card__stats span {
   color: var(--bani-text-soft);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -4859,5 +4864,460 @@ body.bani-app .bani-certificates-list-loading {
   body.bani-app .bani-certificates-payment-selector__cta,
   body.bani-app .bani-certificates-status__actions .ant-btn {
     width: 100%;
+  }
+}
+
+/* ===== Design Kit Completion Layer =====
+ * This section intentionally normalizes the remaining AntD primitives used by
+ * admin/owner/client pages so legacy screens inherit the RelaxHUB kit without
+ * page-by-page rewrites.
+ */
+
+body.bani-app,
+body.bani-app * {
+  letter-spacing: 0 !important;
+}
+
+body.bani-app .ant-layout-content {
+  min-width: 0;
+}
+
+body.bani-app h1,
+body.bani-app h2,
+body.bani-app h3,
+body.bani-app h4,
+body.bani-app h5,
+body.bani-app .ant-typography h1,
+body.bani-app .ant-typography h2,
+body.bani-app .ant-typography h3,
+body.bani-app .ant-typography h4,
+body.bani-app h1.ant-typography,
+body.bani-app h2.ant-typography,
+body.bani-app h3.ant-typography,
+body.bani-app h4.ant-typography {
+  color: var(--bani-text);
+  font-family: var(--rh-font-sans);
+  font-weight: 800;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+body.bani-app h1.ant-typography,
+body.bani-app h2.ant-typography,
+body.bani-app h3.ant-typography {
+  margin-top: 0;
+}
+
+body.bani-app .ant-card,
+body.bani-app .ant-table-wrapper,
+body.bani-app .ant-list,
+body.bani-app .ant-descriptions,
+body.bani-app .ant-statistic,
+body.bani-app .ant-collapse,
+body.bani-app .ant-upload-wrapper .ant-upload-drag {
+  min-width: 0;
+}
+
+body.bani-app .ant-statistic {
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+body.bani-app .ant-statistic-title {
+  margin-bottom: 6px;
+  color: var(--bani-text-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+body.bani-app .ant-statistic-content,
+body.bani-app .ant-statistic-content-value,
+body.bani-app .ant-statistic-content-prefix,
+body.bani-app .ant-statistic-content-suffix {
+  color: var(--bani-text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+body.bani-app .ant-table-wrapper {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--bani-radius-xl);
+  background: var(--bani-card-bg);
+  box-shadow: var(--bani-shadow-soft);
+  overflow: hidden;
+}
+
+body.bani-app .ant-table,
+body.bani-app .ant-table-container,
+body.bani-app .ant-table-content,
+body.bani-app .ant-table-body {
+  background: transparent !important;
+}
+
+body.bani-app .ant-table-thead > tr > th {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+  background: rgba(248, 244, 236, 0.92) !important;
+  color: var(--bani-text) !important;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: none;
+}
+
+body.bani-app .ant-table-tbody > tr > td {
+  border-bottom-color: rgba(15, 23, 42, 0.06) !important;
+  color: var(--bani-text);
+}
+
+body.bani-app .ant-table-tbody > tr.ant-table-row:hover > td,
+body.bani-app .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+  background: rgba(15, 118, 110, 0.045) !important;
+}
+
+body.bani-app .ant-table-pagination {
+  padding: 0 18px 16px;
+}
+
+body.bani-app .ant-list {
+  color: var(--bani-text);
+}
+
+body.bani-app .ant-list-split .ant-list-item {
+  border-block-end-color: rgba(15, 23, 42, 0.07) !important;
+}
+
+body.bani-app .ant-list-item {
+  min-width: 0;
+}
+
+body.bani-app .ant-list-item-meta-title,
+body.bani-app .ant-list-item-meta-title > a {
+  color: var(--bani-text) !important;
+  font-weight: 800;
+}
+
+body.bani-app .ant-list-item-meta-description {
+  color: var(--bani-text-soft) !important;
+}
+
+body.bani-app .ant-descriptions {
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+body.bani-app .ant-descriptions-bordered .ant-descriptions-view {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  border-radius: 20px;
+}
+
+body.bani-app .ant-descriptions .ant-descriptions-item-label {
+  background: rgba(248, 244, 236, 0.78) !important;
+  color: var(--bani-text-soft) !important;
+  font-weight: 700;
+}
+
+body.bani-app .ant-descriptions .ant-descriptions-item-content {
+  background: rgba(255, 253, 248, 0.74) !important;
+  color: var(--bani-text) !important;
+}
+
+body.bani-app .ant-modal .ant-modal-content,
+body.bani-app .ant-drawer .ant-drawer-content {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--bani-radius-xl);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 244, 236, 0.94));
+  box-shadow: var(--bani-shadow-strong);
+  overflow: hidden;
+}
+
+body.bani-app .ant-modal .ant-modal-header,
+body.bani-app .ant-drawer .ant-drawer-header {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+  background: transparent;
+}
+
+body.bani-app .ant-modal .ant-modal-title,
+body.bani-app .ant-drawer .ant-drawer-title {
+  color: var(--bani-text);
+  font-weight: 800;
+}
+
+body.bani-app .ant-modal .ant-modal-footer,
+body.bani-app .ant-drawer .ant-drawer-footer {
+  border-top-color: rgba(15, 23, 42, 0.08);
+  background: rgba(248, 244, 236, 0.46);
+}
+
+body.bani-app .ant-dropdown .ant-dropdown-menu,
+body.bani-app .ant-select-dropdown,
+body.bani-app .ant-picker-dropdown .ant-picker-panel-container,
+body.bani-app .ant-popover .ant-popover-inner,
+body.bani-app .ant-tooltip .ant-tooltip-inner {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.98);
+  box-shadow: var(--bani-shadow);
+  backdrop-filter: blur(18px);
+}
+
+body.bani-app .ant-tooltip .ant-tooltip-inner {
+  border-color: rgba(255, 255, 255, 0.10);
+  background: var(--bani-text);
+  color: var(--rh-text-on-dark);
+}
+
+body.bani-app .ant-dropdown .ant-dropdown-menu-item,
+body.bani-app .ant-dropdown .ant-dropdown-menu-submenu-title {
+  border-radius: 12px;
+  color: var(--bani-text);
+  font-weight: 600;
+}
+
+body.bani-app .ant-dropdown .ant-dropdown-menu-item:hover,
+body.bani-app .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+body.bani-app .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: rgba(15, 118, 110, 0.08) !important;
+  color: var(--bani-primary-strong) !important;
+}
+
+body.bani-app .ant-tabs .ant-tabs-tab {
+  color: var(--bani-text-soft);
+  font-weight: 700;
+}
+
+body.bani-app .ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+body.bani-app .ant-tabs .ant-tabs-tab:hover {
+  color: var(--bani-primary) !important;
+}
+
+body.bani-app .ant-tabs .ant-tabs-ink-bar {
+  background: var(--bani-primary);
+}
+
+body.bani-app .ant-alert {
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+body.bani-app .ant-result {
+  border-radius: var(--bani-radius-xl);
+}
+
+body.bani-app .ant-result-title {
+  color: var(--bani-text);
+  font-weight: 800;
+}
+
+body.bani-app .ant-result-subtitle,
+body.bani-app .ant-empty-description {
+  color: var(--bani-text-soft);
+}
+
+body.bani-app .ant-empty {
+  padding: 24px;
+  border-radius: 22px;
+}
+
+body.bani-app .ant-upload-wrapper .ant-upload-drag {
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  background: rgba(255, 255, 255, 0.58) !important;
+}
+
+body.bani-app .ant-upload-wrapper .ant-upload-drag-hover,
+body.bani-app .ant-upload-wrapper .ant-upload-drag:hover {
+  border-color: rgba(15, 118, 110, 0.28) !important;
+  background: rgba(15, 118, 110, 0.06) !important;
+}
+
+body.bani-app .ant-progress .ant-progress-bg {
+  background: linear-gradient(135deg, var(--bani-primary), var(--bani-primary-strong)) !important;
+}
+
+body.bani-app .ant-rate-star-full,
+body.bani-app .ant-rate-star-half .ant-rate-star-first {
+  color: var(--bani-accent);
+}
+
+body.bani-app .ant-avatar {
+  background: linear-gradient(135deg, var(--bani-primary), var(--bani-primary-strong));
+  color: #fffdf8;
+  font-weight: 800;
+}
+
+body.bani-app .ant-image,
+body.bani-app .ant-image-img,
+body.bani-app img {
+  max-width: 100%;
+}
+
+body.bani-app .ant-image-img {
+  border-radius: 16px;
+}
+
+body.bani-app .ant-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  border-radius: var(--bani-radius-pill) !important;
+  border-color: rgba(15, 23, 42, 0.10) !important;
+  background: rgba(255, 255, 255, 0.66) !important;
+  color: var(--bani-text-soft) !important;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+body.bani-app .ant-tag-green,
+body.bani-app .ant-tag-success {
+  border-color: rgba(21, 128, 61, 0.22) !important;
+  background: rgba(21, 128, 61, 0.10) !important;
+  color: var(--bani-success) !important;
+}
+
+body.bani-app .ant-tag-red,
+body.bani-app .ant-tag-error,
+body.bani-app .ant-tag-volcano,
+body.bani-app .ant-tag-magenta {
+  border-color: rgba(180, 35, 24, 0.20) !important;
+  background: rgba(180, 35, 24, 0.08) !important;
+  color: var(--bani-error) !important;
+}
+
+body.bani-app .ant-tag-orange,
+body.bani-app .ant-tag-gold,
+body.bani-app .ant-tag-warning,
+body.bani-app .ant-tag-yellow {
+  border-color: rgba(217, 119, 6, 0.24) !important;
+  background: rgba(217, 119, 6, 0.10) !important;
+  color: var(--bani-warning) !important;
+}
+
+body.bani-app .ant-tag-blue,
+body.bani-app .ant-tag-cyan,
+body.bani-app .ant-tag-geekblue,
+body.bani-app .ant-tag-purple,
+body.bani-app .ant-tag-processing {
+  border-color: rgba(15, 118, 110, 0.20) !important;
+  background: rgba(15, 118, 110, 0.08) !important;
+  color: var(--bani-primary-strong) !important;
+}
+
+body.bani-app .ant-badge-status-success {
+  background-color: var(--bani-success);
+}
+
+body.bani-app .ant-badge-status-error {
+  background-color: var(--bani-error);
+}
+
+body.bani-app .ant-badge-status-warning {
+  background-color: var(--bani-warning);
+}
+
+body.bani-app .ant-badge-status-processing,
+body.bani-app .ant-badge-status-blue {
+  background-color: var(--bani-primary);
+}
+
+body.bani-app .ant-badge-status-default {
+  background-color: rgba(95, 104, 119, 0.55);
+}
+
+body.bani-app .ant-skeleton-content .ant-skeleton-title,
+body.bani-app .ant-skeleton-content .ant-skeleton-paragraph > li,
+body.bani-app .ant-skeleton-avatar {
+  background: linear-gradient(90deg, rgba(248, 244, 236, 0.78), rgba(255, 255, 255, 0.84), rgba(248, 244, 236, 0.78));
+}
+
+body.bani-app .bani-kit-code,
+body.bani-app .ant-typography code,
+body.bani-app code {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  background: rgba(248, 244, 236, 0.84);
+  color: var(--bani-primary-strong);
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-weight: 700;
+}
+
+body.bani-app .bani-kit-toolbar,
+body.bani-app .bani-admin-toolbar,
+body.bani-app .bani-page-toolbar {
+  min-width: 0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--bani-radius-xl);
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: var(--bani-shadow-soft);
+}
+
+body.bani-app .bani-fullscreen-state {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(217, 119, 6, 0.10), transparent 28%),
+    rgba(248, 244, 236, 0.78);
+}
+
+body.bani-app .bani-fullscreen-state--stack {
+  flex-direction: column;
+  gap: 16px;
+}
+
+body.bani-app .bani-fullscreen-state > .ant-result,
+body.bani-app .bani-fullscreen-state__surface {
+  width: min(100%, 560px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--bani-radius-xl);
+  background: var(--bani-card-bg);
+  box-shadow: var(--bani-shadow);
+}
+
+body.bani-app .bani-public-state-card.ant-card {
+  text-align: center;
+}
+
+body.bani-app .bani-public-state-card .ant-card-body {
+  padding: 32px 24px;
+}
+
+body.bani-app .bani-empty-state.ant-empty {
+  padding: 48px 0;
+}
+
+body.bani-app .bani-equal-card.ant-card {
+  height: 100%;
+}
+
+body.bani-app .ant-space,
+body.bani-app .ant-flex,
+body.bani-app .ant-row,
+body.bani-app .ant-col {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  body.bani-app .ant-card .ant-card-head,
+  body.bani-app .ant-card .ant-card-body,
+  body.bani-app .ant-modal .ant-modal-body,
+  body.bani-app .ant-drawer .ant-drawer-body {
+    padding: 18px;
+  }
+
+  body.bani-app .ant-table-wrapper {
+    border-radius: 20px;
+  }
+
+  body.bani-app .ant-statistic {
+    padding: 12px 14px;
+  }
+
+  body.bani-app .ant-btn {
+    white-space: normal;
   }
 }

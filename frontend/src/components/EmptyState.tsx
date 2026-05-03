@@ -31,9 +31,9 @@ export default function EmptyState({
 
   return (
     <Empty
+      className="bani-empty-state"
       image={image ?? Empty.PRESENTED_IMAGE_SIMPLE}
       description={description}
-      style={{ padding: '48px 0' }}
     >
       {actionText && (
         <Button type="primary" icon={icon} onClick={handleAction}>

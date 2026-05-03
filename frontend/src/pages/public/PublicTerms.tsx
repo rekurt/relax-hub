@@ -71,7 +71,7 @@ export default function PublicTerms() {
       <Row gutter={[16, 16]}>
         {TERMS_SECTIONS.map((section) => (
           <Col key={section.key} xs={24} md={12}>
-            <Card style={{ borderRadius: 24, height: '100%' }}>
+            <Card className="bani-equal-card">
               <div className="bani-section-card">
                 <h2 className="bani-section-card__title">{section.title}</h2>
                 <div className="bani-section-card__description">{section.description}</div>

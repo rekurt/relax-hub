@@ -199,7 +199,11 @@ export default function NotificationPreferences() {
   }
 
   if (globalLoading || eventsLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
+    return (
+      <div className="bani-fullscreen-state">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   const eventPrefMap = new Map(localEventPrefs.map((p) => [p.event_type, p]))

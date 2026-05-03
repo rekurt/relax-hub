@@ -145,7 +145,7 @@
         .bani-widget-calendar { margin-bottom: 20px; }
         .bani-widget-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 20px; }
         .bani-widget-calendar-header { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
-        .bani-widget-calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--bani-widget-text-soft); font-weight: 800; letter-spacing: 0.08em; }
+        .bani-widget-calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--bani-widget-text-soft); font-weight: 800; letter-spacing: 0; }
         .bani-widget-calendar-date { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 1px solid var(--bani-widget-border-strong); border-radius: 16px; cursor: pointer; transition: all 0.2s ease; background: rgba(255, 253, 248, 0.86); color: var(--bani-widget-text); font-weight: 800; font-size: 14px; padding: 0; font-family: inherit; }
         .bani-widget-calendar-date:hover { border-color: var(--bani-widget-primary); background: rgba(255, 255, 255, 0.96); transform: translateY(-1px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08); }
         .bani-widget-calendar-date.disabled { background: rgba(244, 239, 231, 0.82); color: rgba(22, 33, 43, 0.42); cursor: not-allowed; border-color: var(--bani-widget-border); box-shadow: none; transform: none; }

@@ -49,31 +49,30 @@ echo "Output files:"
 echo "  JS:  $DIST_DIR/widget.min.js ($JS_SIZE bytes)"
 echo "  CSS: $DIST_DIR/widget.min.css ($CSS_SIZE bytes)"
 
-# Create a combined file with CSS embedded
-cat > "$DIST_DIR/widget.combined.js" << 'EOF'
-(function() {
-  // Inject CSS
+# Create a combined file with CSS embedded. Use Node so regexes, backslashes,
+# quotes, and ampersands from the minified JS/CSS cannot corrupt the bundle.
+node - "$DIST_DIR" <<'NODE'
+const fs = require('fs');
+const path = require('path');
+
+const distDir = process.argv[2];
+const js = fs.readFileSync(path.join(distDir, 'widget.min.js'), 'utf8');
+const css = fs.readFileSync(path.join(distDir, 'widget.min.css'), 'utf8');
+
+const combined = `(function() {
   if (!document.getElementById('bani-widget-styles')) {
     const style = document.createElement('style');
     style.id = 'bani-widget-styles';
-    style.textContent = `CSS_CONTENT_HERE`;
+    style.textContent = ${JSON.stringify(css)};
     document.head.appendChild(style);
   }
 
-  // Widget code
-  JS_CONTENT_HERE
+  ${js}
 })();
-EOF
+`;
 
-# Read minified files and inject them
-JS_CONTENT=$(cat "$DIST_DIR/widget.min.js")
-CSS_CONTENT=$(cat "$DIST_DIR/widget.min.css")
-
-# Use a safer method to inject
-awk -v js="$JS_CONTENT" -v css="$CSS_CONTENT" \
-  '{gsub(/JS_CONTENT_HERE/, js); gsub(/CSS_CONTENT_HERE/, css); print}' \
-  "$DIST_DIR/widget.combined.js" > "$DIST_DIR/widget.combined.js.tmp" && \
-  mv "$DIST_DIR/widget.combined.js.tmp" "$DIST_DIR/widget.combined.js"
+fs.writeFileSync(path.join(distDir, 'widget.combined.js'), combined);
+NODE
 
 COMBINED_SIZE=$(wc -c < "$DIST_DIR/widget.combined.js")
 echo "  Combined: $DIST_DIR/widget.combined.js ($COMBINED_SIZE bytes)"

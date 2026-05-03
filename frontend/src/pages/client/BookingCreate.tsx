@@ -381,7 +381,11 @@ export default function BookingCreate() {
   }, [promoValidated, priceInfo])
 
   if (bathhouseLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
+    return (
+      <div className="bani-fullscreen-state">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   if (!bathhouse) {

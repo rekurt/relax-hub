@@ -45,7 +45,7 @@ export default function PublicContacts() {
       <Row gutter={[16, 16]}>
         {CONTACT_CARDS.map((card) => (
           <Col key={card.key} xs={24} md={8}>
-            <Card style={{ borderRadius: 24, height: '100%' }}>
+            <Card className="bani-equal-card">
               <div className="bani-feature-item__icon" style={{ marginBottom: 16 }}>
                 {CONTACT_ICONS[card.key]}
               </div>

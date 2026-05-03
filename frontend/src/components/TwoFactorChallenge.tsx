@@ -62,7 +62,7 @@ export default function TwoFactorChallenge({ partialToken, onSuccess, onCancel }
         value={code}
         onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
         onPressEnter={handleVerify}
-        style={{ textAlign: 'center', fontSize: 24, letterSpacing: 8 }}
+        style={{ textAlign: 'center', fontSize: 24 }}
         autoFocus
       />
 

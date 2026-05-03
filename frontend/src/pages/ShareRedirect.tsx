@@ -32,23 +32,33 @@ export default function ShareRedirect() {
   }, [resolved, navigate])
 
   if (isLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
+    return (
+      <div className="bani-fullscreen-state bani-fullscreen-state--stack">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   if (isError || !token) {
     return (
-      <Result
-        status="warning"
-        title="Ссылка недействительна"
-        subTitle="Срок действия ссылки истёк или она некорректна."
-        extra={
-          <Button type="primary" onClick={() => navigate('/')}>
-            На главную
-          </Button>
-        }
-      />
+      <div className="bani-fullscreen-state">
+        <Result
+          status="warning"
+          title="Ссылка недействительна"
+          subTitle="Срок действия ссылки истёк или она некорректна."
+          extra={
+            <Button type="primary" onClick={() => navigate('/')}>
+              На главную
+            </Button>
+          }
+        />
+      </div>
     )
   }
 
-  return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
+  return (
+    <div className="bani-fullscreen-state bani-fullscreen-state--stack">
+      <Spin size="large" />
+    </div>
+  )
 }

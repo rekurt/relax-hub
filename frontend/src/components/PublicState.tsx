@@ -53,7 +53,7 @@ export default function PublicState({
 
   if (kind === 'loading') {
     return (
-      <Card style={{ borderRadius: 24, textAlign: 'center', padding: 24 }}>
+      <Card className="bani-public-state-card">
         <Space orientation="vertical" size={16} style={{ width: '100%' }}>
           <Spin size="large" />
           <Text strong>{resolvedTitle}</Text>
