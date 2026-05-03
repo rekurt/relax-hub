@@ -8,6 +8,7 @@ export {
   Carousel,
   Checkbox,
   Col,
+  ColorPicker,
   Collapse,
   ConfigProvider,
   DatePicker,
@@ -29,6 +30,7 @@ export {
   Popconfirm,
   Popover,
   Progress,
+  QRCode,
   Radio,
   Rate,
   Result,
@@ -47,6 +49,7 @@ export {
   Tag,
   Tooltip,
   Typography,
+  TimePicker,
   Upload,
 } from 'antd'
 
