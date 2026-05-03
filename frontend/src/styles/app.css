@@ -12768,5 +12768,48 @@ body.rh-app .rh-map-marker--highlighted {
   body.rh-app .rh-funnel__change {
     margin-left: 14px;
   }
+
+  body.rh-app .rh-topnav {
+    padding-inline: 12px !important;
+  }
+
+  body.rh-app .rh-topnav__inner {
+    gap: 6px !important;
+  }
+
+  body.rh-app .rh-topnav__brand {
+    flex: 1 1 auto !important;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  body.rh-app .rh-topnav__brand .rh-brand-lockup__subtitle {
+    display: none;
+  }
+
+  body.rh-app .rh-topnav__brand .rh-brand-lockup__title {
+    font-size: 22px !important;
+  }
+
+  body.rh-app .rh-topnav__actions {
+    flex: 0 0 auto !important;
+    gap: 4px !important;
+    margin-left: 4px !important;
+  }
+
+  body.rh-app .rh-topnav__menu-button,
+  body.rh-app .rh-topnav__actions .ant-btn:not(.rh-topnav__login-button) {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+  }
+
+  body.rh-app .rh-topnav__profile-button.rh-nav__user {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    padding: 2px !important;
+  }
 }
 }
