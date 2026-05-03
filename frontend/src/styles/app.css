@@ -620,8 +620,11 @@ body.rh-app {
 .rh-listing-card__address span {
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .rh-listing-card__tags,
@@ -833,10 +836,20 @@ body.rh-app .ant-input-number-input,
 body.rh-app .ant-picker .ant-picker-input > input,
 body.rh-app .ant-select-selection-item,
 body.rh-app .ant-select-selection-placeholder {
+  min-width: 0;
   font-size: 15px;
   font-weight: 500;
   color: var(--rh-control-text) !important;
   line-height: 1.4;
+}
+
+body.rh-app .ant-select-selection-item,
+body.rh-app .ant-select-selection-placeholder,
+body.rh-app .ant-select-content {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal !important;
 }
 
 body.rh-app .ant-input::placeholder,

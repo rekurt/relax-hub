@@ -1,7 +1,7 @@
 import { defineConfig } from 'orval'
 
 export default defineConfig({
-  bani: {
+  relaxhub: {
     input: {
       target: '../docs/swagger.json',
     },

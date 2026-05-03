@@ -175,6 +175,8 @@ interface DesignIconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
 }
 
 export default function DesignIcon({ name, size = 18, className = '', style, filled = false, ...props }: DesignIconProps) {
+  const isDecorative = props['aria-label'] == null && props.role == null
+
   return (
     <svg
       viewBox="0 0 24 24"
@@ -187,7 +189,7 @@ export default function DesignIcon({ name, size = 18, className = '', style, fil
       strokeLinejoin="round"
       className={`rh-icon ${className}`.trim()}
       style={{ flexShrink: 0, ...style }}
-      aria-hidden="true"
+      aria-hidden={isDecorative ? 'true' : undefined}
       {...props}
     >
       {ICON_PATHS[name]}

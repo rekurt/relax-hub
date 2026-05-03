@@ -125,18 +125,35 @@ const ICON_MAP = {
 const FILLED_ICONS = new Set<keyof typeof ICON_MAP>(['BellFilled', 'EnvironmentFilled', 'HeartFilled', 'StarFilled'])
 const FLIPPED_ICONS = new Set<keyof typeof ICON_MAP>(['LogoutOutlined'])
 
+function getLegacyIconName(displayName: keyof typeof ICON_MAP) {
+  return displayName
+    .replace(/(Outlined|Filled|TwoTone)$/, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .toLowerCase()
+}
+
 function createIcon(displayName: keyof typeof ICON_MAP) {
-  const IconComponent = ({ spin: _spin, rotate, twoToneColor: _twoToneColor, className, style, ...props }: LegacyIconProps) => {
+  const IconComponent = ({
+    spin: _spin,
+    rotate,
+    twoToneColor: _twoToneColor,
+    className,
+    style,
+    ...props
+  }: LegacyIconProps) => {
     const transforms = [
       FLIPPED_ICONS.has(displayName) ? 'scaleX(-1)' : '',
       rotate ? `rotate(${rotate}deg)` : '',
     ].filter(Boolean).join(' ')
+    const legacyName = getLegacyIconName(displayName)
 
     return (
       <DesignIcon
         name={ICON_MAP[displayName]}
-        className={['rh-legacy-icon', className].filter(Boolean).join(' ')}
+        className={['anticon', `anticon-${legacyName}`, 'rh-legacy-icon', className].filter(Boolean).join(' ')}
         filled={FILLED_ICONS.has(displayName)}
+        role={props.role ?? 'img'}
+        aria-label={props['aria-label'] ?? legacyName}
         style={{
           transform: transforms || undefined,
           ...style,
