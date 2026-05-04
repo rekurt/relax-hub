@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   Alert,
   Card,
@@ -10,7 +11,6 @@ import {
   Space,
   Popconfirm,
   App,
-  Tag,
   Typography,
   QRCode,
 } from '@/components/design/system'
@@ -20,6 +20,8 @@ import {
   DeleteOutlined,
   KeyOutlined,
   MobileOutlined,
+  QrcodeOutlined,
+  SafetyOutlined,
 } from '@/components/design/icons'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -35,10 +37,12 @@ import {
 } from '@/api/generated/2fa/2fa'
 import PageHeader from '@/components/PageHeader'
 import { resolveAssetUrl } from '@/lib/asset-url'
+import { ADMIN_2FA_START_EVENT } from '@/lib/admin2faNotice'
 
 const { Text } = Typography
 
 export default function AdminProfile() {
+  const location = useLocation()
   const { user, loadProfile, setUser } = useAuthStore()
   const { message } = App.useApp()
   const [profileForm] = Form.useForm()
@@ -114,12 +118,34 @@ export default function AdminProfile() {
     }
   }, [user, profileForm])
 
+  const focusTwoFactorSetup = useCallback(() => {
+    if (typeof window === 'undefined') return
+    const target = document.getElementById('two-factor')
+    if (!target) return
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.setTimeout(() => {
+      const action = target.querySelector<HTMLElement>('[data-admin-2fa-primary-action]')
+      action?.focus({ preventScroll: true })
+    }, 220)
+  }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (location.hash !== '#two-factor' && params.get('focus2fa') !== '1') return
+    focusTwoFactorSetup()
+  }, [focusTwoFactorSetup, location.hash, location.search])
+
+  const startTwoFactorSetup = useCallback(() => {
+    focusTwoFactorSetup()
+    if (totpStep !== 'idle' || smsEnabled || enableTotp.isPending) return
+    enableTotp.mutate()
+  }, [enableTotp.isPending, enableTotp.mutate, focusTwoFactorSetup, smsEnabled, totpStep])
+
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (window.location.hash !== '#two-factor') return
-    const target = document.getElementById('two-factor')
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [])
+    window.addEventListener(ADMIN_2FA_START_EVENT, startTwoFactorSetup)
+    return () => window.removeEventListener(ADMIN_2FA_START_EVENT, startTwoFactorSetup)
+  }, [startTwoFactorSetup])
 
   const updateProfile = usePutAuthMe({
     mutation: {
@@ -255,69 +281,89 @@ export default function AdminProfile() {
 
       <Card
         id="two-factor"
+        className="rh-admin-2fa-card"
         title={
-          <Space>
+          <div className="rh-admin-2fa-card__title">
             <span>Двухфакторная аутентификация</span>
-            <Tag color={totpEnabled ? 'green' : smsEnabled ? 'green' : 'gold'}>
+            <span
+              className={[
+                'rh-admin-2fa-pill',
+                totpEnabled || smsEnabled ? 'rh-admin-2fa-pill--success' : 'rh-admin-2fa-pill--warning',
+              ].join(' ')}
+            >
               {totpEnabled ? 'TOTP активна' : smsEnabled ? 'SMS активна' : 'Не настроена'}
-            </Tag>
-          </Space>
+            </span>
+          </div>
         }
       >
-        {!totpEnabled && !smsEnabled && (
-          <Alert
-            type="warning"
-            showIcon
-            title="Доступ к админ-эндпоинтам требует 2FA"
-            description="Все запросы к /api/v1/admin/* возвращают 403 admin_2fa_required, пока вы не включите второй фактор."
-            className="rh-admin-inline-alert"
-          />
-        )}
+        <div className="rh-admin-2fa-summary">
+          <div className="rh-admin-2fa-summary__icon" aria-hidden="true">
+            <SafetyOutlined />
+          </div>
+          <div className="rh-admin-2fa-summary__copy">
+            <span className="rh-admin-2fa-summary__label">Админ-доступ</span>
+            <strong>
+              {totpEnabled || smsEnabled
+                ? 'Второй фактор включён, админ-эндпоинты доступны.'
+                : 'Включите второй фактор, чтобы открыть админ-эндпоинты.'}
+            </strong>
+            <span>
+              Защищает все запросы к <code>/api/v1/admin/*</code> и критичные операции панели.
+            </span>
+          </div>
+        </div>
 
-        <div className="rh-admin-2fa-stack">
-          <section>
-            <Space align="center" className="rh-admin-inline-heading">
-              <Text strong>TOTP (Google Authenticator, Authy)</Text>
-              <Tag color={totpEnabled ? 'green' : 'default'}>
+        <div className="rh-admin-2fa-methods">
+          <section className="rh-admin-2fa-method rh-admin-2fa-method--primary">
+            <div className="rh-admin-2fa-method__head">
+              <span className="rh-admin-2fa-method__icon" aria-hidden="true">
+                <QrcodeOutlined />
+              </span>
+              <div>
+                <h3>TOTP</h3>
+                <p>Google Authenticator, Authy или любой совместимый генератор кодов.</p>
+              </div>
+              <span className={totpEnabled ? 'rh-admin-2fa-pill rh-admin-2fa-pill--success' : 'rh-admin-2fa-pill'}>
                 {totpEnabled ? 'Включена' : 'Отключена'}
-              </Tag>
-            </Space>
+              </span>
+            </div>
 
             {totpStep === 'idle' && (
-              <Space className="rh-admin-full-width" orientation="vertical">
-                <Text type="secondary">
-                  Сгенерируем QR-код, который вы отсканируете в приложении-аутентификаторе. Коды обновляются каждые 30 секунд.
-                </Text>
+              <div className="rh-admin-2fa-method__body">
+                <p className="rh-admin-2fa-method__text">
+                  Сначала сгенерируем QR-код. После сканирования подтвердите настройку 6-значным кодом.
+                </p>
                 <Button
                   type="primary"
                   icon={<KeyOutlined />}
                   onClick={() => enableTotp.mutate()}
                   loading={enableTotp.isPending}
+                  className="rh-admin-2fa-method__button"
+                  data-admin-2fa-primary-action
                 >
                   Настроить TOTP
                 </Button>
-              </Space>
+              </div>
             )}
 
             {totpStep === 'qr' && (
-              <Space align="start" size={24} className="rh-admin-full-width">
-                <Space orientation="vertical" className="rh-admin-flex-fill">
+              <div className="rh-admin-2fa-qr-layout">
+                <div className="rh-admin-2fa-qr-layout__copy">
                   <Alert
                     type="info"
                     showIcon
                     title="Отсканируйте QR"
-                    description="Откройте приложение-аутентификатор и добавьте новый аккаунт по коду справа."
+                    description="Добавьте RelaxHUB в приложение-аутентификатор и введите свежий код ниже."
                   />
-                  <div>
-                    <Text type="secondary">Секретный ключ (если QR недоступен)</Text>
-                    <div>
-                      <Text copyable code>
-                        {totpSecret}
-                      </Text>
-                    </div>
+                  <div className="rh-admin-2fa-secret">
+                    <span>Секретный ключ</span>
+                    <Text copyable code>
+                      {totpSecret}
+                    </Text>
                   </div>
                   <Form
                     layout="inline"
+                    className="rh-admin-2fa-confirm-form"
                     onFinish={() => verifyTotp.mutate({ data: { code: verifyCode } })}
                   >
                     <Form.Item>
@@ -327,6 +373,7 @@ export default function AdminProfile() {
                         onChange={(event) => setVerifyCode(event.target.value)}
                         maxLength={6}
                         className="rh-admin-code-input"
+                        data-admin-2fa-primary-action
                       />
                     </Form.Item>
                     <Form.Item>
@@ -340,20 +387,25 @@ export default function AdminProfile() {
                       </Button>
                     </Form.Item>
                   </Form>
-                </Space>
-                {qrUrl && <QRCode value={qrUrl} size={176} />}
-              </Space>
+                </div>
+                {qrUrl && (
+                  <div className="rh-admin-2fa-qr">
+                    <QRCode value={qrUrl} size={176} />
+                    <span>Сканировать в приложении</span>
+                  </div>
+                )}
+              </div>
             )}
 
             {totpStep === 'done' && (
-              <Space className="rh-admin-full-width" orientation="vertical">
+              <div className="rh-admin-2fa-method__body">
                 <Alert
                   type="success"
                   showIcon
                   title="TOTP активирован"
                   description="При следующем входе понадобится одноразовый код из приложения."
                 />
-                <Space>
+                <div className="rh-admin-2fa-disable-row">
                   <Input
                     placeholder="6-значный код для отключения"
                     value={disableCode}
@@ -376,18 +428,30 @@ export default function AdminProfile() {
                       Отключить TOTP
                     </Button>
                   </Popconfirm>
-                </Space>
-              </Space>
+                </div>
+              </div>
             )}
           </section>
 
-          <section>
-            <Space align="center" className="rh-admin-inline-heading">
-              <Text strong>SMS 2FA (резерв)</Text>
-              <Tag color={smsEnabled ? 'green' : user?.phone ? 'gold' : 'default'}>
+          <section className="rh-admin-2fa-method">
+            <div className="rh-admin-2fa-method__head">
+              <span className="rh-admin-2fa-method__icon rh-admin-2fa-method__icon--muted" aria-hidden="true">
+                <MobileOutlined />
+              </span>
+              <div>
+                <h3>SMS 2FA</h3>
+                <p>Резервный способ для администраторов с подтверждённым телефоном.</p>
+              </div>
+              <span
+                className={[
+                  'rh-admin-2fa-pill',
+                  smsEnabled ? 'rh-admin-2fa-pill--success' : user?.phone ? 'rh-admin-2fa-pill--warning' : '',
+                ].join(' ')}
+              >
                 {smsEnabled ? 'Включена' : user?.phone ? 'Доступна' : 'Нужен телефон'}
-              </Tag>
-            </Space>
+              </span>
+            </div>
+
             {smsEnabled ? (
               <Alert
                 type="success"
@@ -396,23 +460,22 @@ export default function AdminProfile() {
                 description="Коды будут приходить на подтверждённый номер телефона."
               />
             ) : user?.phone ? (
-              <Space className="rh-admin-full-width" orientation="vertical">
-                <Text type="secondary">Коды подтверждения будут отправляться на {user.phone}.</Text>
+              <div className="rh-admin-2fa-method__body">
+                <p className="rh-admin-2fa-method__text">Коды подтверждения будут отправляться на {user.phone}.</p>
                 <Button
                   icon={<MobileOutlined />}
                   onClick={() => enableSms2fa.mutate()}
                   loading={enableSms2fa.isPending}
+                  className="rh-admin-2fa-method__button"
                 >
                   Включить SMS 2FA
                 </Button>
-              </Space>
+              </div>
             ) : (
-              <Alert
-                type="warning"
-                showIcon
-                title="Сначала добавьте номер телефона"
-                description="Подтверждённый телефон нужен, чтобы включить SMS-подтверждение."
-              />
+              <div className="rh-admin-2fa-phone-required">
+                <strong>Сначала добавьте номер телефона</strong>
+                <span>Подтверждённый телефон нужен, чтобы включить SMS-подтверждение.</span>
+              </div>
             )}
           </section>
         </div>

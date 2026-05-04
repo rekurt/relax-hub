@@ -30,6 +30,7 @@ interface TopNavigationLayoutProps {
   drawerSections?: NavigationSection[]
   footer?: React.ReactNode
   topBanner?: React.ReactNode
+  contentOverride?: React.ReactNode
 }
 
 type DropdownItem = NonNullable<MenuProps['items']>[number]
@@ -128,6 +129,7 @@ export default function TopNavigationLayout({
   drawerSections,
   footer,
   topBanner,
+  contentOverride,
 }: TopNavigationLayoutProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
@@ -329,7 +331,7 @@ export default function TopNavigationLayout({
           )}
         >
           {topBanner}
-          <Outlet />
+          {contentOverride === undefined ? <Outlet /> : contentOverride}
         </div>
       </Content>
 

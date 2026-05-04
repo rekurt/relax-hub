@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-refresh/only-export-components */
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import { create as createQRCode } from 'qrcode'
 import {
   Children,
   cloneElement,
@@ -13,6 +14,7 @@ import {
   useId,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -822,6 +824,17 @@ function SelectRoot({
     : resolvedOptions
   const popupRootClassName = typeof _classNames?.popup?.root === 'string' ? _classNames.popup.root : undefined
   const dropdownId = id ? `${id}-dropdown` : undefined
+  const getInitialActiveIndex = () => {
+    if (mode) return dropdownOptions.findIndex((option) => !option.disabled)
+
+    const selectedIdx = dropdownOptions.findIndex((option) => String(option.value) === String(selectedValue ?? ''))
+    const selectedOpt = selectedIdx >= 0 ? dropdownOptions[selectedIdx] : undefined
+    return selectedOpt && !selectedOpt.disabled
+      ? selectedIdx
+      : dropdownOptions.findIndex((option) => !option.disabled)
+  }
+  const activeOption = activeIndex >= 0 ? dropdownOptions[activeIndex] : undefined
+  const visibleActiveIndex = open && activeOption && !activeOption.disabled ? activeIndex : getInitialActiveIndex()
 
   useLayoutEffect(() => {
     if (!open || typeof window === 'undefined') return
@@ -868,32 +881,13 @@ function SelectRoot({
   }, [dropdownOptions.length, open])
 
   useEffect(() => {
-    if (!open) {
-      setActiveIndex(-1)
-      return
-    }
-    if (mode) {
-      const firstEnabled = dropdownOptions.findIndex((option) => !option.disabled)
-      setActiveIndex(firstEnabled)
-      return
-    }
-    const selectedIdx = dropdownOptions.findIndex((option) => String(option.value) === String(selectedValue ?? ''))
-    const selectedOpt = selectedIdx >= 0 ? dropdownOptions[selectedIdx] : undefined
-    if (selectedOpt && !selectedOpt.disabled) {
-      setActiveIndex(selectedIdx)
-    } else {
-      setActiveIndex(dropdownOptions.findIndex((option) => !option.disabled))
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open || activeIndex < 0 || !dropdownRef.current) return
+    if (!open || visibleActiveIndex < 0 || !dropdownRef.current) return
     const optionEls = dropdownRef.current.querySelectorAll('[role="option"]')
-    const target = optionEls[activeIndex] as HTMLElement | undefined
+    const target = optionEls[visibleActiveIndex] as HTMLElement | undefined
     if (target && typeof target.scrollIntoView === 'function') {
       target.scrollIntoView({ block: 'nearest' })
     }
-  }, [activeIndex, open])
+  }, [open, visibleActiveIndex])
 
   useEffect(() => {
     if (!open) return
@@ -902,10 +896,14 @@ function SelectRoot({
       const target = event.target as Node
       if (!rootRef.current?.contains(target) && !dropdownRef.current?.contains(target)) {
         setOpen(false)
+        setActiveIndex(-1)
       }
     }
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape') {
+        setOpen(false)
+        setActiveIndex(-1)
+      }
     }
 
     document.addEventListener('pointerdown', handlePointerDown)
@@ -931,6 +929,7 @@ function SelectRoot({
     if (value === undefined) setInternalValue(nextValue)
     onChange?.(nextValue, option)
     setOpen(false)
+    setActiveIndex(-1)
   }
 
   return (
@@ -956,11 +955,18 @@ function SelectRoot({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={dropdownId}
-        aria-activedescendant={open && activeIndex >= 0 && dropdownId
-          ? `${dropdownId}-opt-${activeIndex}`
+        aria-activedescendant={open && visibleActiveIndex >= 0 && dropdownId
+          ? `${dropdownId}-opt-${visibleActiveIndex}`
           : undefined}
         onClick={() => {
-          if (!disabled) setOpen((current) => !current)
+          if (disabled) return
+          if (open) {
+            setOpen(false)
+            setActiveIndex(-1)
+          } else {
+            setActiveIndex(getInitialActiveIndex())
+            setOpen(true)
+          }
         }}
         onKeyDown={(event) => {
           if (disabled) return
@@ -972,7 +978,7 @@ function SelectRoot({
               if (opt && !opt.disabled) enabled.push(i)
             }
             if (enabled.length === 0) return
-            const cur = enabled.indexOf(activeIndex)
+            const cur = enabled.indexOf(visibleActiveIndex)
             const baseline = cur >= 0 ? cur : (delta > 0 ? -1 : 0)
             const nextPos = (baseline + delta + enabled.length) % enabled.length
             const target = enabled[nextPos]
@@ -981,13 +987,21 @@ function SelectRoot({
           switch (event.key) {
             case 'ArrowDown':
               event.preventDefault()
-              if (!open) setOpen(true)
-              else moveActive(1)
+              if (!open) {
+                setActiveIndex(getInitialActiveIndex())
+                setOpen(true)
+              } else {
+                moveActive(1)
+              }
               return
             case 'ArrowUp':
               event.preventDefault()
-              if (!open) setOpen(true)
-              else moveActive(-1)
+              if (!open) {
+                setActiveIndex(getInitialActiveIndex())
+                setOpen(true)
+              } else {
+                moveActive(-1)
+              }
               return
             case 'Home':
               if (!open) return
@@ -1012,10 +1026,11 @@ function SelectRoot({
             case ' ': {
               event.preventDefault()
               if (!open) {
+                setActiveIndex(getInitialActiveIndex())
                 setOpen(true)
                 return
               }
-              const option = dropdownOptions[activeIndex]
+              const option = dropdownOptions[visibleActiveIndex]
               if (option && !option.disabled) commitValue(option.value, option)
               return
             }
@@ -1023,6 +1038,7 @@ function SelectRoot({
               if (open) {
                 event.preventDefault()
                 setOpen(false)
+                setActiveIndex(-1)
               }
               return
             default:
@@ -1047,7 +1063,7 @@ function SelectRoot({
             const selected = mode && Array.isArray(selectedValue)
               ? selectedValue.some((item) => String(item) === String(option.value))
               : String(selectedValue ?? '') === String(option.value)
-            const active = idx === activeIndex
+            const active = idx === visibleActiveIndex
             return (
               <button
                 key={String(option.value)}
@@ -1510,6 +1526,32 @@ function cellValue<T>(record: T, dataIndex: FieldName | undefined) {
   return getValueAt(record as FieldValues, dataIndex)
 }
 
+function widthToPixels(width: ColumnType<any>['width']): number | undefined {
+  if (typeof width === 'number' && Number.isFinite(width)) return width
+  if (typeof width !== 'string') return undefined
+  const pxMatch = width.trim().match(/^(\d+(?:\.\d+)?)px$/)
+  if (pxMatch) return Number(pxMatch[1])
+  return undefined
+}
+
+function deriveTableMinWidth<T>(columns: ColumnsType<T>, rowSelection: unknown, expandable: unknown): number {
+  const structuralWidth = (rowSelection ? 52 : 0) + (expandable ? 52 : 0)
+  return columns.reduce((total, column) => total + (widthToPixels(column.width) ?? 168), structuralWidth)
+}
+
+function resolveTableMinWidth(scrollX: number | string | undefined, derivedWidth: number) {
+  if (typeof scrollX === 'number' && Number.isFinite(scrollX)) {
+    return `${Math.max(scrollX, derivedWidth)}px`
+  }
+  if (typeof scrollX === 'string') {
+    const explicitPx = widthToPixels(scrollX)
+    if (explicitPx !== undefined) return `${Math.max(explicitPx, derivedWidth)}px`
+    if (scrollX === 'max-content') return `${derivedWidth}px`
+    return scrollX
+  }
+  return `${derivedWidth}px`
+}
+
 export function Table<T extends object>({
   columns = [],
   dataSource = [],
@@ -1534,7 +1576,8 @@ export function Table<T extends object>({
   const pageSize = hasPagination ? pagination.pageSize ?? 10 : dataSource.length || 10
   const pagedData = !hasPagination ? dataSource : dataSource.slice((page - 1) * pageSize, page * pageSize)
   const isLoading = typeof loading === 'object' ? loading.spinning : loading
-  const tableStyle = scroll?.x ? { minWidth: typeof scroll.x === 'number' ? `${scroll.x}px` : scroll.x } : undefined
+  const derivedMinWidth = deriveTableMinWidth(visibleColumns, rowSelection, expandable)
+  const tableStyle = { minWidth: resolveTableMinWidth(scroll?.x, derivedMinWidth) }
 
   const toggleSelected = (key: Key, record: T, checked: boolean) => {
     const nextKeys = checked ? [...selectedKeys, key] : selectedKeys.filter((item) => item !== key)
@@ -1547,7 +1590,7 @@ export function Table<T extends object>({
     <div className={cx('rh-table-wrapper ant-table-wrapper', className)} {...props}>
       <div className="ant-table">
         <div className="ant-table-container">
-          <div className="ant-table-content" style={scroll?.x ? { overflowX: 'auto' } : undefined}>
+          <div className="ant-table-content">
             <table style={tableStyle}>
               <thead className="ant-table-thead">
                 <tr>
@@ -1563,9 +1606,13 @@ export function Table<T extends object>({
               <tbody className="ant-table-tbody">
                 {pagedData.length === 0 ? (
                   <tr>
-                    <td colSpan={visibleColumns.length + (rowSelection ? 1 : 0) + (expandable ? 1 : 0)}>
-                      {isLoading && <div className="rh-table__loading">Загрузка...</div>}
-                      {locale?.emptyText ?? 'Нет данных'}
+                    <td
+                      className="rh-table__empty-cell"
+                      colSpan={visibleColumns.length + (rowSelection ? 1 : 0) + (expandable ? 1 : 0)}
+                    >
+                      {isLoading
+                        ? <div className="rh-table__loading">Загрузка...</div>
+                        : <div className="rh-table__empty">{locale?.emptyText ?? 'Нет данных'}</div>}
                     </td>
                   </tr>
                 ) : pagedData.map((record, index) => {
@@ -2202,9 +2249,42 @@ interface QRCodeProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function QRCode({ value = '', size = 160, className, ...props }: QRCodeProps) {
+  const qr = useMemo(() => {
+    if (!value) return null
+    try {
+      const matrix = createQRCode(value, { errorCorrectionLevel: 'M' }).modules
+      const quietZone = 4
+      const commands: string[] = []
+      for (let row = 0; row < matrix.size; row += 1) {
+        for (let col = 0; col < matrix.size; col += 1) {
+          if (matrix.get(row, col)) commands.push(`M${col + quietZone},${row + quietZone}h1v1h-1z`)
+        }
+      }
+      return {
+        viewBoxSize: matrix.size + 8,
+        path: commands.join(''),
+      }
+    } catch {
+      return null
+    }
+  }, [value])
+
   return (
     <div className={cx('rh-qr ant-qrcode', className)} style={{ width: size, height: size }} aria-label={value} {...props}>
-      <div className="rh-qr__grid" />
+      {qr ? (
+        <svg
+          className="rh-qr__svg"
+          viewBox={`0 0 ${qr.viewBoxSize} ${qr.viewBoxSize}`}
+          role="img"
+          aria-hidden="true"
+          shapeRendering="crispEdges"
+        >
+          <rect width={qr.viewBoxSize} height={qr.viewBoxSize} fill="#fff" />
+          <path d={qr.path} fill="currentColor" />
+        </svg>
+      ) : (
+        <div className="rh-qr__empty" />
+      )}
     </div>
   )
 }

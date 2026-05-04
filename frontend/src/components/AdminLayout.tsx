@@ -1,9 +1,11 @@
 import BrandLockup from '@/components/BrandLockup'
 import TopNavigationLayout from '@/components/TopNavigationLayout'
-import { Admin2FABanner, Admin2FAToastBridge } from '@/components/Admin2FANotice'
+import { Admin2FABanner, Admin2FALockedState, Admin2FAToastBridge, isAdmin2FAEnabled } from '@/components/Admin2FANotice'
 import { PLATFORM_NAME } from '@/content/support'
 import { ADMIN_OVERFLOW_NAV_ITEMS, ADMIN_PRIMARY_NAV_ITEMS } from '@/navigation/menu'
 import { useDocumentTitle, type DocumentTitleEntry } from '@/lib/useDocumentTitle'
+import { useAuthStore } from '@/stores/auth'
+import { useLocation } from 'react-router-dom'
 
 const ADMIN_TITLES: readonly DocumentTitleEntry[] = [
   ['/admin/dashboard', `${PLATFORM_NAME} — Админ-дашборд`],
@@ -47,6 +49,12 @@ const ADMIN_TITLES: readonly DocumentTitleEntry[] = [
 
 export default function AdminLayout() {
   useDocumentTitle(ADMIN_TITLES, `${PLATFORM_NAME} — Админ-панель`)
+  const user = useAuthStore((s) => s.user)
+  const location = useLocation()
+  const profile2FASetupAllowed = location.pathname === '/admin/profile' || location.pathname.startsWith('/admin/profile/')
+  const admin2FARequired = user?.role === 'admin' && !isAdmin2FAEnabled(user.two_fa_method)
+  const contentOverride = admin2FARequired && !profile2FASetupAllowed ? <Admin2FALockedState /> : undefined
+
   return (
     <>
       <Admin2FAToastBridge />
@@ -67,7 +75,8 @@ export default function AdminLayout() {
         overflowLabel="Ещё"
         navigationMode="pills"
         profilePath="/admin/profile"
-        topBanner={<Admin2FABanner />}
+        topBanner={contentOverride ? null : <Admin2FABanner />}
+        contentOverride={contentOverride}
       />
     </>
   )

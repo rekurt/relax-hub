@@ -99,6 +99,7 @@ function renderAdminShell(route = '/admin') {
         <Routes>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<div>Админка</div>} />
+            <Route path="profile" element={<div>Профиль администратора</div>} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -221,5 +222,39 @@ describe('Shell navigation', () => {
     expect(consoleError.mock.calls.flat().join(' ')).not.toContain('Encountered two children with the same key')
 
     consoleError.mockRestore()
+  })
+
+  it('locks admin workspace until 2FA is enabled', () => {
+    mockDesktopViewport()
+    useAuthStore.setState({
+      user: { id: '42', role: 'admin', name: 'Администратор', email: 'admin@example.com', two_fa_method: 'none', onboarding_completed: true },
+      token: 'jwt-token',
+      isAuthenticated: true,
+      isLoading: false,
+    })
+
+    renderAdminShell()
+
+    expect(screen.getByText('Включите 2FA для доступа к админ-панели')).toBeInTheDocument()
+    expect(screen.queryByText('Админка')).not.toBeInTheDocument()
+    expect(screen.queryByText('Включите двухфакторную аутентификацию')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Настроить 2FA' })).toHaveAttribute('href', '/admin/profile?focus2fa=1#two-factor')
+  })
+
+  it('keeps admin profile reachable while 2FA is not configured', () => {
+    mockDesktopViewport()
+    useAuthStore.setState({
+      user: { id: 'admin-1', role: 'admin', name: 'Администратор', email: 'admin@example.com', two_fa_method: 'none', onboarding_completed: true },
+      token: 'jwt-token',
+      isAuthenticated: true,
+      isLoading: false,
+    })
+
+    renderAdminShell('/admin/profile')
+
+    expect(screen.getByText('Профиль администратора')).toBeInTheDocument()
+    expect(screen.getByText('Включите двухфакторную аутентификацию')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Включить 2FA' })).toHaveAttribute('href', '/admin/profile?focus2fa=1#two-factor')
+    expect(screen.queryByText('Включите 2FA для доступа к админ-панели')).not.toBeInTheDocument()
   })
 })
