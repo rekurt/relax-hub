@@ -7973,7 +7973,7 @@ body.rh-app .rh-admin-dashboard .rh-admin-queue {
 }
 
 body.rh-app .rh-admin-dashboard .rh-admin-queue__row {
-  grid-template-columns: minmax(112px, 0.72fr) minmax(220px, 1.8fr) minmax(72px, 0.4fr) auto;
+  grid-template-columns: 112px minmax(0, 1fr) 86px auto;
   gap: 12px;
   padding: 10px 0;
 }
@@ -8014,6 +8014,10 @@ body.rh-app .rh-admin-dashboard .rh-table-shell {
 
 body.rh-app .rh-admin-dashboard .rh-table-wrapper .ant-table-content {
   overflow-x: auto;
+}
+
+body.rh-app .rh-admin-dashboard .rh-table-wrapper table {
+  min-width: 810px;
 }
 
 body.rh-app .rh-admin-dashboard .rh-table-wrapper th,

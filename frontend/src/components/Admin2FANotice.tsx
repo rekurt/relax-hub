@@ -2,16 +2,11 @@ import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Alert, App } from '@/components/design/system'
 import { SafetyOutlined } from '@/components/design/icons'
-import { ADMIN_2FA_DEEP_LINK, ADMIN_2FA_START_EVENT } from '@/lib/admin2faNotice'
+import { ADMIN_2FA_DEEP_LINK, ADMIN_2FA_START_EVENT, isAdmin2FAEnabled } from '@/lib/admin2faNotice'
 import { useAuthStore } from '@/stores/auth'
 
 const DESCRIPTION =
   'Для доступа к админ-панели включите двухфакторную аутентификацию.'
-
-export function isAdmin2FAEnabled(method?: string | null): boolean {
-  const normalized = method?.trim().toLowerCase()
-  return normalized === 'totp' || normalized === 'sms'
-}
 
 export function Admin2FABanner() {
   const user = useAuthStore((s) => s.user)

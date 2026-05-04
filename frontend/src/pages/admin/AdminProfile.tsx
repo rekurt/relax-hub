@@ -135,17 +135,16 @@ export default function AdminProfile() {
     focusTwoFactorSetup()
   }, [focusTwoFactorSetup, location.hash, location.search])
 
-  const startTwoFactorSetup = useCallback(() => {
-    focusTwoFactorSetup()
-    if (totpStep !== 'idle' || smsEnabled || enableTotp.isPending) return
-    enableTotp.mutate()
-  }, [enableTotp.isPending, enableTotp.mutate, focusTwoFactorSetup, smsEnabled, totpStep])
-
   useEffect(() => {
     if (typeof window === 'undefined') return
+    const startTwoFactorSetup = () => {
+      focusTwoFactorSetup()
+      if (totpStep !== 'idle' || smsEnabled || enableTotp.isPending) return
+      enableTotp.mutate()
+    }
     window.addEventListener(ADMIN_2FA_START_EVENT, startTwoFactorSetup)
     return () => window.removeEventListener(ADMIN_2FA_START_EVENT, startTwoFactorSetup)
-  }, [startTwoFactorSetup])
+  }, [enableTotp, focusTwoFactorSetup, smsEnabled, totpStep])
 
   const updateProfile = usePutAuthMe({
     mutation: {

@@ -16,4 +16,21 @@ describe('resolveAssetUrl', () => {
   it('keeps normal absolute URLs unchanged', () => {
     expect(resolveAssetUrl('https://cdn.example.com/photo.jpg')).toBe('https://cdn.example.com/photo.jpg')
   })
+
+  it('returns protocol-relative URLs unchanged when window is unavailable (SSR-safe)', () => {
+    const originalWindow = globalThis.window
+    Reflect.deleteProperty(globalThis, 'window')
+    try {
+      expect(resolveAssetUrl('//cdn.example.com/a.png')).toBe('//cdn.example.com/a.png')
+      // Relative paths fall back to a server-relative path string instead of
+      // throwing on the missing window.location.
+      expect(resolveAssetUrl('/local/path.png')).toBe('/local/path.png')
+    } finally {
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: originalWindow,
+        writable: true,
+      })
+    }
+  })
 })

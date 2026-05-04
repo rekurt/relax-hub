@@ -1,6 +1,7 @@
 import BrandLockup from '@/components/BrandLockup'
 import TopNavigationLayout from '@/components/TopNavigationLayout'
-import { Admin2FABanner, Admin2FALockedState, Admin2FAToastBridge, isAdmin2FAEnabled } from '@/components/Admin2FANotice'
+import { Admin2FABanner, Admin2FALockedState, Admin2FAToastBridge } from '@/components/Admin2FANotice'
+import { isAdmin2FAEnabled } from '@/lib/admin2faNotice'
 import { PLATFORM_NAME } from '@/content/support'
 import { ADMIN_OVERFLOW_NAV_ITEMS, ADMIN_PRIMARY_NAV_ITEMS } from '@/navigation/menu'
 import { useDocumentTitle, type DocumentTitleEntry } from '@/lib/useDocumentTitle'

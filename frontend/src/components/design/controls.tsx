@@ -1590,7 +1590,7 @@ export function Table<T extends object>({
     <div className={cx('rh-table-wrapper ant-table-wrapper', className)} {...props}>
       <div className="ant-table">
         <div className="ant-table-container">
-          <div className="ant-table-content">
+          <div className="ant-table-content" style={scroll?.x ? { overflowX: 'auto' } : undefined}>
             <table style={tableStyle}>
               <thead className="ant-table-thead">
                 <tr>
@@ -1709,6 +1709,61 @@ interface ModalProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   [key: string]: any
 }
 
+// Stack of overlay Escape handlers — one document listener routes Escape to
+// only the topmost overlay. Per-instance listeners would all fire on a single
+// Escape and dismiss every stacked dialog at once, losing in-progress input.
+const overlayEscapeStack: Array<() => void> = []
+let overlayEscapeListenerAttached = false
+function handleOverlayEscape(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || overlayEscapeStack.length === 0) return
+  const top = overlayEscapeStack[overlayEscapeStack.length - 1]
+  top?.()
+}
+function pushOverlayEscapeHandler(handler: () => void): () => void {
+  if (typeof document === 'undefined') return () => {}
+  overlayEscapeStack.push(handler)
+  if (!overlayEscapeListenerAttached) {
+    document.addEventListener('keydown', handleOverlayEscape)
+    overlayEscapeListenerAttached = true
+  }
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    const idx = overlayEscapeStack.lastIndexOf(handler)
+    if (idx >= 0) overlayEscapeStack.splice(idx, 1)
+    if (overlayEscapeStack.length === 0 && overlayEscapeListenerAttached) {
+      document.removeEventListener('keydown', handleOverlayEscape)
+      overlayEscapeListenerAttached = false
+    }
+  }
+}
+
+// Body-scroll lock shared by Modal/Drawer. A ref-counted handle lets stacked
+// overlays coexist: the body stays scroll-locked until the *last* open
+// overlay releases its lock, so closing an inner modal can no longer
+// re-enable page scroll while an outer one is still open.
+let bodyScrollLockCount = 0
+let bodyScrollLockPreviousOverflow = ''
+function acquireBodyScrollLock(): () => void {
+  if (typeof document === 'undefined') return () => {}
+  if (bodyScrollLockCount === 0) {
+    bodyScrollLockPreviousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+  }
+  bodyScrollLockCount += 1
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    bodyScrollLockCount = Math.max(0, bodyScrollLockCount - 1)
+    if (bodyScrollLockCount === 0) {
+      document.body.style.overflow = bodyScrollLockPreviousOverflow
+      bodyScrollLockPreviousOverflow = ''
+    }
+  }
+}
+
 export function Modal({
   open,
   visible,
@@ -1737,16 +1792,11 @@ export function Modal({
   useEffect(() => {
     if (!isOpen) return
 
-    const previousOverflow = document.body.style.overflow
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel?.()
-    }
-
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', handleKeyDown)
+    const releaseScrollLock = acquireBodyScrollLock()
+    const releaseEscape = pushOverlayEscapeHandler(() => onCancel?.())
     return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', handleKeyDown)
+      releaseScrollLock()
+      releaseEscape()
     }
   }, [isOpen, onCancel])
   if (!isOpen) return null
@@ -1805,16 +1855,11 @@ export function Drawer({ open, visible, title, placement = 'right', width = 420,
   useEffect(() => {
     if (!isOpen) return
 
-    const previousOverflow = document.body.style.overflow
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose?.()
-    }
-
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', handleKeyDown)
+    const releaseScrollLock = acquireBodyScrollLock()
+    const releaseEscape = pushOverlayEscapeHandler(() => onClose?.())
     return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', handleKeyDown)
+      releaseScrollLock()
+      releaseEscape()
     }
   }, [isOpen, onClose])
   if (!isOpen) return null
