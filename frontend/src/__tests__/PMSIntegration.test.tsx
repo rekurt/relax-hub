@@ -118,8 +118,8 @@ describe('PMSIntegration route', () => {
     expect(screen.getByText('Подключить PMS')).toBeInTheDocument()
   })
 
-  it('shows empty state when no connections exist', () => {
+  it('shows empty state when no connections exist', async () => {
     renderRouter('/settings/pms')
-    expect(screen.getByText(/Нет подключений к PMS/)).toBeInTheDocument()
+    expect(await screen.findByText(/Нет подключений к PMS/)).toBeInTheDocument()
   })
 })

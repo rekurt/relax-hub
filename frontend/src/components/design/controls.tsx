@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-refresh/only-export-components */
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import { create as createQRCode } from 'qrcode'
 import {
   Children,
   cloneElement,
@@ -13,6 +14,7 @@ import {
   useId,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -1524,6 +1526,32 @@ function cellValue<T>(record: T, dataIndex: FieldName | undefined) {
   return getValueAt(record as FieldValues, dataIndex)
 }
 
+function widthToPixels(width: ColumnType<any>['width']): number | undefined {
+  if (typeof width === 'number' && Number.isFinite(width)) return width
+  if (typeof width !== 'string') return undefined
+  const pxMatch = width.trim().match(/^(\d+(?:\.\d+)?)px$/)
+  if (pxMatch) return Number(pxMatch[1])
+  return undefined
+}
+
+function deriveTableMinWidth<T>(columns: ColumnsType<T>, rowSelection: unknown, expandable: unknown): number {
+  const structuralWidth = (rowSelection ? 52 : 0) + (expandable ? 52 : 0)
+  return columns.reduce((total, column) => total + (widthToPixels(column.width) ?? 168), structuralWidth)
+}
+
+function resolveTableMinWidth(scrollX: number | string | undefined, derivedWidth: number) {
+  if (typeof scrollX === 'number' && Number.isFinite(scrollX)) {
+    return `${Math.max(scrollX, derivedWidth)}px`
+  }
+  if (typeof scrollX === 'string') {
+    const explicitPx = widthToPixels(scrollX)
+    if (explicitPx !== undefined) return `${Math.max(explicitPx, derivedWidth)}px`
+    if (scrollX === 'max-content') return `${derivedWidth}px`
+    return scrollX
+  }
+  return `${derivedWidth}px`
+}
+
 export function Table<T extends object>({
   columns = [],
   dataSource = [],
@@ -1548,7 +1576,8 @@ export function Table<T extends object>({
   const pageSize = hasPagination ? pagination.pageSize ?? 10 : dataSource.length || 10
   const pagedData = !hasPagination ? dataSource : dataSource.slice((page - 1) * pageSize, page * pageSize)
   const isLoading = typeof loading === 'object' ? loading.spinning : loading
-  const tableStyle = scroll?.x ? { minWidth: typeof scroll.x === 'number' ? `${scroll.x}px` : scroll.x } : undefined
+  const derivedMinWidth = deriveTableMinWidth(visibleColumns, rowSelection, expandable)
+  const tableStyle = { minWidth: resolveTableMinWidth(scroll?.x, derivedMinWidth) }
 
   const toggleSelected = (key: Key, record: T, checked: boolean) => {
     const nextKeys = checked ? [...selectedKeys, key] : selectedKeys.filter((item) => item !== key)
@@ -1577,9 +1606,13 @@ export function Table<T extends object>({
               <tbody className="ant-table-tbody">
                 {pagedData.length === 0 ? (
                   <tr>
-                    <td colSpan={visibleColumns.length + (rowSelection ? 1 : 0) + (expandable ? 1 : 0)}>
-                      {isLoading && <div className="rh-table__loading">Загрузка...</div>}
-                      {locale?.emptyText ?? 'Нет данных'}
+                    <td
+                      className="rh-table__empty-cell"
+                      colSpan={visibleColumns.length + (rowSelection ? 1 : 0) + (expandable ? 1 : 0)}
+                    >
+                      {isLoading
+                        ? <div className="rh-table__loading">Загрузка...</div>
+                        : <div className="rh-table__empty">{locale?.emptyText ?? 'Нет данных'}</div>}
                     </td>
                   </tr>
                 ) : pagedData.map((record, index) => {
@@ -2261,9 +2294,42 @@ interface QRCodeProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function QRCode({ value = '', size = 160, className, ...props }: QRCodeProps) {
+  const qr = useMemo(() => {
+    if (!value) return null
+    try {
+      const matrix = createQRCode(value, { errorCorrectionLevel: 'M' }).modules
+      const quietZone = 4
+      const commands: string[] = []
+      for (let row = 0; row < matrix.size; row += 1) {
+        for (let col = 0; col < matrix.size; col += 1) {
+          if (matrix.get(row, col)) commands.push(`M${col + quietZone},${row + quietZone}h1v1h-1z`)
+        }
+      }
+      return {
+        viewBoxSize: matrix.size + 8,
+        path: commands.join(''),
+      }
+    } catch {
+      return null
+    }
+  }, [value])
+
   return (
     <div className={cx('rh-qr ant-qrcode', className)} style={{ width: size, height: size }} aria-label={value} {...props}>
-      <div className="rh-qr__grid" />
+      {qr ? (
+        <svg
+          className="rh-qr__svg"
+          viewBox={`0 0 ${qr.viewBoxSize} ${qr.viewBoxSize}`}
+          role="img"
+          aria-hidden="true"
+          shapeRendering="crispEdges"
+        >
+          <rect width={qr.viewBoxSize} height={qr.viewBoxSize} fill="#fff" />
+          <path d={qr.path} fill="currentColor" />
+        </svg>
+      ) : (
+        <div className="rh-qr__empty" />
+      )}
     </div>
   )
 }

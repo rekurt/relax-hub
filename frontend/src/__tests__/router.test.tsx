@@ -91,7 +91,7 @@ function setAuth(role: string) {
   useAuthStore.setState({
     isAuthenticated: true,
     isLoading: false,
-    user: { id: '1', role, email: 'test@test.com' },
+    user: { id: '1', role, email: 'test@test.com', ...(role === 'admin' ? { two_fa_method: 'totp' } : {}) },
     token: 'jwt-token',
   })
 }

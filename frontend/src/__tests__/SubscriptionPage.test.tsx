@@ -11,7 +11,7 @@ vi.mock('@/api/generated/subscriptions/subscriptions', () => ({
   usePostMyBathhousesIdSubscription: vi.fn(),
   useDeleteMyBathhousesIdSubscription: vi.fn(),
   useGetMySubscriptions: vi.fn(),
-  useGetMyBathhousesIdPromotion: vi.fn(),
+  useGetMyBathhousesIdPromotions: vi.fn(),
   usePostMyBathhousesIdPromotion: vi.fn(),
 }))
 
@@ -24,7 +24,7 @@ import {
   usePostMyBathhousesIdSubscription,
   useDeleteMyBathhousesIdSubscription,
   useGetMySubscriptions,
-  useGetMyBathhousesIdPromotion,
+  useGetMyBathhousesIdPromotions,
   usePostMyBathhousesIdPromotion,
 } from '@/api/generated/subscriptions/subscriptions'
 import { useBathhouseStore } from '@/stores/bathhouse'
@@ -109,9 +109,9 @@ describe('SubscriptionPage', () => {
       data: undefined,
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -129,9 +129,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -150,9 +150,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -171,9 +171,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -190,9 +190,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -210,9 +210,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -235,9 +235,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -255,9 +255,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
-      data: { data: mockPromotion, success: true },
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
+      data: { data: [mockPromotion], success: true, meta: { total_count: 1 } },
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -281,9 +281,9 @@ describe('SubscriptionPage', () => {
       },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -301,9 +301,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 
@@ -321,9 +321,9 @@ describe('SubscriptionPage', () => {
       data: { data: [], success: true, meta: { total_count: 0 } },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMySubscriptions>)
-    vi.mocked(useGetMyBathhousesIdPromotion).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPromotions).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotion>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPromotions>)
 
     renderWithProviders(<SubscriptionPage />)
 

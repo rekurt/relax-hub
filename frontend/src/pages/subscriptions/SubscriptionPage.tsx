@@ -30,7 +30,7 @@ import {
   usePostMyBathhousesIdSubscription,
   useDeleteMyBathhousesIdSubscription,
   useGetMySubscriptions,
-  useGetMyBathhousesIdPromotion,
+  useGetMyBathhousesIdPromotions,
   usePostMyBathhousesIdPromotion,
 } from '@/api/generated/subscriptions/subscriptions'
 import { useGetCities } from '@/api/generated/cities/cities'
@@ -121,8 +121,9 @@ export default function SubscriptionPage() {
     { page: subsPage, page_size: subsPageSize },
   )
 
-  const { data: promotionData } = useGetMyBathhousesIdPromotion(
+  const { data: promotionsData } = useGetMyBathhousesIdPromotions(
     selectedBathhouseId ?? '',
+    { page: 1, page_size: 20 },
     { query: { enabled: !!selectedBathhouseId } },
   )
 
@@ -132,7 +133,8 @@ export default function SubscriptionPage() {
   const currentSubscription = subscriptionData?.data as InternalHandlerSubscriptionResponse | undefined
   const allSubscriptions = (allSubscriptionsData?.data ?? []) as InternalHandlerSubscriptionResponse[]
   const totalSubs = allSubscriptionsData?.meta?.total_count ?? 0
-  const promotion = promotionData?.data as InternalHandlerPromotionResponse | undefined
+  const promotions = (promotionsData?.data ?? []) as InternalHandlerPromotionResponse[]
+  const promotion = promotions.find((item) => item.status === 'active') ?? promotions[0]
 
   const invalidateSubscription = () => {
     queryClient.invalidateQueries({
@@ -144,6 +146,9 @@ export default function SubscriptionPage() {
   const invalidatePromotion = () => {
     queryClient.invalidateQueries({
       queryKey: [`/my/bathhouses/${selectedBathhouseId}/promotion`],
+    })
+    queryClient.invalidateQueries({
+      queryKey: [`/my/bathhouses/${selectedBathhouseId}/promotions`],
     })
   }
 
