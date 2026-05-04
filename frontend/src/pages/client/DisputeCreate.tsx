@@ -7,7 +7,6 @@ import {
   Input,
   Select,
   Space,
-  Typography,
 } from '@/components/design/system'
 import { ArrowLeftOutlined } from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
@@ -15,8 +14,6 @@ import {
   usePostBookingsIdDispute,
 } from '@/api/generated/disputes/disputes'
 import { getGetMyDisputesQueryKey } from '@/api/generated/disputes/disputes'
-
-const { Title } = Typography
 
 const REASON_OPTIONS = [
   { label: 'Услуга не оказана', value: 'service_not_provided' },
@@ -64,30 +61,40 @@ export default function DisputeCreate() {
 
   if (!bookingId) {
     return (
-      <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', padding: '40px 0' }}>
-        <Title level={4}>Бронирование не указано</Title>
-        <Button onClick={() => navigate('/client/bookings')}>К бронированиям</Button>
-      </div>
+      <Card className="rh-client-narrow-page">
+        <div className="rh-admin-empty-state">
+          <div className="rh-admin-empty-state__title">Бронирование не указано</div>
+          <p className="rh-admin-empty-state__text">
+            Спор открывается из конкретного бронирования.
+          </p>
+          <Button onClick={() => navigate('/client/bookings')}>К бронированиям</Button>
+        </div>
+      </Card>
     )
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <Space style={{ marginBottom: 16 }}>
+    <div className="rh-client-narrow-page rh-admin-detail-page">
+      <div className="rh-admin-detail-back">
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate(-1)}
         >
           Назад
         </Button>
-      </Space>
+      </div>
 
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Открыть спор
-      </Title>
+      <Card className="rh-admin-detail-hero">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <span className="rh-admin-toolbar__hint">Поддержка</span>
+            <h1 className="rh-admin-toolbar__title">Открыть спор</h1>
+          </div>
+        </div>
+      </Card>
 
-      <Card>
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+      <Card className="rh-admin-detail-card">
+        <Form form={form} layout="vertical" onFinish={handleSubmit} className="rh-admin-modal-form">
           <Form.Item label="Бронирование">
             <Input value={bookingId} disabled />
           </Form.Item>

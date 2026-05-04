@@ -6,7 +6,7 @@ import { postAuthForgotPassword } from '@/api/generated/auth/auth'
 import AuthShell from '@/components/AuthShell'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
-import { syncAntdFormFromDOM } from '@/lib/autofill'
+import { syncDesignFormFromDOM } from '@/lib/autofill'
 
 export default function ForgotPassword() {
   const { message } = App.useApp()
@@ -15,7 +15,7 @@ export default function ForgotPassword() {
   const [form] = Form.useForm<{ email: string }>()
 
   const handleSubmitMouseDown = () => {
-    syncAntdFormFromDOM(form, ['email'])
+    syncDesignFormFromDOM(form, ['email'])
   }
 
   const onFinish = async (values: { email: string }) => {
@@ -87,7 +87,7 @@ export default function ForgotPassword() {
       footer={<Link to="/login">Вернуться к входу</Link>}
     >
       <Card variant="borderless" className="rh-auth-surface">
-        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" className="rh-full-width">
           <Form
             form={form}
             className="rh-auth-form"

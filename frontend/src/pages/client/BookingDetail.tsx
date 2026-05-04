@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   Typography,
@@ -7,7 +7,6 @@ import {
   Tag,
   Button,
   Spin,
-  Empty,
   Alert,
   Divider,
   Space,
@@ -25,6 +24,7 @@ import {
   StarOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
+  ReloadOutlined,
 } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -34,21 +34,22 @@ import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/p
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { axiosInstance } from '@/api/axios-instance'
+import { useDeviceToken } from '@/lib/useDeviceToken'
 import { usePostApiV1BookingsShare } from '@/api/generated/share/share'
+
+const PUSH_PROMPTED_KEY = 'rh_push_prompted'
 import ApplePayButton from '@/components/ApplePayButton'
 import GooglePayButton from '@/components/GooglePayButton'
 import ShareButton from '@/components/ShareButton'
-import { useDeviceToken } from '@/lib/useDeviceToken'
 
-const { Title, Text } = Typography
-const PUSH_PROMPTED_KEY = 'rh_push_prompted'
+const { Text } = Typography
 
 export default function ClientBookingDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
   const { message } = App.useApp()
-  const routeState = location.state as { paymentMethod?: string; comboWalletAmount?: number } | null
+  const routeState = location.state as { paymentMethod?: string; walletApplied?: number } | null
   const queryClient = useQueryClient()
   const [modifyModalOpen, setModifyModalOpen] = useState(false)
   const [modifyLoading, setModifyLoading] = useState(false)
@@ -105,11 +106,13 @@ export default function ClientBookingDetail() {
 
   const { requestPushPermission } = useDeviceToken()
 
-  // FR-142: Request push permission after first booking completion
+  // Request push permission once after the first booking actually completes.
+  // Triggering on creation would burn the one-shot prompt for cancelled or
+  // never-completed (request-mode) bookings.
   useEffect(() => {
     if (booking?.status === 'completed' && !localStorage.getItem(PUSH_PROMPTED_KEY)) {
       localStorage.setItem(PUSH_PROMPTED_KEY, '1')
-      requestPushPermission()
+      void requestPushPermission()
     }
   }, [booking?.status, requestPushPermission])
 
@@ -176,7 +179,16 @@ export default function ClientBookingDetail() {
   }
 
   if (!booking) {
-    return <Empty description="Бронирование не найдено" />
+    return (
+      <Card>
+        <div className="rh-admin-empty-state">
+          <div className="rh-admin-empty-state__title">Бронирование не найдено</div>
+          <p className="rh-admin-empty-state__text">
+            Проверьте ссылку или вернитесь к списку бронирований.
+          </p>
+        </div>
+      </Card>
+    )
   }
 
   const statusConfig = BOOKING_STATUS_CONFIG[booking.status ?? ''] ?? { color: 'default', text: booking.status }
@@ -189,6 +201,7 @@ export default function ClientBookingDetail() {
   const canPay = booking.status === 'confirmed' && (!payment || payment.status === 'pending' || !payment.status)
   const canReview = booking.status === 'completed'
   const canDispute = booking.status === 'completed' || booking.status === 'no_show'
+  const canRebook = booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'rejected'
   const canModify =
     (booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'pending_owner') &&
     (booking.modification_count ?? 0) < 3 &&
@@ -225,19 +238,27 @@ export default function ClientBookingDetail() {
   }
 
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto' }}>
-      <Button
-        type="text"
-        icon={<ArrowLeftOutlined />}
-        onClick={() => navigate('/client/bookings')}
-        style={{ marginBottom: 16 }}
-      >
-        К бронированиям
-      </Button>
+    <div className="rh-client-booking-detail rh-admin-detail-page">
+      <div className="rh-admin-detail-back">
+        <Button
+          type="text"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/client/bookings')}
+        >
+          К бронированиям
+        </Button>
+      </div>
 
-      <Title level={3}>Детали бронирования</Title>
+      <Card className="rh-admin-detail-hero">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <span className="rh-admin-toolbar__hint">Клиентское бронирование</span>
+            <h1 className="rh-admin-toolbar__title">Детали бронирования</h1>
+          </div>
+        </div>
+      </Card>
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card className="rh-admin-detail-card">
         <Descriptions column={1} bordered size="small">
           <Descriptions.Item label="ID">
             {booking.id?.slice(0, 8)}...
@@ -287,7 +308,7 @@ export default function ClientBookingDetail() {
             </Descriptions.Item>
           )}
           <Descriptions.Item label="Итого">
-            <Text strong style={{ fontSize: 16 }}>{formatPrice(booking.total_price ?? 0)}</Text>
+            <Text strong className="rh-client-booking-total">{formatPrice(booking.total_price ?? 0)}</Text>
           </Descriptions.Item>
           {(booking.earned_points ?? 0) > 0 && (
             <Descriptions.Item label="Начислено баллов">
@@ -306,7 +327,7 @@ export default function ClientBookingDetail() {
       </Card>
 
       {/* Payment section */}
-      <Card title="Платёж" style={{ marginBottom: 16 }}>
+      <Card title="Платёж" className="rh-admin-detail-card">
         {paymentLoading ? (
           <Spin size="small" />
         ) : payment ? (
@@ -333,7 +354,7 @@ export default function ClientBookingDetail() {
             </Descriptions.Item>
           </Descriptions>
         ) : (
-          <div style={{ color: 'var(--rh-text-muted)' }}>Платёж не найден</div>
+          <div className="rh-client-muted-state">Платёж не найден</div>
         )}
       </Card>
 
@@ -342,15 +363,15 @@ export default function ClientBookingDetail() {
         <Alert
           type="warning"
           showIcon
-          style={{ marginBottom: 16 }}
+          className="rh-admin-alert"
           title="Политика отмены"
           description={getRefundInfo()}
         />
       )}
 
-      <Divider />
+      <Divider className="rh-admin-detail-divider" />
 
-      <Space wrap>
+      <Space wrap className="rh-client-booking-actions">
         <ShareButton
           url={`${window.location.origin}/client/bookings/${id}`}
           title="Бронирование на Bani"
@@ -386,26 +407,46 @@ export default function ClientBookingDetail() {
             Открыть спор
           </Button>
         )}
+        {canRebook && booking.bathhouse_id && (
+          <Button
+            size="large"
+            icon={<ReloadOutlined />}
+            onClick={() => navigate(`/client/booking/new?bathhouse=${booking.bathhouse_id}&rebook=${booking.id}`)}
+          >
+            Забронировать снова
+          </Button>
+        )}
         {canPay && (
           <>
             <Button
               type="primary"
               size="large"
               icon={<DollarOutlined />}
-              onClick={() => id && payMutation.mutate({
-                id,
-                data: {
-                  payment_method: routeState?.paymentMethod ?? 'card',
-                  ...(routeState?.paymentMethod === 'combo' && routeState?.comboWalletAmount
-                    ? { wallet_amount: routeState.comboWalletAmount, card_amount: (booking.total_price ?? 0) - routeState.comboWalletAmount }
-                    : {}),
-                },
-              })}
+              onClick={() => {
+                if (!id) return
+                const walletAmount = routeState?.walletApplied && routeState.walletApplied > 0 ? routeState.walletApplied : 0
+                const cardAmount = Math.max(0, (booking.total_price ?? 0) - walletAmount)
+                let method: string = routeState?.paymentMethod ?? 'card'
+                if (walletAmount > 0 && cardAmount === 0) {
+                  method = 'wallet'
+                } else if (walletAmount > 0 && cardAmount > 0) {
+                  method = 'combo'
+                }
+                payMutation.mutate({
+                  id,
+                  data: {
+                    payment_method: method,
+                    ...(walletAmount > 0
+                      ? { wallet_amount: walletAmount, card_amount: cardAmount }
+                      : {}),
+                  },
+                })
+              }}
               loading={payMutation.isPending}
             >
               {routeState?.paymentMethod === 'sbp' ? 'Оплатить через СБП'
                 : routeState?.paymentMethod === 'wallet' ? 'Оплатить с кошелька'
-                : routeState?.paymentMethod === 'combo' ? 'Оплатить (кошелёк + карта)'
+                : routeState?.walletApplied && routeState.walletApplied > 0 ? 'Оплатить (кошелёк + карта)'
                 : 'Оплатить картой'}
             </Button>
             <ApplePayButton
@@ -454,7 +495,7 @@ export default function ClientBookingDetail() {
         <Alert
           type="info"
           showIcon
-          style={{ marginBottom: 16 }}
+          className="rh-admin-alert"
           title={`Осталось изменений: ${3 - (booking.modification_count ?? 0)}`}
           description="Цена будет пересчитана автоматически. При увеличении стоимости потребуется доплата, при уменьшении — разница будет возвращена."
         />
@@ -471,7 +512,7 @@ export default function ClientBookingDetail() {
             <DatePicker
               showTime={{ format: 'HH:mm' }}
               format="DD.MM.YYYY HH:mm"
-              style={{ width: '100%' }}
+              className="rh-admin-form-control"
             />
           </Form.Item>
           <Form.Item
@@ -482,7 +523,7 @@ export default function ClientBookingDetail() {
             <DatePicker
               showTime={{ format: 'HH:mm' }}
               format="DD.MM.YYYY HH:mm"
-              style={{ width: '100%' }}
+              className="rh-admin-form-control"
             />
           </Form.Item>
           <Form.Item
@@ -490,7 +531,7 @@ export default function ClientBookingDetail() {
             label="Количество гостей"
             rules={[{ required: true, message: 'Укажите количество гостей' }]}
           >
-            <InputNumber min={1} style={{ width: '100%' }} />
+            <InputNumber min={1} className="rh-admin-form-control" />
           </Form.Item>
           <Form.Item>
             <Space>

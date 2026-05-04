@@ -6,7 +6,6 @@ import {
   Card,
   Descriptions,
   Divider,
-  Empty,
   Input,
   Rate,
   Space,
@@ -33,7 +32,11 @@ import type {
 } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
+
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(' ')
+}
 
 const statusLabel: Record<string, string> = {
   open: 'Открыт',
@@ -132,14 +135,23 @@ export default function TicketDetail() {
 
   if (ticketLoading || messagesLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: 48 }}>
+      <Card className="rh-admin-state-card">
         <Spin size="large" />
-      </div>
+      </Card>
     )
   }
 
   if (!ticket) {
-    return <Empty description="Обращение не найдено" />
+    return (
+      <Card>
+        <div className="rh-admin-empty-state">
+          <div className="rh-admin-empty-state__title">Обращение не найдено</div>
+          <p className="rh-admin-empty-state__text">
+            Проверьте ссылку или вернитесь к списку обращений.
+          </p>
+        </div>
+      </Card>
+    )
   }
 
   const isResolved = ticket.status === 'resolved'
@@ -148,21 +160,26 @@ export default function TicketDetail() {
   const canSubmitCSAT = isResolved && !ticket.csat_score
 
   return (
-    <div>
-      <Space style={{ marginBottom: 16 }}>
+    <div className="rh-admin-detail-page">
+      <div className="rh-admin-detail-back">
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/client/tickets')}
         >
           Назад
         </Button>
-      </Space>
+      </div>
 
-      <Title level={3} style={{ marginBottom: 16 }}>
-        {ticket.subject}
-      </Title>
+      <Card className="rh-admin-detail-hero">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <span className="rh-admin-toolbar__hint">Обращение в поддержку</span>
+            <h1 className="rh-admin-toolbar__title">{ticket.subject}</h1>
+          </div>
+        </div>
+      </Card>
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card className="rh-admin-detail-card">
         <Descriptions column={{ xs: 1, sm: 2 }} size="small">
           <Descriptions.Item label="Статус">
             <Tag color={statusColor[ticket.status!] ?? 'default'}>
@@ -198,7 +215,7 @@ export default function TicketDetail() {
 
       {canSubmitCSAT && (
         <Card
-          style={{ marginBottom: 16 }}
+          className="rh-admin-detail-card"
           title={
             <Space>
               <SmileOutlined />
@@ -206,7 +223,7 @@ export default function TicketDetail() {
             </Space>
           }
         >
-          <Space orientation="vertical" align="center" style={{ width: '100%' }}>
+          <Space orientation="vertical" align="center" className="rh-client-csat-panel">
             <Rate
               value={csatScore}
               onChange={setCsatScore}
@@ -227,44 +244,41 @@ export default function TicketDetail() {
         </Card>
       )}
 
-      <Card title="Переписка" style={{ marginBottom: 16 }}>
+      <Card title="Переписка" className="rh-admin-detail-card rh-admin-message-card">
         {messages.length === 0 ? (
-          <Empty description="Нет сообщений" />
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет сообщений</div>
+            <p className="rh-admin-empty-state__text">
+              История обращения пока пуста.
+            </p>
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="rh-admin-message-list">
             {messages.map((msg) => {
               const isAdmin = msg.sender_type === 'admin'
+              const isOwnMessage = !isAdmin
               return (
                 <div
                   key={msg.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: isAdmin ? 'flex-start' : 'flex-end',
-                  }}
+                  className={cx('rh-admin-message-row', isOwnMessage && 'rh-client-message-row--own')}
                 >
                   <div
-                    style={{
-                      maxWidth: '70%',
-                      padding: '10px 14px',
-                      borderRadius: 20,
-                      background: isAdmin ? 'rgba(15, 23, 42, 0.08)' : 'rgba(15, 118, 110, 0.08)',
-                      border: isAdmin ? '1px solid #c9c1b5' : '1px solid rgba(15, 118, 110, 0.28)',
-                    }}
+                    className={cx('rh-admin-message-bubble', isOwnMessage && 'rh-client-message-bubble--own')}
                   >
-                    <div style={{ marginBottom: 4 }}>
-                      <Text strong style={{ fontSize: 12 }}>
+                    <div className="rh-admin-message-meta">
+                      <Text strong className="rh-admin-message-author">
                         {isAdmin ? 'Поддержка' : 'Вы'}
                       </Text>
-                      <Text type="secondary" style={{ fontSize: 11, marginLeft: 8 }}>
+                      <Text type="secondary" className="rh-admin-message-time">
                         {msg.created_at ? formatDateTime(msg.created_at) : ''}
                       </Text>
                     </div>
-                    <Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                    <Paragraph className="rh-admin-message-body">
                       {msg.body}
                     </Paragraph>
                     {msg.attachments && msg.attachments.length > 0 && (
                       <>
-                        <Divider style={{ margin: '8px 0' }} />
+                        <Divider className="rh-admin-message-divider" />
                         <Space orientation="vertical" size={2}>
                           {msg.attachments.map((url, idx) => (
                             <a
@@ -289,7 +303,7 @@ export default function TicketDetail() {
         {canSendMessage && (
           <>
             <Divider />
-            <Space.Compact style={{ width: '100%' }}>
+            <Space.Compact className="rh-admin-reply-box">
               <Input.TextArea
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
@@ -308,12 +322,12 @@ export default function TicketDetail() {
                 onClick={handleSendMessage}
                 loading={sendMutation.isPending}
                 disabled={!messageText.trim()}
-                style={{ height: 'auto' }}
+                className="rh-admin-reply-button"
               >
                 Отправить
               </Button>
             </Space.Compact>
-            <Text type="secondary" style={{ fontSize: 11 }}>
+            <Text type="secondary" className="rh-admin-keyboard-hint">
               Ctrl+Enter для отправки
             </Text>
           </>

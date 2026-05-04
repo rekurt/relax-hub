@@ -14,7 +14,7 @@ import type { InternalHandlerUserResponse } from '@/api/generated/model'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
 import { PLATFORM_NAME } from '@/content/support'
-import { syncAntdFormFromDOM } from '@/lib/autofill'
+import { syncDesignFormFromDOM } from '@/lib/autofill'
 
 const { Text } = Typography
 
@@ -38,7 +38,7 @@ export default function Login() {
   // Chrome/Safari password-managers fill DOM values but may skip React change
   // events — this drains the DOM into form state before submit fires.
   const handleEmailSubmitMouseDown = () => {
-    syncAntdFormFromDOM(emailForm, ['email', 'password'])
+    syncDesignFormFromDOM(emailForm, ['email', 'password'])
   }
 
   const navigateAfterLogin = (user: InternalHandlerUserResponse) => {
@@ -167,7 +167,7 @@ export default function Login() {
       )}
     >
       <Card variant="borderless" className="rh-auth-surface">
-        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" className="rh-full-width">
           <Segmented
             className="rh-auth-segmented"
             options={AUTH_METHOD_OPTIONS}

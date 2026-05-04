@@ -19,8 +19,9 @@ import {
 import dayjs from 'dayjs'
 import { useGetMyBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { AUTH_TOKEN_KEY } from '@/lib/constants'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { RangePicker } = DatePicker
 
 export default function FinancialReports() {
@@ -100,10 +101,15 @@ export default function FinancialReports() {
   }, [dateRange, downloadFile])
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>Отчёты</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Финансы"
+        title="Отчёты"
+        description="Экспортируйте историю кошелька, акты и XML для бухгалтерии за выбранный период."
+        size="compact"
+      />
 
-      <Space wrap style={{ marginBottom: 16 }}>
+      <Space wrap className="rh-page-toolbar">
         <RangePicker
           value={dateRange}
           onChange={(dates) => setDateRange(dates)}
@@ -114,8 +120,8 @@ export default function FinancialReports() {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}>
-          <Card title="История кошелька" styles={{ body: { minHeight: 120 } }}>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          <Card title="История кошелька" className="rh-admin-detail-card rh-report-card">
+            <Text type="secondary" className="rh-card-intro-text">
               Выгрузка всех операций по кошельку за период
             </Text>
             <Dropdown
@@ -137,17 +143,17 @@ export default function FinancialReports() {
         </Col>
 
         <Col xs={24} md={8}>
-          <Card title="Акт оказанных услуг" styles={{ body: { minHeight: 120 } }}>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          <Card title="Акт оказанных услуг" className="rh-admin-detail-card rh-report-card">
+            <Text type="secondary" className="rh-card-intro-text">
               PDF-акт для выбранной бани за период
             </Text>
-            <Space orientation="vertical" style={{ width: '100%' }}>
+            <Space orientation="vertical" className="rh-full-width">
               <Select
                 value={selectedBathhouse || undefined}
                 onChange={setSelectedBathhouse}
                 options={bathhouseOptions}
                 placeholder="Выберите баню"
-                style={{ width: '100%' }}
+                className="rh-full-width"
               />
               <Button
                 icon={<FilePdfOutlined />}
@@ -162,8 +168,8 @@ export default function FinancialReports() {
         </Col>
 
         <Col xs={24} md={8}>
-          <Card title="Экспорт 1С" styles={{ body: { minHeight: 120 } }}>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          <Card title="Экспорт 1С" className="rh-admin-detail-card rh-report-card">
+            <Text type="secondary" className="rh-card-intro-text">
               Выгрузка в формате XML для 1С (юр. лица)
             </Text>
             <Button

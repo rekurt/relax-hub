@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,17 +17,17 @@ import (
 )
 
 type bathhouseTestEnv struct {
-	svc          service.BathhouseService
-	bhRepo       *mock.BathhouseRepo
-	repRepo      *mock.RepresentativeRepo
-	bookingRepo  *mock.BookingRepo
-	photoRepo    *mock.BathhousePhotoRepo
-	kycRepo      *mock.KYCRepo
-	offerRepo    *mock.OfferRepo
-	pdRepo       *mock.PaymentDetailsRepo
-	stoplistRepo *mock.StoplistRepo
+	svc           service.BathhouseService
+	bhRepo        *mock.BathhouseRepo
+	repRepo       *mock.RepresentativeRepo
+	bookingRepo   *mock.BookingRepo
+	photoRepo     *mock.BathhousePhotoRepo
+	kycRepo       *mock.KYCRepo
+	offerRepo     *mock.OfferRepo
+	pdRepo        *mock.PaymentDetailsRepo
+	stoplistRepo  *mock.StoplistRepo
 	fraudFlagRepo *mock.FraudFlagRepo
-	userRepo     *mock.UserRepo
+	userRepo      *mock.UserRepo
 }
 
 func newBathhouseTestEnv() *bathhouseTestEnv {
@@ -76,11 +77,11 @@ func (e *bathhouseTestEnv) setupOnboardingGate(t *testing.T, userID uuid.UUID) {
 	// Approved KYC
 	expiresAt := time.Now().Add(365 * 24 * time.Hour)
 	kyc := &domain.KYCApplication{
-		ID:       uuid.New(),
-		UserID:   userID,
-		Status:   domain.KYCStatusApproved,
-		FullName: "Test User",
-		INN:      "123456789012",
+		ID:        uuid.New(),
+		UserID:    userID,
+		Status:    domain.KYCStatusApproved,
+		FullName:  "Test User",
+		INN:       "123456789012",
 		ExpiresAt: &expiresAt,
 	}
 	if err := e.kycRepo.Create(context.Background(), kyc); err != nil {
@@ -241,7 +242,7 @@ func TestBathhouseService_Update_RepresentativeAllowed(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
-		Role:        domain.RepRoleManager,
+		Role: domain.RepRoleManager,
 	}
 	_ = repRepo.Create(context.Background(), rep)
 
@@ -329,6 +330,9 @@ func TestBathhouseService_Approve_NotPendingFails(t *testing.T) {
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("should fail for non-pending bathhouse, got: %v", err)
 	}
+	if !strings.Contains(err.Error(), "only pending bathhouses can be approved") {
+		t.Errorf("error message should explain pending-only transition, got: %v", err)
+	}
 }
 
 func TestBathhouseService_Reject(t *testing.T) {
@@ -357,6 +361,19 @@ func TestBathhouseService_Reject(t *testing.T) {
 	updated, _ := bhRepo.GetByID(context.Background(), bh.ID)
 	if updated.Status != domain.BathhouseStatusRejected {
 		t.Errorf("status = %q, want %q", updated.Status, domain.BathhouseStatusRejected)
+	}
+}
+
+func TestBathhouseService_Reject_NotPendingFails(t *testing.T) {
+	svc, bhRepo, _, _ := newBathhouseService()
+	bh := createBathhouse(t, bhRepo, uuid.New()) // active status
+
+	err := svc.Reject(context.Background(), bh.ID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("should fail for non-pending bathhouse, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "only pending bathhouses can be rejected") {
+		t.Errorf("error message should explain pending-only transition, got: %v", err)
 	}
 }
 
@@ -876,7 +893,7 @@ func TestBathhouseService_Duplicate_RepresentativeAllowed(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
-		Role:        domain.RepRoleManager,
+		Role: domain.RepRoleManager,
 	}
 	_ = env.repRepo.Create(context.Background(), rep)
 
@@ -1084,7 +1101,7 @@ func TestBathhouseService_Deactivate_RepresentativeAllowed(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
-		Role:        domain.RepRoleManager,
+		Role: domain.RepRoleManager,
 	}
 	_ = env.repRepo.Create(context.Background(), rep)
 
@@ -1460,9 +1477,9 @@ func TestIsLastMinuteActive_Enabled_SlotInWindow(t *testing.T) {
 	openTime := now.Add(1 * time.Hour).Format("15:04")
 
 	bh := &domain.Bathhouse{
-		LastMinuteEnabled:        true,
+		LastMinuteEnabled:         true,
 		LastMinuteDiscountPercent: 20,
-		LastMinuteHoursThreshold: 6,
+		LastMinuteHoursThreshold:  6,
 		WorkingHours: []domain.WorkingHours{
 			{DayOfWeek: dayOfWeek, OpenTime: openTime, CloseTime: "23:00"},
 		},
@@ -1484,9 +1501,9 @@ func TestIsLastMinuteActive_Enabled_NoSlotInWindow(t *testing.T) {
 	openTime := now.Add(10 * time.Hour).Format("15:04")
 
 	bh := &domain.Bathhouse{
-		LastMinuteEnabled:        true,
+		LastMinuteEnabled:         true,
 		LastMinuteDiscountPercent: 20,
-		LastMinuteHoursThreshold: 6,
+		LastMinuteHoursThreshold:  6,
 		WorkingHours: []domain.WorkingHours{
 			{DayOfWeek: dayOfWeek, OpenTime: openTime, CloseTime: "23:59"},
 		},
@@ -1499,9 +1516,9 @@ func TestIsLastMinuteActive_Enabled_NoSlotInWindow(t *testing.T) {
 func TestIsLastMinuteActive_Disabled(t *testing.T) {
 	env := newBathhouseTestEnv()
 	bh := &domain.Bathhouse{
-		LastMinuteEnabled:        false,
+		LastMinuteEnabled:         false,
 		LastMinuteDiscountPercent: 20,
-		LastMinuteHoursThreshold: 6,
+		LastMinuteHoursThreshold:  6,
 	}
 	if env.svc.IsLastMinuteActive(bh) {
 		t.Error("expected last-minute NOT active when feature is disabled")
@@ -1523,10 +1540,10 @@ func TestComputeBadges_LastMinute(t *testing.T) {
 		ID: uuid.New(), OwnerID: uuid.New(), Name: "Last Minute Баня", Slug: "lm",
 		Address: "ул. Скидки 1", CityID: 1, PricePerHour: 5000,
 		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
-		CreatedAt:                time.Now().Add(-60 * 24 * time.Hour),
-		LastMinuteEnabled:        true,
+		CreatedAt:                 time.Now().Add(-60 * 24 * time.Hour),
+		LastMinuteEnabled:         true,
 		LastMinuteDiscountPercent: 20,
-		LastMinuteHoursThreshold: 6,
+		LastMinuteHoursThreshold:  6,
 		WorkingHours: []domain.WorkingHours{
 			{DayOfWeek: dayOfWeek, OpenTime: openTime, CloseTime: "23:00"},
 		},

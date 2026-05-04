@@ -339,7 +339,7 @@ export default function PublicCheckout() {
             />
 
             <div className="rh-info-grid">
-              <div className="rh-info-card">
+              <label className="rh-info-card">
                 <span className="rh-info-card__label">Дата посещения</span>
                 <DatePicker
                   value={dayjs(selectedDate)}
@@ -349,19 +349,19 @@ export default function PublicCheckout() {
                     setSelectedSlotRange(null)
                     setSlotConflictError(null)
                   }}
-                  style={{ width: '100%' }}
+                  className="rh-full-width"
                 />
-              </div>
-              <div className="rh-info-card">
+              </label>
+              <label className="rh-info-card">
                 <span className="rh-info-card__label">Количество гостей</span>
                 <InputNumber
                   min={1}
                   max={bathhouse.max_guests ?? 20}
                   value={guestCount}
                   onChange={(value) => setGuestCount(value ?? 1)}
-                  style={{ width: '100%' }}
+                  className="rh-full-width"
                 />
-              </div>
+              </label>
             </div>
 
             <div className="rh-section-card">
@@ -387,7 +387,7 @@ export default function PublicCheckout() {
                     description="Попробуйте другую дату или вернитесь в каталог, чтобы посмотреть похожие варианты."
                   />
                 ) : (
-                  <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+                  <Space orientation="vertical" className="rh-full-width" size="middle">
                     <ContiguousSlotSelector
                       slots={slots}
                       value={selectedSlotRange}
@@ -496,7 +496,7 @@ export default function PublicCheckout() {
                     Получить SMS-код
                   </Button>
                 ) : (
-                  <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+                  <Space orientation="vertical" className="rh-full-width" size="middle">
                     <Input
                       size="large"
                       placeholder="Код из SMS"

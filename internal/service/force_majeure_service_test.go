@@ -103,6 +103,13 @@ func (m *mockFMWalletService) GetWallet(_ context.Context, userID uuid.UUID) (*d
 	return nil, domain.ErrWalletNotFound
 }
 
+func (m *mockFMWalletService) EnsureWallet(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error) {
+	if w, err := m.GetWallet(ctx, userID); err == nil {
+		return w, nil
+	}
+	return m.CreateWallet(ctx, userID, domain.WalletCurrencyRUB)
+}
+
 func (m *mockFMWalletService) TopUp(_ context.Context, _ uuid.UUID, _ int64) (*domain.WalletTransaction, error) {
 	return &domain.WalletTransaction{}, nil
 }

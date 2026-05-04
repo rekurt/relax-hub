@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Button, Checkbox, Descriptions, Drawer, Input, Segmented, Space, Table, Tag } from '@/components/design/system'
+import { App, Button, Checkbox, Descriptions, Drawer, Input, Segmented, Space, Table, Tag, Tooltip } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -12,6 +12,7 @@ import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
 import PageHeader from '@/components/PageHeader'
+import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, FilterOutlined, SearchOutlined } from '@/components/design/icons'
 
 const { Search } = Input
 
@@ -98,6 +99,34 @@ export default function BathhouseModeration() {
         )
       })
     : bathhouses
+  const pendingBathhouses = filteredBathhouses.filter((b) => b.status === 'pending')
+  const pendingIds = pendingBathhouses.map((b) => b.id!).filter(Boolean)
+  const activeCount = bathhouses.filter((b) => b.status === 'active').length
+  const rejectedCount = bathhouses.filter((b) => b.status === 'rejected').length
+  const blockedCount = bathhouses.filter((b) => b.status === 'blocked').length
+
+  const summaryCards = [
+    {
+      label: 'Всего объектов',
+      value: meta?.total_count ?? bathhouses.length,
+      hint: 'Все заявки и опубликованные объекты в текущем срезе',
+    },
+    {
+      label: 'На проверке',
+      value: pendingBathhouses.length,
+      hint: 'Можно одобрить или отклонить прямо из таблицы',
+    },
+    {
+      label: 'Опубликованы',
+      value: activeCount,
+      hint: 'Уже видны клиентам в каталоге',
+    },
+    {
+      label: 'Отклонены',
+      value: rejectedCount + blockedCount,
+      hint: 'Не участвуют в публичной витрине',
+    },
+  ]
 
   const handleApprove = (item: InternalHandlerBathhouseResponse) => {
     modal.confirm({
@@ -178,10 +207,11 @@ export default function BathhouseModeration() {
     {
       title: (
         <Checkbox
-          checked={selectedIds.length > 0 && selectedIds.length === filteredBathhouses.length}
-          indeterminate={selectedIds.length > 0 && selectedIds.length < filteredBathhouses.length}
+          checked={pendingIds.length > 0 && selectedIds.length === pendingIds.length}
+          indeterminate={selectedIds.length > 0 && selectedIds.length < pendingIds.length}
+          disabled={pendingIds.length === 0}
           onChange={(e) =>
-            setSelectedIds(e.target.checked ? filteredBathhouses.map((b) => b.id!).filter(Boolean) : [])
+            setSelectedIds(e.target.checked ? pendingIds : [])
           }
         />
       ),
@@ -190,6 +220,7 @@ export default function BathhouseModeration() {
       render: (_, record) => (
         <Checkbox
           checked={selectedIds.includes(record.id!)}
+          disabled={record.status !== 'pending'}
           onChange={(e) =>
             setSelectedIds((prev) =>
               e.target.checked ? [...prev, record.id!] : prev.filter((id) => id !== record.id!),
@@ -203,8 +234,12 @@ export default function BathhouseModeration() {
       dataIndex: 'name',
       key: 'name',
       ellipsis: true,
+      width: 220,
       render: (name: string, record) => (
-        <a onClick={() => setDetailItem(record)}>{name || '—'}</a>
+        <button type="button" className="rh-admin-object-link" onClick={() => setDetailItem(record)}>
+          <span className="rh-admin-object-link__name">{name || '—'}</span>
+          {record.address && <span className="rh-admin-object-link__meta">{record.address}</span>}
+        </button>
       ),
     },
     {
@@ -212,27 +247,31 @@ export default function BathhouseModeration() {
       dataIndex: 'address',
       key: 'address',
       ellipsis: true,
-      responsive: ['md'] as const,
+      responsive: ['xxl'] as const,
+      width: 290,
       render: (address: string) => address || '—',
     },
     {
       title: 'Цена/час',
       dataIndex: 'price_per_hour',
       key: 'price_per_hour',
-      responsive: ['lg'] as const,
+      responsive: ['xxl'] as const,
+      width: 130,
       render: (price: number) => (price ? formatPrice(price) : '—'),
     },
     {
       title: 'Рейтинг',
       dataIndex: 'rating',
       key: 'rating',
-      responsive: ['lg'] as const,
+      responsive: ['xxl'] as const,
+      width: 110,
       render: (rating: number) => (rating ? rating.toFixed(1) : '—'),
     },
     {
       title: 'Статус',
       key: 'status',
       dataIndex: 'status',
+      width: 150,
       render: (status: string) => {
         const config = STATUS_LABELS[status] ?? { color: 'default', text: status }
         return <Tag color={config.color}>{config.text}</Tag>
@@ -241,27 +280,46 @@ export default function BathhouseModeration() {
     {
       title: 'Действия',
       key: 'actions',
+      width: 270,
       render: (_, record) => {
-        const actions: React.ReactNode[] = []
-        if (record.status !== 'active') {
-          actions.push(
-            <a key="approve" onClick={() => handleApprove(record)}>
-              Одобрить
-            </a>,
+        if (record.status === 'pending') {
+          return (
+            <Space className="rh-admin-row-actions" wrap>
+              <Tooltip title="Открыть карточку объекта с адресом, удобствами и метаданными.">
+                <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => setDetailItem(record)}>
+                  Детали
+                </Button>
+              </Tooltip>
+              <Tooltip title="Опубликовать объект в каталоге после проверки.">
+                <Button type="primary" size="small" icon={<CheckCircleOutlined />} onClick={() => handleApprove(record)}>
+                  Одобрить
+                </Button>
+              </Tooltip>
+              <Tooltip title="Отклонить заявку, если данные объекта не проходят модерацию.">
+                <Button danger size="small" icon={<CloseCircleOutlined />} onClick={() => handleReject(record)}>
+                  Отклонить
+                </Button>
+              </Tooltip>
+            </Space>
           )
         }
-        if (record.status !== 'rejected') {
-          actions.push(
-            <a
-              key="reject"
-              onClick={() => handleReject(record)}
-              style={{ color: '#b42318' }}
-            >
-              Отклонить
-            </a>,
-          )
-        }
-        return <Space>{actions}</Space>
+
+        const statusHint = record.status === 'active'
+          ? 'Объект уже опубликован'
+          : record.status === 'rejected'
+            ? 'Заявка уже отклонена'
+            : record.status === 'blocked'
+              ? 'Объект заблокирован'
+              : 'Действия недоступны'
+
+        return (
+          <Space className="rh-admin-row-actions" wrap>
+            <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => setDetailItem(record)}>
+              Детали
+            </Button>
+            <Tag color="default">{statusHint}</Tag>
+          </Space>
+        )
       },
     },
   ]
@@ -275,19 +333,32 @@ export default function BathhouseModeration() {
         description="Проверка объектов, публичных обещаний и статусов в плотном рабочем интерфейсе."
       />
 
+      <div className="rh-admin-summary-strip" aria-label="Сводка модерации объектов">
+        {summaryCards.map((card) => (
+          <Tooltip title={card.hint} key={card.label}>
+            <div className="rh-admin-summary-card">
+              <span className="rh-admin-summary-card__label">{card.label}</span>
+              <strong className="rh-admin-summary-card__value">{card.value}</strong>
+              <span className="rh-admin-summary-card__hint">{card.hint}</span>
+            </div>
+          </Tooltip>
+        ))}
+      </div>
+
       <div className="rh-admin-grid rh-admin-grid--filters">
         <aside className="rh-admin-filter-rail">
-          <span className="rh-admin-filter-rail__title">Фильтры</span>
+          <span className="rh-admin-filter-rail__title"><FilterOutlined /> Фильтры</span>
           {filterRailItems.map((item) => (
-            <button
-              className={`rh-admin-filter-rail__item${statusFilter === item.value ? ' rh-admin-filter-rail__item--active' : ''}`}
-              key={item.value || 'all'}
-              type="button"
-              onClick={() => updateStatusFilter(item.value)}
-            >
-              <span>{item.railLabel}</span>
-              <span className="rh-admin-filter-rail__count">{item.count}</span>
-            </button>
+            <Tooltip title={`Показать: ${item.railLabel.toLowerCase()}`} key={item.value || 'all'}>
+              <button
+                className={`rh-admin-filter-rail__item${statusFilter === item.value ? ' rh-admin-filter-rail__item--active' : ''}`}
+                type="button"
+                onClick={() => updateStatusFilter(item.value)}
+              >
+                <span>{item.railLabel}</span>
+                <span className="rh-admin-filter-rail__count">{item.count}</span>
+              </button>
+            </Tooltip>
           ))}
         </aside>
 
@@ -298,31 +369,42 @@ export default function BathhouseModeration() {
               <div className="rh-admin-toolbar__hint">Фильтры, поиск и решение модератора находятся рядом с таблицей.</div>
             </div>
             <div className="rh-admin-toolbar__actions">
-              <Search
-                placeholder="Поиск по названию или адресу"
-                allowClear
-                onSearch={setSearch}
-                onChange={(e) => !e.target.value && setSearch('')}
-                style={{ width: 320 }}
-              />
+              <Tooltip title="Ищет по названию и адресу среди загруженных строк. Нажмите Enter или кнопку «Найти».">
+                <Search
+                  className="rh-admin-search"
+                  placeholder="Поиск по названию или адресу"
+                  allowClear
+                  enterButton={<><SearchOutlined /> Найти</>}
+                  onSearch={setSearch}
+                  onChange={(e) => !e.target.value && setSearch('')}
+                />
+              </Tooltip>
             </div>
           </div>
 
-          <Segmented
-            options={STATUS_OPTIONS}
-            value={statusFilter}
-            onChange={(val) => updateStatusFilter(val as string)}
-          />
+          <Tooltip title="Быстро переключает статусную выборку таблицы.">
+            <span className="rh-admin-segmented-wrap">
+              <Segmented
+                options={STATUS_OPTIONS}
+                value={statusFilter}
+                onChange={(val) => updateStatusFilter(val as string)}
+              />
+            </span>
+          </Tooltip>
 
           {selectedIds.length > 0 && (
-            <Space wrap>
-              <span>Выбрано: {selectedIds.length}</span>
-              <Button type="primary" loading={batchLoading} onClick={() => handleBatchAction('approve')}>
-                Одобрить выбранные
-              </Button>
-              <Button danger loading={batchLoading} onClick={() => handleBatchAction('reject')}>
-                Отклонить выбранные
-              </Button>
+            <Space className="rh-admin-batch-bar" wrap>
+              <span className="rh-admin-batch-bar__count">Выбрано: {selectedIds.length}</span>
+              <Tooltip title="Одобрить все выбранные заявки со статусом «На рассмотрении».">
+                <Button type="primary" loading={batchLoading} icon={<CheckCircleOutlined />} onClick={() => handleBatchAction('approve')}>
+                  Одобрить
+                </Button>
+              </Tooltip>
+              <Tooltip title="Отклонить все выбранные заявки со статусом «На рассмотрении».">
+                <Button danger loading={batchLoading} icon={<CloseCircleOutlined />} onClick={() => handleBatchAction('reject')}>
+                  Отклонить
+                </Button>
+              </Tooltip>
             </Space>
           )}
 
@@ -332,6 +414,7 @@ export default function BathhouseModeration() {
             rowKey="id"
             loading={isLoading}
             locale={{ emptyText: 'Нет бань' }}
+            scroll={{ x: 760 }}
             pagination={{
               current: page,
               pageSize: pageSize,

@@ -46,11 +46,11 @@ export default function PublicContacts() {
         {CONTACT_CARDS.map((card) => (
           <Col key={card.key} xs={24} md={8}>
             <Card className="rh-equal-card">
-              <div className="rh-feature-item__icon" style={{ marginBottom: 16 }}>
+              <div className="rh-feature-item__icon rh-public-contact-icon">
                 {CONTACT_ICONS[card.key]}
               </div>
               <div className="rh-section-card">
-                <h2 className="rh-section-card__title" style={{ fontSize: 22 }}>
+                <h2 className="rh-section-card__title rh-public-card-title">
                   {card.title}
                 </h2>
                 <div className="rh-section-card__description">{card.description}</div>
@@ -99,7 +99,7 @@ export default function PublicContacts() {
           </div>
           <div className="rh-hero-panel__meta-item">
             <span className="rh-hero-panel__meta-label">
-              <ClockCircleOutlined style={{ marginRight: 8 }} />
+              <ClockCircleOutlined className="rh-inline-icon" />
               Часы работы
             </span>
             <div className="rh-hero-panel__meta-value">{PLATFORM_CONTACTS.supportHours}</div>

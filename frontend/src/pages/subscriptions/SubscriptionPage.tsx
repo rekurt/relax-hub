@@ -41,31 +41,30 @@ import type {
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@/lib/format'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const PLANS = [
   {
     key: 'free',
     title: 'Бесплатный',
-    icon: <StarOutlined style={{ fontSize: 24 }} />,
-    color: '#c9c1b5',
+    icon: <StarOutlined className="rh-subscription-plan-icon" />,
     features: ['Базовый листинг', 'До 5 фото', 'Стандартный поиск'],
     price: 0,
   },
   {
     key: 'premium',
     title: 'Премиум',
-    icon: <CrownOutlined style={{ fontSize: 24 }} />,
-    color: '#d97706',
+    icon: <CrownOutlined className="rh-subscription-plan-icon" />,
     features: ['Приоритет в поиске (+10)', 'До 20 фото', 'Аналитика', 'Виджет бронирования'],
     price: 99900,
   },
   {
     key: 'promoted',
     title: 'Продвижение',
-    icon: <RocketOutlined style={{ fontSize: 24 }} />,
-    color: '#0f766e',
+    icon: <RocketOutlined className="rh-subscription-plan-icon" />,
     features: ['Всё из Премиум', 'Первые позиции', 'Промо-кампании', 'Персональный менеджер'],
     price: 299900,
   },
@@ -256,24 +255,32 @@ export default function SubscriptionPage() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Подписки</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
-          Выберите баню для управления подписками
-        </div>
+      <div className="rh-page-stack">
+        <PageHeader
+          title="Подписки"
+          description="Тарифные планы, промо-кампании и история подписок объекта."
+          size="compact"
+        />
+        <Card className="rh-admin-detail-card">
+          <EmptyState description="Выберите баню для управления подписками" />
+        </Card>
       </div>
     )
   }
 
   return (
-    <div>
-      <Title level={3}>Подписки</Title>
+    <div className="rh-page-stack">
+      <PageHeader
+        title="Подписки"
+        description="Управляйте тарифом, продвижением и автопродлением выбранного объекта."
+        size="compact"
+      />
 
       {/* Current subscription */}
       {currentSubscription && currentSubscription.plan !== 'free' && (
         <Card
           title="Текущая подписка"
-          style={{ marginBottom: 24 }}
+          className="rh-admin-detail-card"
           loading={subscriptionLoading}
           extra={
             currentSubscription.auto_renew && (
@@ -319,29 +326,30 @@ export default function SubscriptionPage() {
       )}
 
       {/* Plans */}
-      <Title level={4} style={{ marginBottom: 16 }}>Выбор плана</Title>
-      <Row gutter={[16, 16]} style={{ marginBottom: 32 }}>
+      <h2 className="rh-inline-title">Выбор плана</h2>
+      <Row gutter={[16, 16]} className="rh-subscription-plan-grid">
         {PLANS.map((plan) => {
           const isCurrent = currentSubscription?.plan === plan.key
           return (
             <Col xs={24} sm={8} key={plan.key}>
               <Card
                 hoverable={!isCurrent}
-                style={{
-                  borderColor: isCurrent ? plan.color : undefined,
-                  borderWidth: isCurrent ? 2 : 1,
-                }}
+                className={[
+                  'rh-subscription-plan-card',
+                  `rh-subscription-plan-card--${plan.key}`,
+                  isCurrent ? 'rh-subscription-plan-card--current' : '',
+                ].filter(Boolean).join(' ')}
               >
-                <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                  <div style={{ color: plan.color, marginBottom: 8 }}>{plan.icon}</div>
-                  <Title level={4} style={{ margin: 0 }}>{plan.title}</Title>
-                  <div style={{ fontSize: 24, fontWeight: 600, margin: '8px 0' }}>
+                <div className="rh-subscription-plan-head">
+                  <div className="rh-subscription-plan-icon-wrap">{plan.icon}</div>
+                  <h3 className="rh-subscription-plan-title">{plan.title}</h3>
+                  <div className="rh-subscription-plan-price">
                     {plan.price === 0 ? 'Бесплатно' : `${formatPrice(plan.price)}/мес`}
                   </div>
                 </div>
-                <ul style={{ paddingLeft: 20, marginBottom: 16 }}>
+                <ul className="rh-subscription-feature-list">
                   {plan.features.map((f) => (
-                    <li key={f} style={{ marginBottom: 4 }}>{f}</li>
+                    <li key={f}>{f}</li>
                   ))}
                 </ul>
                 <Button
@@ -362,15 +370,15 @@ export default function SubscriptionPage() {
       {/* Promotions section (only for promoted plan) */}
       {currentSubscription?.plan === 'promoted' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Title level={4} style={{ margin: 0 }}>Промо-кампании</Title>
+          <div className="rh-section-toolbar">
+            <h2 className="rh-inline-title">Промо-кампании</h2>
             <Button type="primary" onClick={() => { promoForm.resetFields(); setPromoModalOpen(true) }}>
               Создать кампанию
             </Button>
           </div>
 
           {promotion && (
-            <Card style={{ marginBottom: 24 }}>
+            <Card className="rh-admin-detail-card rh-subscription-promotion-card">
               <Row gutter={16}>
                 <Col xs={12} sm={6}>
                   <Statistic
@@ -388,14 +396,14 @@ export default function SubscriptionPage() {
                   <Statistic title="Клики" value={promotion.click_count ?? 0} />
                 </Col>
               </Row>
-              <div style={{ marginTop: 12 }}>
+              <div className="rh-subscription-promotion-period">
                 <Text type="secondary">
                   Период: {promotion.start_date ? dayjs(promotion.start_date).format('DD.MM.YYYY') : '—'}
                   {' – '}
                   {promotion.end_date ? dayjs(promotion.end_date).format('DD.MM.YYYY') : '—'}
                 </Text>
                 {promotion.status && (
-                  <Tag color={STATUS_COLORS[promotion.status] ?? 'default'} style={{ marginLeft: 8 }}>
+                  <Tag color={STATUS_COLORS[promotion.status] ?? 'default'}>
                     {STATUS_LABELS[promotion.status] ?? promotion.status}
                   </Tag>
                 )}
@@ -406,13 +414,13 @@ export default function SubscriptionPage() {
       )}
 
       {/* All subscriptions */}
-      <Title level={4} style={{ marginBottom: 16 }}>Все подписки</Title>
+      <h2 className="rh-inline-title">Все подписки</h2>
       <Table
         dataSource={allSubscriptions}
         columns={subsColumns}
         rowKey="id"
         loading={allSubsLoading}
-        locale={{ emptyText: 'Нет подписок' }}
+        locale={{ emptyText: <EmptyState description="Нет подписок" /> }}
         pagination={
           totalSubs > subsPageSize
             ? {
@@ -446,7 +454,7 @@ export default function SubscriptionPage() {
             rules={[{ required: true, message: 'Укажите бюджет' }]}
             extra="Сумма в рублях на рекламную кампанию"
           >
-            <InputNumber min={100} step={500} style={{ width: '100%' }} placeholder="5000" />
+            <InputNumber min={100} step={500} className="rh-full-width" placeholder="5000" />
           </Form.Item>
 
           <Form.Item
@@ -470,7 +478,7 @@ export default function SubscriptionPage() {
             label="Целевой город"
             extra="Оставьте пустым для показа во всех городах"
           >
-            <Select allowClear placeholder="Все города" style={{ width: '100%' }}>
+            <Select allowClear placeholder="Все города" className="rh-full-width">
               {cities.map((city) => (
                 <Select.Option key={city.id} value={city.id}>
                   {city.name}

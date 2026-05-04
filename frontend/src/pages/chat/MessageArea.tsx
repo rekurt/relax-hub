@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Input, Button, Empty, Spin, Typography, Space, Alert } from '@/components/design/system'
+import { Input, Button, Spin, Typography, Space, Alert } from '@/components/design/system'
 import { SendOutlined, WarningOutlined } from '@/components/design/icons'
 import {
   useGetConversationsIdMessages,
@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import type { InternalHandlerMessageResponse } from '@/api/generated/model'
 import dayjs from 'dayjs'
+import EmptyState from '@/components/EmptyState'
 
 const { Text } = Typography
 
@@ -28,35 +29,15 @@ function MessageBubble({
 }) {
   return (
     <div
-      style={{
-        display: 'flex',
-        justifyContent: isOwn ? 'flex-end' : 'flex-start',
-        marginBottom: 8,
-      }}
+      className={isOwn ? 'rh-message-row rh-message-row--own' : 'rh-message-row'}
     >
       <div
-        style={{
-          maxWidth: '70%',
-          padding: '10px 14px',
-          borderRadius: isOwn ? '18px 18px 6px 18px' : '18px 18px 18px 6px',
-          border: isOwn ? 'none' : '1px solid var(--rh-border)',
-          background: isOwn
-            ? 'linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong))'
-            : 'rgba(248, 244, 236, 0.82)',
-          color: isOwn ? '#fff' : 'inherit',
-          boxShadow: isOwn ? '0 12px 24px rgba(15, 118, 110, 0.16)' : undefined,
-        }}
+        className={isOwn ? 'rh-message-bubble rh-message-bubble--own' : 'rh-message-bubble'}
       >
-        <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{message.text}</div>
+        <div className="rh-message-bubble__text">{message.text}</div>
         <Text
           type="secondary"
-          style={{
-            fontSize: 11,
-            color: isOwn ? 'rgba(255,255,255,0.7)' : undefined,
-            display: 'block',
-            textAlign: 'right',
-            marginTop: 4,
-          }}
+          className={isOwn ? 'rh-message-bubble__time rh-message-bubble__time--own' : 'rh-message-bubble__time'}
         >
           {dayjs(message.created_at).format('HH:mm')}
         </Text>
@@ -148,45 +129,27 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
 
   if (!conversationId) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-        }}
-      >
-        <Empty description="Выберите беседу для просмотра сообщений" />
+      <div className="rh-chat-center-state">
+        <EmptyState description="Выберите беседу для просмотра сообщений" />
       </div>
     )
   }
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-        }}
-      >
+      <div className="rh-chat-center-state">
         <Spin />
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div
-        style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: 16,
-        }}
-      >
+    <div className="rh-message-area">
+      <div className="rh-message-scroll">
         {messages.length === 0 ? (
-          <Empty description="Нет сообщений" style={{ marginTop: 40 }} />
+          <div className="rh-chat-empty">
+            <EmptyState description="Нет сообщений" />
+          </div>
         ) : (
           <>
             {[...messages].reverse().map((msg) => (
@@ -210,25 +173,19 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
           icon={<WarningOutlined />}
           closable
           onClose={() => setFilterWarning(false)}
-          style={{ margin: '0 16px' }}
+          className="rh-chat-alert"
         />
       )}
 
-      <div
-        style={{
-          padding: '12px 16px',
-          borderTop: '1px solid var(--rh-border)',
-          background: 'rgba(248, 244, 236, 0.56)',
-        }}
-      >
-        <Space.Compact style={{ width: '100%' }}>
+      <div className="rh-message-composer">
+        <Space.Compact className="rh-full-width">
           <Input.TextArea
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Введите сообщение..."
             rows={1}
-            style={{ resize: 'none' }}
+            className="rh-message-input"
           />
           <Button
             type="primary"

@@ -190,7 +190,6 @@ describe('ClientHome', () => {
 
     expect(screen.getByText('Фото проверены')).toBeInTheDocument()
     expect(screen.getByText('Мгновенно')).toBeInTheDocument()
-    expect(screen.getByText('Удобства')).toBeInTheDocument()
     expect(screen.getByText('Бассейн')).toBeInTheDocument()
     expect(screen.getByText('Чан')).toBeInTheDocument()
     expect(screen.getByText('Сауна')).toBeInTheDocument()

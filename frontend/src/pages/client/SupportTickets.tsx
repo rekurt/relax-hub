@@ -3,7 +3,6 @@ import {
   App,
   Button,
   Card,
-  Empty,
   Form,
   Input,
   Modal,
@@ -264,11 +263,15 @@ export default function SupportTickets() {
             </div>
           ) : tickets.length === 0 ? (
             <div className="rh-feed-empty">
-              <Empty description="Нет обращений">
+              <div className="rh-admin-empty-state">
+                <div className="rh-admin-empty-state__title">Нет обращений</div>
+                <p className="rh-admin-empty-state__text">
+                  Создайте первое обращение, если нужна помощь команды поддержки.
+                </p>
                 <Button type="primary" onClick={() => setCreateModalOpen(true)}>
                   Создать обращение
                 </Button>
-              </Empty>
+              </div>
             </div>
           ) : (
             <>
@@ -278,15 +281,21 @@ export default function SupportTickets() {
                 rowKey="id"
                 pagination={false}
                 size="middle"
-                locale={{ emptyText: <Empty description="Нет обращений с выбранным статусом." /> }}
+                locale={{
+                  emptyText: (
+                    <div className="rh-admin-empty-state">
+                      <div className="rh-admin-empty-state__title">Нет обращений с выбранным статусом</div>
+                    </div>
+                  ),
+                }}
                 onRow={(record) => ({
                   onClick: () => navigate(`/client/tickets/${record.id}`),
-                  style: { cursor: 'pointer' },
+                  className: 'rh-clickable-row',
                 })}
               />
 
               {meta && meta.total_pages! > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div className="rh-admin-pagination">
                   <Pagination
                     current={page}
                     pageSize={pageSize}

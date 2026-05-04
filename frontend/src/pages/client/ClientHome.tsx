@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { Typography, Input, Row, Col, Card, Rate, Select, Space, Tag, Carousel, Button } from '@/components/design/system'
+import { Typography, Input, Row, Col, Card, Select, Space, Tag, Carousel, Button } from '@/components/design/system'
 import { useNavigate } from 'react-router-dom'
 import {
   SearchOutlined,
@@ -16,33 +16,14 @@ import { useGetCities } from '@/api/generated/cities/cities'
 import type { InternalHandlerRecommendationResponse } from '@/api/generated/model'
 import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/lib/format'
+import { resolveAssetUrl } from '@/lib/asset-url'
+import { DesignListingCard } from '@/components/design'
 import PublicState from '@/components/PublicState'
 import RecentlyViewed from '@/components/RecentlyViewed'
 import OnboardingTour from '@/components/OnboardingTour'
 import { PUBLIC_SHORTCUT_CARDS } from '@/navigation/menu'
 
-const { Title, Text } = Typography
-
-const DISCOVERY_PROOF_POINTS = [
-  {
-    key: 'slots',
-    eyebrow: 'Маршрут',
-    title: 'Каталог с понятным входом в бронь',
-    description: 'Поиск, сценарии отдыха и переход к слоту собраны в один public-first контур без кабинетообразной навигации.',
-  },
-  {
-    key: 'filters',
-    eyebrow: 'Фильтры',
-    title: 'Сценарии вместо перегруза',
-    description: 'Город, гости, дата и ключевые удобства вынесены на первый план, а вторичные настройки не мешают выбору.',
-  },
-  {
-    key: 'trust',
-    eyebrow: 'Доверие',
-    title: 'Реальные объекты, рейтинги и ценовые ориентиры',
-    description: 'Решение строится на живой выдаче, а не на рекламных обещаниях или vanity-метриках.',
-  },
-]
+const { Text } = Typography
 
 const DISCOVERY_STEPS = [
   'Выберите сценарий отдыха или сразу откройте каталог.',
@@ -89,54 +70,35 @@ function DiscoveryBathhouseCard({ item }: { item: InternalHandlerRecommendationR
   const navigate = useNavigate()
   const statusTags = getBathhouseStatusTags(item)
   const amenities = getBathhouseAmenities(item)
+  const tags: string[] = [...statusTags, ...amenities.slice(0, 4)]
+  if (amenities.length > 4) tags.push(`+${amenities.length - 4}`)
+
+  const lastMinute = (item as { last_minute_active?: boolean }).last_minute_active
+  const lastMinutePercent = (item as { last_minute_discount_percent?: number }).last_minute_discount_percent
+  const badge = lastMinute
+    ? `Срочно ${lastMinutePercent ? `-${lastMinutePercent}%` : ''}`.trim()
+    : undefined
+
+  const cover = resolveAssetUrl(
+    (item as { cover_photo?: string }).cover_photo
+    ?? (item as { images?: string[] }).images?.[0],
+  )
 
   return (
-    <Card
-      hoverable
-      className="rh-home__listing-card"
+    <DesignListingCard
       onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
-    >
-      <Title level={5} className="rh-home__listing-card-title">{item.name}</Title>
-      {item.address && (
-        <Text type="secondary" className="rh-home__listing-card-address">
-          <EnvironmentOutlined style={{ marginRight: 4 }} />
-          {item.address}
-        </Text>
-      )}
-      <div className="rh-home__listing-card-rating">
-        <Rate disabled allowHalf value={item.rating ?? 0} style={{ fontSize: 14 }} />
-        <Text type="secondary" className="rh-home__listing-card-rating-text">
-          {item.rating?.toFixed(1)} ({item.review_count ?? 0})
-        </Text>
-      </div>
-      {statusTags.length > 0 && (
-        <div className="rh-home__listing-card-tags">
-          {statusTags.map((label) => (
-            <Tag key={label} className="rh-home__listing-card-tag">
-              {label}
-            </Tag>
-          ))}
-        </div>
-      )}
-      {amenities.length > 0 && (
-        <div className="rh-home__listing-card-amenities">
-          <Text className="rh-home__listing-card-amenities-label">Удобства</Text>
-          <div className="rh-home__listing-card-tags rh-home__listing-card-tags--amenities">
-            {amenities.slice(0, 4).map((label) => (
-              <Tag key={label} className="rh-home__listing-card-tag rh-home__listing-card-tag--amenity">
-                {label}
-              </Tag>
-            ))}
-            {amenities.length > 4 && (
-              <Tag className="rh-home__listing-card-tag rh-home__listing-card-tag--amenity">+{amenities.length - 4}</Tag>
-            )}
-          </div>
-        </div>
-      )}
-      {item.price_per_hour != null && (
-        <Text strong className="rh-home__listing-card-price">{formatPrice(item.price_per_hour)}/ч</Text>
-      )}
-    </Card>
+      name={item.name}
+      address={item.address}
+      price={item.price_per_hour != null ? `${formatPrice(item.price_per_hour)}/ч` : undefined}
+      rating={typeof item.rating === 'number' ? item.rating : undefined}
+      reviewCount={typeof item.review_count === 'number' ? item.review_count : undefined}
+      verified={Boolean(item.is_photo_verified)}
+      imageUrl={cover}
+      imageAlt={item.name}
+      badge={badge}
+      badgeTone="red"
+      tags={tags}
+    />
   )
 }
 
@@ -163,38 +125,27 @@ function PromoBanner() {
 
   if (banners.length > 0) {
     const renderBanner = (banner: PromotionBanner) => {
-      const gradients: Record<string, string> = {
-        promo: 'linear-gradient(135deg, #b42318 0%, #d97706 100%)',
-        welcome: 'linear-gradient(135deg, #15803d 0%, #0f766e 100%)',
-        loyalty: 'linear-gradient(135deg, #0f766e 0%, #0a5f59 100%)',
-      }
       return (
         <div key={banner.id}>
           <Card
-            style={{
-              background: gradients[banner.type] ?? gradients.loyalty,
-              border: 'none',
-              borderRadius: 12,
-            }}
+            className={`rh-home-promo-card rh-home-promo-card--${banner.type}`}
           >
-            <div style={{ color: '#fff' }}>
+            <div className="rh-home-promo-card__content">
               <Space>
                 {banner.type === 'promo' ? (
-                  <TagOutlined style={{ fontSize: 20 }} />
+                  <TagOutlined className="rh-home-promo-card__icon" />
                 ) : (
-                  <GiftOutlined style={{ fontSize: 20 }} />
+                  <GiftOutlined className="rh-home-promo-card__icon" />
                 )}
-              <Title level={3} style={{ color: '#fff', margin: 0 }}>
-                {banner.title}
-              </Title>
+                <h2 className="rh-home-promo-card__title">{banner.title}</h2>
               </Space>
-              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, display: 'block', marginTop: 8 }}>
+              <Text className="rh-home-promo-card__description">
                 {banner.description}
               </Text>
               {banner.promo_code && (
                 <Tag
                   color="#fff"
-                  style={{ color: 'var(--rh-text)', marginTop: 12, fontSize: 14, padding: '4px 12px', fontWeight: 600 }}
+                  className="rh-home-promo-card__code"
                 >
                   {banner.promo_code}
                   {banner.discount_text && ` — ${banner.discount_text}`}
@@ -207,7 +158,7 @@ function PromoBanner() {
     }
 
     return (
-      <div style={{ marginBottom: 24 }}>
+      <div className="rh-home-section-block">
         {banners.length === 1 ? (
           renderBanner(banners[0]!)
         ) : (
@@ -220,29 +171,22 @@ function PromoBanner() {
   }
 
   return (
-    <div style={{ marginBottom: 24 }}>
+    <div className="rh-home-section-block">
       <Card
-        style={{
-          marginBottom: failedToLoad ? 12 : 0,
-          background: isNewUser
-            ? 'linear-gradient(135deg, #15803d 0%, #0f766e 100%)'
-            : 'linear-gradient(135deg, #1f4853 0%, #80502c 100%)',
-          border: 'none',
-          borderRadius: 12,
-        }}
+        className={`rh-home-promo-card ${isNewUser ? 'rh-home-promo-card--welcome' : 'rh-home-promo-card--default'}${failedToLoad ? ' rh-home-promo-card--with-status' : ''}`}
       >
-        <div style={{ color: '#fff' }}>
+        <div className="rh-home-promo-card__content">
           <Space>
             {isNewUser ? (
-              <RocketOutlined style={{ fontSize: 20 }} />
+              <RocketOutlined className="rh-home-promo-card__icon" />
             ) : (
-              <GiftOutlined style={{ fontSize: 20 }} />
+              <GiftOutlined className="rh-home-promo-card__icon" />
             )}
-            <Title level={3} style={{ color: '#fff', margin: 0 }}>
+            <h2 className="rh-home-promo-card__title">
               {isNewUser ? 'Вечер уже можно планировать' : 'Бронирование без лишних шагов'}
-            </Title>
+            </h2>
           </Space>
-          <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, display: 'block', marginTop: 8 }}>
+          <Text className="rh-home-promo-card__description">
             {isNewUser
               ? 'Приветственный бонус 500 ₽ уже в кошельке. Выберите сценарий, подтвердите телефон по SMS и переходите к брони.'
               : 'Каталог, понятные цены и SMS-подтверждение собраны в один короткий маршрут до бронирования.'}
@@ -283,7 +227,7 @@ function CitySelector({
       onChange={onSelect}
       options={cities}
       placeholder="Выберите город"
-      style={{ minWidth: 180 }}
+      className="rh-home-city-select"
       suffixIcon={<EnvironmentOutlined />}
       size="middle"
     />
@@ -324,22 +268,13 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
   if (cities.length === 0) return null
 
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: 16,
-          marginBottom: 16,
-          flexWrap: 'wrap',
-        }}
-      >
+    <div className="rh-home-section-block">
+      <div className="rh-home-section-toolbar">
         <div>
-          <Title level={4} style={{ margin: 0 }}>
-            <FireOutlined style={{ marginRight: 8, color: '#b42318' }} />
+          <h2 className="rh-home-section-heading">
+            <FireOutlined className="rh-home-section-heading__icon rh-home-section-heading__icon--danger" />
             Популярные рядом
-          </Title>
+          </h2>
           <Text data-testid="popular-city-caption" type="secondary">
             {detectedCityId && selectedCity?.name
               ? `Показываем подборку рядом с вами: ${selectedCity.name}`
@@ -385,7 +320,7 @@ function PersonalRecommendations() {
 
   if (isError) {
     return (
-      <div style={{ marginBottom: 24 }}>
+      <div className="rh-home-section-block">
         <PublicState
           kind="degraded"
           compact
@@ -401,11 +336,11 @@ function PersonalRecommendations() {
   if (recs.length === 0) return null
 
   return (
-    <div style={{ marginBottom: 24 }}>
-      <Title level={4}>
-        <StarOutlined style={{ marginRight: 8, color: '#d97706' }} />
+    <div className="rh-home-section-block">
+      <h2 className="rh-home-section-heading">
+        <StarOutlined className="rh-home-section-heading__icon rh-home-section-heading__icon--warning" />
         Рекомендации для вас
-      </Title>
+      </h2>
       <Row gutter={[16, 16]}>
         {recs.slice(0, 6).map((item) => (
           <Col key={item.id} xs={24} sm={12} md={8}>
@@ -475,9 +410,9 @@ export default function ClientHome() {
       <section className="rh-home__hero">
         <div className="rh-home__hero-copy">
           <Tag color="gold">Быстрое бронирование</Tag>
-          <Title level={1} className="rh-home__hero-title">
+          <h1 className="rh-home__hero-title">
             Бани для вечера вдвоем, компании и выходных за городом
-          </Title>
+          </h1>
           <Text className="rh-home__hero-description">
             Public-маршрут начинается с выбора сценария: находите подходящий формат отдыха, уточняете параметры и переходите к слоту без длинной регистрации и без лишних экранов.
           </Text>
@@ -489,14 +424,9 @@ export default function ClientHome() {
               const val = (e.target as HTMLInputElement).value
               navigate(`/catalog${val ? `?q=${encodeURIComponent(val)}` : ''}`)
             }}
-            onClick={() => navigate('/catalog')}
-            readOnly
             className="rh-home__search"
           />
           <Space wrap className="rh-home__hero-actions">
-            <Button size="large" type="primary" onClick={() => navigate('/catalog')}>
-              Подобрать баню
-            </Button>
             <Button size="large" className="rh-home__hero-secondary" onClick={() => navigate('/certificates')}>
               Подарочный сертификат
             </Button>
@@ -514,9 +444,9 @@ export default function ClientHome() {
         <div className="rh-home__hero-side">
           <div className="rh-home__section-copy">
             <Text className="rh-home__section-eyebrow">Сценарии</Text>
-            <Title level={3} className="rh-home__section-title">
+            <h2 className="rh-home__section-title">
               Начните с готовой подборки
-            </Title>
+            </h2>
             <Text className="rh-home__section-description">
               Сценарии привязаны к реальным фильтрам каталога, поэтому переход сразу открывает рабочую выдачу, а не декоративный экран.
             </Text>
@@ -530,9 +460,9 @@ export default function ClientHome() {
                 onClick={() => navigate(card.to)}
               >
                 <Tag color="cyan">{card.eyebrow}</Tag>
-                <Title level={4} className="rh-home__shortcut-title">
+                <h3 className="rh-home__shortcut-title">
                   {card.title}
-                </Title>
+                </h3>
                 <Text className="rh-home__shortcut-description">{card.description}</Text>
               </button>
             ))}
@@ -540,35 +470,12 @@ export default function ClientHome() {
         </div>
       </section>
 
-      <section className="rh-home__proof">
-        <div className="rh-home__section-copy">
-          <Text className="rh-home__section-eyebrow">Как устроен выбор</Text>
-          <Title level={3} className="rh-home__section-title">
-            Discovery без дешёвого маркетингового шума
-          </Title>
-          <Text className="rh-home__section-description">
-            Новый клиент должен сразу понимать, что здесь можно выбрать, по каким параметрам сравнивать варианты и как быстро дойти до бронирования.
-          </Text>
-        </div>
-        <div className="rh-home__proof-grid">
-          {DISCOVERY_PROOF_POINTS.map((item) => (
-            <Card key={item.key} variant="borderless" className="rh-home__proof-card">
-              <Text className="rh-home__proof-eyebrow">{item.eyebrow}</Text>
-              <Title level={4} className="rh-home__proof-title">
-                {item.title}
-              </Title>
-              <Text className="rh-home__proof-description">{item.description}</Text>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       <section className="rh-home__inventory">
         <div className="rh-home__section-copy rh-home__section-copy--compact">
           <Text className="rh-home__section-eyebrow">Подборка</Text>
-          <Title level={3} className="rh-home__section-title">
+          <h2 className="rh-home__section-title">
             С чего обычно начинают выбор
-          </Title>
+          </h2>
         </div>
         <PopularNearby detectedCityId={detectedCityId} />
       </section>

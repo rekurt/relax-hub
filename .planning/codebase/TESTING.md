@@ -165,8 +165,7 @@ func TestBookingService_Create_InactiveBathhouse(t *testing.T) {
 ```typescript
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { ConfigProvider, ruRU } from '@/components/design/system'
 import Dashboard from '@/pages/Dashboard'
 import { useGetMyBathhousesIdAnalytics } from '@/api/generated/analytics/analytics'
 

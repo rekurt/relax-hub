@@ -192,7 +192,7 @@ export default function PayoutPage() {
       </div>
 
       <section className="rh-admin-panel">
-        <div className="rh-admin-toolbar" style={{ marginBottom: 18 }}>
+        <div className="rh-admin-toolbar rh-admin-toolbar--spaced">
           <div className="rh-admin-toolbar__copy">
             <h2 className="rh-admin-toolbar__title">Запросить выплату</h2>
             <div className="rh-admin-toolbar__hint">Сумма не может превышать доступный баланс: {formatPrice(wallet?.available ?? 0)}.</div>
@@ -215,7 +215,7 @@ export default function PayoutPage() {
               placeholder="Сумма, \u20BD"
               min={100}
               max={availableRubles}
-              style={{ width: 200 }}
+              className="rh-payout-amount-control"
             />
           </Form.Item>
           <Form.Item
@@ -224,7 +224,7 @@ export default function PayoutPage() {
           >
             <Select
               options={PAYOUT_METHOD_OPTIONS}
-              style={{ width: 220 }}
+              className="rh-payout-method-control"
             />
           </Form.Item>
           <Form.Item>
@@ -241,7 +241,7 @@ export default function PayoutPage() {
       </section>
 
       <section className="rh-admin-panel">
-        <div className="rh-admin-toolbar" style={{ marginBottom: 14 }}>
+        <div className="rh-admin-toolbar rh-admin-toolbar--compact-spaced">
           <div className="rh-admin-toolbar__copy">
             <h2 className="rh-admin-toolbar__title">Автовыплата</h2>
             <div className="rh-admin-toolbar__hint">Автоматический вывод при достижении заданного порога.</div>

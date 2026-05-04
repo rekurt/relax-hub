@@ -3,7 +3,7 @@ import {
   App,
   Button,
   Card,
-  Empty,
+  Input,
   Modal,
   Space,
   Spin,
@@ -12,15 +12,17 @@ import {
   Tag,
   Typography,
 } from '@/components/design/system'
-import { CameraOutlined, PlusOutlined, ReloadOutlined } from '@/components/design/icons'
+import { PlusOutlined, ReloadOutlined } from '@/components/design/icons'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@/lib/format'
 import dayjs from 'dayjs'
 import type { ColumnsType } from '@/components/design/types'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 interface PhotoOrder {
   id: string
@@ -161,45 +163,55 @@ export default function PhotoOrderPage() {
 
   if (!selectedBathhouseId) {
     return (
-      <Card>
-        <Empty description="Выберите объект для управления фотосъёмкой" />
-      </Card>
+      <div className="rh-page-stack">
+        <PageHeader
+          title="Профессиональная фотосъёмка"
+          description="Заявки, статусы и согласование съемки для выбранного объекта."
+          size="compact"
+        />
+        <Card className="rh-admin-detail-card">
+          <EmptyState description="Выберите объект для управления фотосъёмкой" />
+        </Card>
+      </div>
     )
   }
 
   const orders = data?.data ?? []
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          <CameraOutlined /> Профессиональная фотосъёмка
-        </Title>
-        <Space>
+    <div className="rh-page-stack">
+      <PageHeader
+        eyebrow="Контент объекта"
+        title="Профессиональная фотосъёмка"
+        description="Закажите съемку, отслеживайте назначение фотографа и завершение работ."
+        size="compact"
+        extra={
+          <Space wrap>
           <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
             Обновить
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
             Заказать съёмку
           </Button>
-        </Space>
-      </div>
+          </Space>
+        }
+      />
 
-      <Card style={{ marginBottom: 24 }}>
-        <Paragraph>
+      <Card className="rh-admin-detail-card rh-photo-order-intro">
+        <Paragraph className="rh-card-intro-text">
           Закажите профессиональную фотосъёмку вашего объекта. Качественные фотографии увеличивают
           конверсию в бронирования до 40%. После отправки заявки администратор назначит фотографа
           и согласует дату съёмки. Оплата списывается с кошелька после завершения работы.
         </Paragraph>
         <Steps
           size="small"
+          className="rh-photo-order-steps"
           items={[
             { title: 'Заявка' },
             { title: 'Подтверждение' },
             { title: 'Съёмка' },
             { title: 'Готово' },
           ]}
-          style={{ maxWidth: 500 }}
         />
       </Card>
 
@@ -237,12 +249,7 @@ export default function PhotoOrderPage() {
             rowExpandable: (record) => !!(record.notes || record.admin_notes),
           }}
           locale={{
-            emptyText: (
-              <Empty
-                description="У вас пока нет заявок на фотосъёмку"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
-            ),
+            emptyText: <EmptyState description="У вас пока нет заявок на фотосъёмку" />,
           }}
         />
       </Spin>
@@ -259,20 +266,12 @@ export default function PhotoOrderPage() {
         <Paragraph>
           Опишите ваши пожелания: предпочтительное время, количество помещений, особые требования.
         </Paragraph>
-        <textarea
+        <Input.TextArea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Например: съёмка парной, комнаты отдыха и бассейна. Предпочтительно в будний день."
-          style={{
-            width: '100%',
-            minHeight: 100,
-            padding: 8,
-            border: '1px solid #c9c1b5',
-            borderRadius: 6,
-            fontFamily: 'inherit',
-            fontSize: 14,
-            resize: 'vertical',
-          }}
+          className="rh-full-width"
+          rows={4}
         />
       </Modal>
     </div>

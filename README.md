@@ -18,7 +18,7 @@ Go-бекенд и React SPA для агрегатора бань с онлай�
 
 - **React 18** + **TypeScript 5.6** — UI
 - **Vite 6** — сборщик
-- **Ant Design 6** — UI-библиотека (русская локализация)
+- **RelaxHUB Design System** (`frontend/src/components/design`) — UI-kit из `./design`, нативные React-компоненты и русская локализация
 - **TanStack React Query 5** — серверное состояние
 - **orval** — генерация API-клиента из OpenAPI
 - **zustand** — клиентское состояние
@@ -126,6 +126,7 @@ make run
 | `BANI_BACKEND_URL` | URL API для frontend dev proxy | `http://localhost:28080` |
 | `BANI_DATABASE_DSN` | PostgreSQL DSN | `postgres://postgres:postgres@localhost:5435/bani?sslmode=disable` |
 | `BANI_REDIS_ADDR` | Redis адрес | `localhost:6381` |
+| `BANI_STORAGE_PUBLIC_BASE_URL` | Публичный URL MinIO/S3 для браузера; отличается от internal endpoint внутри Docker | `http://localhost:9102` |
 | `BANI_JWT_SECRET` | Секрет для JWT | `change-me-in-production` |
 | `BANI_JWT_TOKEN_TTL` | Время жизни токена | `24h` |
 | `BANI_PAYMENT_YOOKASSA_SHOP_ID` | Shop ID в ЮKassa | `` |

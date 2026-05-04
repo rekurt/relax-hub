@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Button, Checkbox, Input, Space, Table, Tag } from '@/components/design/system'
+import { App, Button, Card, Checkbox, Input, Space, Table, Tag } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -187,63 +187,69 @@ export default function UserManagement() {
       render: (_, record) => {
         if (record.role === 'admin') return null
         return record.is_active === false ? (
-          <a onClick={() => handleUnblock(record)}>Разблокировать</a>
+          <Button type="link" size="small" onClick={() => handleUnblock(record)}>
+            Разблокировать
+          </Button>
         ) : (
-          <a onClick={() => handleBlock(record)} style={{ color: '#b42318' }}>
+          <Button type="link" size="small" danger onClick={() => handleBlock(record)}>
             Заблокировать
-          </a>
+          </Button>
         )
       },
     },
   ]
 
   return (
-    <div>
+    <div className="rh-stack rh-admin-reference-page">
       <PageHeader
         eyebrow="Справочник"
         title="Управление пользователями"
         description="Поиск, массовые операции и блокировки в одном аккуратном рабочем экране."
       />
 
-      <Search
-        placeholder="Поиск по имени, email или телефону"
-        allowClear
-        onSearch={setSearch}
-        onChange={(e) => !e.target.value && setSearch('')}
-        style={{ maxWidth: 400, marginBottom: 16 }}
-      />
+      <Card className="rh-admin-reference-card" title="Реестр пользователей">
+        <div className="rh-admin-table-tools">
+          <Search
+            className="rh-admin-search-control"
+            placeholder="Поиск по имени, email или телефону"
+            allowClear
+            onSearch={setSearch}
+            onChange={(e) => !e.target.value && setSearch('')}
+          />
 
-      {selectedIds.length > 0 && (
-        <Space style={{ marginBottom: 16 }}>
-          <span>Выбрано: {selectedIds.length}</span>
-          <Button danger loading={batchLoading} onClick={() => handleBatchAction('block')}>
-            Заблокировать выбранных
-          </Button>
-          <Button type="primary" loading={batchLoading} onClick={() => handleBatchAction('unblock')}>
-            Разблокировать выбранных
-          </Button>
-        </Space>
-      )}
+          {selectedIds.length > 0 && (
+            <Space className="rh-admin-selection-bar" wrap>
+              <span>Выбрано: {selectedIds.length}</span>
+              <Button danger loading={batchLoading} onClick={() => handleBatchAction('block')}>
+                Заблокировать выбранных
+              </Button>
+              <Button type="primary" loading={batchLoading} onClick={() => handleBatchAction('unblock')}>
+                Разблокировать выбранных
+              </Button>
+            </Space>
+          )}
+        </div>
 
-      <Table
-        columns={columns}
-        dataSource={filteredUsers}
-        rowKey="id"
-        loading={isLoading}
-        locale={{ emptyText: 'Нет пользователей' }}
-        pagination={{
-          current: page,
-          pageSize: pageSize,
-          total: meta?.total_count ?? 0,
-          showSizeChanger: true,
-          showTotal: (total) => `Всего: ${total}`,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-            setSelectedIds([])
-          },
-        }}
-      />
+        <Table
+          columns={columns}
+          dataSource={filteredUsers}
+          rowKey="id"
+          loading={isLoading}
+          locale={{ emptyText: 'Нет пользователей' }}
+          pagination={{
+            current: page,
+            pageSize: pageSize,
+            total: meta?.total_count ?? 0,
+            showSizeChanger: true,
+            showTotal: (total) => `Всего: ${total}`,
+            onChange: (p, ps) => {
+              setPage(p)
+              setPageSize(ps)
+              setSelectedIds([])
+            },
+          }}
+        />
+      </Card>
     </div>
   )
 }

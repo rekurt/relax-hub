@@ -45,12 +45,12 @@ function KpiCard({ title, value, change, icon, loading, suffix, hint }: KpiCardP
     )
   }
 
-  const changeColor =
+  const changeClass =
     change === undefined || change === 0
-      ? undefined
+      ? 'rh-stat-change'
       : change > 0
-        ? '#15803d'
-        : '#b42318'
+        ? 'rh-stat-change rh-stat-change--positive'
+        : 'rh-stat-change rh-stat-change--negative'
 
   const changeIcon =
     change !== undefined && change !== 0
@@ -69,7 +69,7 @@ function KpiCard({ title, value, change, icon, loading, suffix, hint }: KpiCardP
         {value}{suffix ?? ''}
       </div>
       {change !== undefined ? (
-        <Text style={{ color: changeColor, fontSize: 13 }}>
+        <Text className={changeClass}>
           {changeIcon} {change > 0 ? '+' : ''}
           {change.toFixed(1)}% к пред. периоду
         </Text>

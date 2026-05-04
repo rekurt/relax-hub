@@ -8,7 +8,6 @@ import {
   Input,
   Alert,
   Popconfirm,
-  Empty,
   Spin,
   Form,
   QRCode,
@@ -47,7 +46,7 @@ import { useQueryClient } from '@tanstack/react-query'
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 interface SessionRow {
   id?: string
@@ -296,7 +295,7 @@ export default function SecuritySettings() {
       <section className="rh-security-hero">
         <div className="rh-security-hero__copy">
           <div className="rh-security-hero__eyebrow">Контур безопасности</div>
-          <Title level={1} className="rh-security-hero__title">Безопасность</Title>
+          <h1 className="rh-security-hero__title">Безопасность</h1>
           <Paragraph className="rh-security-hero__description">
             Закрытый контур для входа, устройств и восстановления доступа. Здесь сразу видно,
             насколько хорошо собрана защита аккаунта и что ещё стоит усилить.
@@ -389,7 +388,12 @@ export default function SecuritySettings() {
             {sessionsLoading ? (
               <Spin />
             ) : sessions.length === 0 ? (
-              <Empty description="Нет активных сессий" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              <div className="rh-admin-empty-state">
+                <div className="rh-admin-empty-state__title">Нет активных сессий</div>
+                <p className="rh-admin-empty-state__text">
+                  Активные устройства появятся после входа в аккаунт.
+                </p>
+              </div>
             ) : (
               <div className="rh-security-session-list">
                 {sessions.map((session) => (
@@ -453,9 +457,9 @@ export default function SecuritySettings() {
                 <div className="rh-security-method-card__header">
                   <div>
                     <div className="rh-security-method-card__eyebrow">Основной фактор</div>
-                    <Title level={4} className="rh-security-method-card__title">
+                    <h2 className="rh-security-method-card__title">
                       TOTP
-                    </Title>
+                    </h2>
                   </div>
                   <Tag color={totpEnabled ? 'green' : 'gold'}>
                     {totpEnabled ? 'Активно' : 'Не настроено'}
@@ -510,13 +514,13 @@ export default function SecuritySettings() {
                         onFinish={() => verifyTotp.mutate({ data: { code: verifyCode } })}
                       >
                         <Form.Item>
-                          <Input
-                            placeholder="Введите 6-значный код"
-                            value={verifyCode}
-                            onChange={(event) => setVerifyCode(event.target.value)}
-                            maxLength={6}
-                            style={{ width: 220 }}
-                          />
+	                          <Input
+	                            placeholder="Введите 6-значный код"
+	                            value={verifyCode}
+	                            onChange={(event) => setVerifyCode(event.target.value)}
+	                            maxLength={6}
+	                            className="rh-admin-code-input"
+	                          />
                         </Form.Item>
                         <Form.Item>
                           <Button
@@ -546,13 +550,13 @@ export default function SecuritySettings() {
                       description="При следующем входе потребуется одноразовый код из приложения."
                     />
                     <div className="rh-inline-form">
-                      <Input
-                        placeholder="6-значный код"
-                        value={disableCode}
-                        onChange={(event) => setDisableCode(event.target.value)}
-                        maxLength={6}
-                        style={{ width: 220 }}
-                      />
+	                      <Input
+	                        placeholder="6-значный код"
+	                        value={disableCode}
+	                        onChange={(event) => setDisableCode(event.target.value)}
+	                        maxLength={6}
+	                        className="rh-admin-code-input"
+	                      />
                       <Popconfirm
                         title="Отключить TOTP 2FA?"
                         description="Вы потеряете дополнительную защиту аккаунта."
@@ -577,9 +581,9 @@ export default function SecuritySettings() {
                 <div className="rh-security-method-card__header">
                   <div>
                     <div className="rh-security-method-card__eyebrow">Резервный фактор</div>
-                    <Title level={4} className="rh-security-method-card__title">
+                    <h2 className="rh-security-method-card__title">
                       SMS 2FA
-                    </Title>
+                    </h2>
                   </div>
                   <Tag color={smsEnabled ? 'green' : user?.phone ? 'gold' : 'default'}>
                     {smsEnabled ? 'Включено' : user?.phone ? 'Доступно' : 'Нужен телефон'}

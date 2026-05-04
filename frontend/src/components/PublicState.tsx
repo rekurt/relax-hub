@@ -55,10 +55,10 @@ export default function PublicState({
   if (kind === 'loading') {
     return (
       <DesignCard className="rh-public-state-card">
-        <Space orientation="vertical" size={16} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={16} className="rh-full-width">
           <Spin size="large" />
           <Text strong>{resolvedTitle}</Text>
-          <Paragraph style={{ marginBottom: 0 }}>{resolvedDescription}</Paragraph>
+          <Paragraph className="rh-paragraph-reset">{resolvedDescription}</Paragraph>
         </Space>
       </DesignCard>
     )
@@ -111,7 +111,7 @@ export default function PublicState({
       ].filter(Boolean)}
     >
       {typeof resolvedDescription === 'string' ? null : (
-        <Paragraph style={{ marginBottom: 0 }}>{resolvedDescription}</Paragraph>
+        <Paragraph className="rh-paragraph-reset">{resolvedDescription}</Paragraph>
       )}
     </Result>
   )

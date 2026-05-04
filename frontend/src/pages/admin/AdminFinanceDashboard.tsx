@@ -161,7 +161,11 @@ export default function AdminFinanceDashboard() {
       key: 'discrepancy',
       render: (v: number) => {
         const val = v ?? 0
-        return <span style={{ color: val !== 0 ? '#b42318' : undefined }}>{formatPrice(val)}</span>
+        return (
+          <span className={val !== 0 ? 'rh-admin-value--danger' : undefined}>
+            {formatPrice(val)}
+          </span>
+        )
       },
     },
     {
@@ -181,20 +185,20 @@ export default function AdminFinanceDashboard() {
         description="Сверка выплат, возвратов и кошельков в плотном операционном интерфейсе."
         extra={(
           <Space wrap>
-          <Button
-            icon={<CameraOutlined />}
-            onClick={handleSnapshot}
-            loading={snapshotMutation.isPending}
-          >
-            Снять снимок
-          </Button>
-          <Button
-            icon={<SyncOutlined />}
-            onClick={handleReconcile}
-            loading={reconcileMutation.isPending}
-          >
-            Сверка с провайдером
-          </Button>
+            <Button
+              icon={<CameraOutlined />}
+              onClick={handleSnapshot}
+              loading={snapshotMutation.isPending}
+            >
+              Снять снимок
+            </Button>
+            <Button
+              icon={<SyncOutlined />}
+              onClick={handleReconcile}
+              loading={reconcileMutation.isPending}
+            >
+              Сверка с провайдером
+            </Button>
           </Space>
         )}
       />
@@ -216,7 +220,7 @@ export default function AdminFinanceDashboard() {
 
       {summary?.last_report && (
         <section className="rh-admin-panel">
-          <div className="rh-admin-toolbar" style={{ marginBottom: 16 }}>
+          <div className="rh-admin-toolbar rh-admin-toolbar--spaced">
             <div className="rh-admin-toolbar__copy">
               <h2 className="rh-admin-toolbar__title">Последняя сверка</h2>
               <div className="rh-admin-toolbar__hint">Короткая сводка по последнему отчёту перед просмотром таблицы.</div>

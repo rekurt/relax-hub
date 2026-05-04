@@ -124,7 +124,7 @@ export default function FinanceDashboard() {
       render: (amount: number, record) => {
         const isPositive = record.type !== 'spend' && record.type !== 'service_fee' && record.type !== 'payout'
         return (
-          <span style={{ color: isPositive ? '#15803d' : '#b42318', fontWeight: 500 }}>
+          <span className={isPositive ? 'rh-amount rh-amount--positive' : 'rh-amount rh-amount--negative'}>
             {isPositive ? '+' : '-'}{formatPrice(amount ?? 0)}
           </span>
         )
@@ -240,19 +240,19 @@ export default function FinanceDashboard() {
                   value={period}
                   onChange={setPeriod}
                   options={PERIOD_OPTIONS}
-                  style={{ minWidth: 140 }}
+                  className="rh-finance-period-control"
                 />
               </div>
 
               <div className="rh-info-grid">
                 <div className="rh-info-card">
                   <span className="rh-info-card__label">Поступления</span>
-                  <div className="rh-info-card__value" style={{ color: '#15803d' }}>{formatPrice(incomeStats.positive)}</div>
+                  <div className="rh-info-card__value rh-info-card__value--positive">{formatPrice(incomeStats.positive)}</div>
                   <div className="rh-info-card__hint">Включая брони, пополнения, бонусы и промо</div>
                 </div>
                 <div className="rh-info-card">
                   <span className="rh-info-card__label">Списания</span>
-                  <div className="rh-info-card__value" style={{ color: '#b42318' }}>{formatPrice(incomeStats.negative)}</div>
+                  <div className="rh-info-card__value rh-info-card__value--negative">{formatPrice(incomeStats.negative)}</div>
                   <div className="rh-info-card__hint">Комиссии, выплаты и возвраты за выбранный период</div>
                 </div>
               </div>

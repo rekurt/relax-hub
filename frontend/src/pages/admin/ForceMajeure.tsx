@@ -23,8 +23,9 @@ import {
 } from '@/api/generated/admin/admin'
 import type { InternalHandlerForceMajeureEventResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Paragraph } = Typography
+const { Paragraph } = Typography
 const { TextArea } = Input
 const { RangePicker } = DatePicker
 
@@ -132,25 +133,29 @@ export default function ForceMajeure() {
       title: '',
       key: 'actions',
       render: (_, record) => (
-        <a onClick={() => setDetailItem(record)}>Подробнее</a>
+        <Button type="link" size="small" onClick={() => setDetailItem(record)}>
+          Подробнее
+        </Button>
       ),
     },
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Форс-мажор
-      </Title>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Операционный контроль"
+        title="Форс-мажор"
+        description="Региональные чрезвычайные события, отмены и возвраты в одном контролируемом журнале."
+      />
 
-      <Card title="Активировать форс-мажор" style={{ marginBottom: 24 }}>
+      <Card className="rh-admin-action-card" title="Активировать форс-мажор">
         <Paragraph type="secondary">
           Массовая отмена бронирований по региону в случае чрезвычайной ситуации.
           Все подтверждённые бронирования в указанном регионе за выбранный период будут отменены,
           клиентам будет возвращено 100% стоимости на кошелёк.
         </Paragraph>
 
-        <Form form={form} layout="vertical" style={{ maxWidth: 600 }}>
+        <Form form={form} layout="vertical" className="rh-admin-force-form">
           <Form.Item
             name="region"
             label="Регион"
@@ -167,7 +172,7 @@ export default function ForceMajeure() {
             label="Период"
             rules={[{ required: true, message: 'Укажите период' }]}
           >
-            <RangePicker style={{ width: '100%' }} />
+            <RangePicker className="rh-admin-form-control" />
           </Form.Item>
 
           <Form.Item
@@ -194,7 +199,7 @@ export default function ForceMajeure() {
         </Form>
       </Card>
 
-      <Card title="История событий">
+      <Card className="rh-admin-reference-card" title="История событий">
         <Table
           columns={columns}
           dataSource={events}
@@ -234,7 +239,7 @@ export default function ForceMajeure() {
               </Descriptions.Item>
             </Descriptions>
 
-            <div style={{ marginTop: 24, display: 'flex', gap: 24 }}>
+            <div className="rh-admin-stat-strip">
               <Statistic
                 title="Затронутые бронирования"
                 value={detailItem.affected_count ?? 0}

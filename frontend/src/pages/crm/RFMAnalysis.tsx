@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react'
-import { Card, Col, Empty, Row, Table, Tag, Tooltip, Typography, Spin } from '@/components/design/system'
+import { Card, Col, Row, Table, Tag, Tooltip, Typography, Spin } from '@/components/design/system'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 interface RFMScore {
   recency: number
@@ -65,7 +67,7 @@ const SCORE_LABELS: Record<number, string> = {
 function ScoreTag({ value }: { value: number }) {
   return (
     <Tooltip title={SCORE_LABELS[value]}>
-      <Tag color={SCORE_COLORS[value]} style={{ minWidth: 28, textAlign: 'center' }}>
+      <Tag color={SCORE_COLORS[value]} className="rh-score-tag">
         {value}
       </Tag>
     </Tooltip>
@@ -87,13 +89,13 @@ function RFMMatrix({ matrix }: { matrix: RFMMatrixCell[] }) {
 
   return (
     <Card title="Матрица RFM (Давность x Частота)" size="small">
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 350 }}>
+      <div className="rh-rfm-matrix">
+        <table className="rh-rfm-matrix__table">
           <thead>
             <tr>
-              <th style={{ padding: 8, border: '1px solid rgba(15, 23, 42, 0.08)', background: 'rgba(255, 253, 248, 0.72)' }}>R \ F</th>
+              <th className="rh-rfm-matrix__head">R \ F</th>
               {[1, 2, 3, 4, 5].map((f) => (
-                <th key={f} style={{ padding: 8, border: '1px solid rgba(15, 23, 42, 0.08)', background: 'rgba(255, 253, 248, 0.72)', textAlign: 'center' }}>
+                <th key={f} className="rh-rfm-matrix__head">
                   F={f}
                 </th>
               ))}
@@ -102,26 +104,17 @@ function RFMMatrix({ matrix }: { matrix: RFMMatrixCell[] }) {
           <tbody>
             {[5, 4, 3, 2, 1].map((r) => (
               <tr key={r}>
-                <td style={{ padding: 8, border: '1px solid rgba(15, 23, 42, 0.08)', background: 'rgba(255, 253, 248, 0.72)', fontWeight: 600 }}>
+                <td className="rh-rfm-matrix__head rh-rfm-matrix__head--row">
                   R={r}
                 </td>
                 {[1, 2, 3, 4, 5].map((f) => {
                   const count = matrixMap[`${r}-${f}`] ?? 0
                   const intensity = count / maxCount
-                  const bg = count > 0
-                    ? `rgba(22, 119, 255, ${0.1 + intensity * 0.6})`
-                    : '#fff'
+                  const level = count > 0 ? Math.max(1, Math.ceil(intensity * 5)) : 0
                   return (
                     <td
                       key={f}
-                      style={{
-                        padding: 8,
-                        border: '1px solid rgba(15, 23, 42, 0.08)',
-                        textAlign: 'center',
-                        background: bg,
-                        fontWeight: count > 0 ? 600 : 400,
-                        color: intensity > 0.5 ? '#fff' : 'var(--rh-text)',
-                      }}
+                      className={`rh-rfm-matrix__cell rh-rfm-matrix__cell--level-${level}`}
                     >
                       {count || ''}
                     </td>
@@ -132,7 +125,7 @@ function RFMMatrix({ matrix }: { matrix: RFMMatrixCell[] }) {
           </tbody>
         </table>
       </div>
-      <Text type="secondary" style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
+      <Text type="secondary" className="rh-field-help-text">
         R = Давность (5 = недавний визит), F = Частота (5 = много визитов)
       </Text>
     </Card>
@@ -159,7 +152,7 @@ export default function RFMAnalysis() {
       title: 'ID клиента',
       dataIndex: 'client_id',
       key: 'client_id',
-      render: (id: string) => <Tag style={{ fontFamily: 'monospace' }}>{id?.slice(0, 8)}...</Tag>,
+      render: (id: string) => <Tag className="rh-code-tag">{id?.slice(0, 8)}...</Tag>,
     },
     {
       title: 'R',
@@ -217,72 +210,74 @@ export default function RFMAnalysis() {
 
   if (isLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: 80 }}>
+      <div className="rh-loading-block">
         <Spin size="large" />
       </div>
     )
   }
 
   return (
-    <div>
-      <Title level={3}>RFM-анализ</Title>
-      <Text type="secondary" style={{ marginBottom: 24, display: 'block' }}>
-        Анализ гостей по давности визита (R), частоте (F) и сумме трат (M). Каждый показатель от 1 до 5.
-      </Text>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="CRM"
+        title="RFM-анализ"
+        description="Анализ гостей по давности визита (R), частоте (F) и сумме трат (M). Каждый показатель от 1 до 5."
+        size="compact"
+      />
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[16, 16]} className="rh-section-spaced">
         <Col xs={12} sm={6}>
           <Card size="small">
             <Text type="secondary">Чемпионы</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#15803d' }}>
+            <div className="rh-rfm-summary-value rh-rfm-summary-value--success">
               {segmentSummary.champions}
             </div>
-            <Text type="secondary" style={{ fontSize: 11 }}>R≥4, F≥4</Text>
+            <Text type="secondary" className="rh-rfm-summary-note">R≥4, F≥4</Text>
           </Card>
         </Col>
         <Col xs={12} sm={6}>
           <Card size="small">
             <Text type="secondary">Лояльные</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#0f766e' }}>
+            <div className="rh-rfm-summary-value rh-rfm-summary-value--primary">
               {segmentSummary.loyal}
             </div>
-            <Text type="secondary" style={{ fontSize: 11 }}>F≥4, R&lt;4</Text>
+            <Text type="secondary" className="rh-rfm-summary-note">F≥4, R&lt;4</Text>
           </Card>
         </Col>
         <Col xs={12} sm={6}>
           <Card size="small">
             <Text type="secondary">Под угрозой</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#d97706' }}>
+            <div className="rh-rfm-summary-value rh-rfm-summary-value--warning">
               {segmentSummary.atRisk}
             </div>
-            <Text type="secondary" style={{ fontSize: 11 }}>R≤2, F≥3</Text>
+            <Text type="secondary" className="rh-rfm-summary-note">R≤2, F≥3</Text>
           </Card>
         </Col>
         <Col xs={12} sm={6}>
           <Card size="small">
             <Text type="secondary">Потерянные</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#b42318' }}>
+            <div className="rh-rfm-summary-value rh-rfm-summary-value--danger">
               {segmentSummary.lost}
             </div>
-            <Text type="secondary" style={{ fontSize: 11 }}>R≤2, F≤2</Text>
+            <Text type="secondary" className="rh-rfm-summary-note">R≤2, F≤2</Text>
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[16, 16]} className="rh-section-spaced">
         <Col xs={24} lg={12}>
           <RFMMatrix matrix={matrix} />
         </Col>
         <Col xs={24} lg={12}>
           <Card title="Подсказка по интерпретации" size="small">
-            <div style={{ lineHeight: 2 }}>
+            <div className="rh-rfm-legend">
               <Tag color="#15803d">5</Tag> Лучший квинтиль (топ-20%)<br />
               <Tag color="#15803d">4</Tag> Выше среднего<br />
               <Tag color="#d97706">3</Tag> Средний<br />
               <Tag color="#d97706">2</Tag> Ниже среднего<br />
               <Tag color="#b42318">1</Tag> Нижний квинтиль (нижние 20%)<br />
             </div>
-            <Text type="secondary" style={{ fontSize: 12, marginTop: 12, display: 'block' }}>
+            <Text type="secondary" className="rh-field-help-text rh-section-offset">
               Чемпионы (R≥4, F≥4) - самые ценные гости. Потерянные (R≤2, F≤2) - давно не приходили.
               Используйте эти данные для таргетированных рассылок.
             </Text>
@@ -297,7 +292,7 @@ export default function RFMAnalysis() {
           rowKey="id"
           size="small"
           pagination={{ pageSize, showSizeChanger: false }}
-          locale={{ emptyText: <Empty description="Нет данных для RFM-анализа. Гости появятся после завершённых бронирований" /> }}
+          locale={{ emptyText: <EmptyState description="Нет данных для RFM-анализа. Гости появятся после завершённых бронирований" /> }}
         />
       </Card>
     </div>

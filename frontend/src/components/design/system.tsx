@@ -102,6 +102,13 @@ function toGap(size: unknown): string {
   return '8px'
 }
 
+const RowGutterContext = createContext({ x: 0, y: 0 })
+
+function normalizeRowGutter(gutter: number | [number, number] | undefined) {
+  if (Array.isArray(gutter)) return { x: gutter[0], y: gutter[1] }
+  return { x: gutter ?? 0, y: gutter ?? 0 }
+}
+
 interface ConfigProviderProps {
   children?: ReactNode
   locale?: unknown
@@ -687,15 +694,25 @@ export function Button({
   const classes = cx(
     'rh-system-button',
     'rh-btn',
+    'inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-rh-pill border border-transparent font-sans text-sm font-semibold tracking-normal transition duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(15,118,110,0.16)] disabled:pointer-events-none disabled:opacity-55',
     `rh-btn--${isPrimary && !ghost ? 'primary' : isText || isLink || ghost ? 'ghost' : 'default'}`,
+    isPrimary && !ghost && 'bg-[linear-gradient(135deg,#0f766e,#0a5f59)] text-white shadow-rh-primary hover:-translate-y-px hover:shadow-[0_18px_30px_rgba(15,118,110,0.24)]',
+    !isPrimary && !isText && !isLink && !ghost && 'border-[rgba(15,23,42,0.12)] bg-white/75 text-rh-text hover:border-[rgba(15,118,110,0.28)] hover:bg-white/95 hover:shadow-rh-soft',
+    (isText || isLink || ghost) && 'bg-transparent text-rh-text shadow-none hover:bg-[rgba(15,118,110,0.08)] hover:text-rh-primary-strong',
     size === 'small' && 'rh-btn--sm',
+    size === 'small' && 'min-h-9 px-4 text-[13px]',
     size === 'large' && 'rh-btn--lg',
+    size === 'large' && 'min-h-[52px] px-7 text-[15px]',
+    size === 'middle' && 'min-h-11 px-[22px]',
     block && 'rh-btn--block',
+    block && 'w-full',
     danger && 'rh-btn--danger',
+    danger && !isPrimary && 'border-[rgba(180,35,24,0.22)] bg-[rgba(180,35,24,0.08)] text-rh-error hover:border-[rgba(180,35,24,0.32)]',
     loading && 'rh-btn--loading',
     isText && 'rh-btn--text',
     isLink && 'rh-btn--link',
     shape !== 'default' && `rh-btn--${shape}`,
+    shape === 'circle' && 'aspect-square px-0',
     'ant-btn',
     isPrimary && 'ant-btn-primary',
     ghost && 'ant-btn-background-ghost',
@@ -808,9 +825,13 @@ export const Card = Object.assign(
           'rh-system-card',
           'rh-card',
           'ant-card',
+          'min-w-0 rounded-rh-2xl border border-[rgba(15,23,42,0.12)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,252,246,0.84))] shadow-rh-soft backdrop-blur-[18px]',
           size === 'small' && 'ant-card-small rh-card--small',
+          size === 'small' && 'rounded-rh-xl',
           hoverable && 'rh-card--hoverable ant-card-hoverable',
+          hoverable && 'transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-rh',
           (!bordered || variant === 'borderless') && 'rh-card--borderless ant-card-borderless',
+          (!bordered || variant === 'borderless') && 'border-transparent shadow-none',
           className,
         )}
         {...props}
@@ -857,12 +878,19 @@ function tagTone(color?: ColorTone) {
   return 'ghost'
 }
 
-export function Tag({ color, icon, closable, closeIcon, onClose, className, children, ...props }: TagProps) {
+function TagBase({ color, icon, closable, closeIcon, onClose, className, children, ...props }: TagProps) {
   const tone = tagTone(color)
   return (
     <span
       className={cx(
         'rh-tag',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-rh-pill border px-3 py-1 font-sans text-xs font-semibold leading-none',
+        tone === 'default' && 'border-[rgba(15,23,42,0.12)] bg-white/80 text-rh-text',
+        tone === 'primary' && 'border-[rgba(15,118,110,0.22)] bg-[rgba(15,118,110,0.10)] text-rh-primary-strong',
+        tone === 'gold' && 'border-[rgba(217,119,6,0.28)] bg-[rgba(217,119,6,0.12)] text-[#92400e]',
+        tone === 'red' && 'border-[rgba(180,35,24,0.22)] bg-[rgba(180,35,24,0.08)] text-[#991b1b]',
+        tone === 'green' && 'border-[rgba(21,128,61,0.24)] bg-[rgba(21,128,61,0.10)] text-rh-success',
+        tone === 'ghost' && 'border-[rgba(15,23,42,0.08)] bg-white/55 text-rh-text',
         tone !== 'default' && `rh-tag--${tone}`,
         'ant-tag',
         color && `ant-tag-${color}`,
@@ -888,6 +916,49 @@ export function Tag({ color, icon, closable, closeIcon, onClose, className, chil
     </span>
   )
 }
+
+interface CheckableTagProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'onChange'> {
+  checked?: boolean
+  onChange?: (checked: boolean) => void
+}
+
+function CheckableTag({ checked, onChange, className, children, onClick, onKeyDown, ...props }: CheckableTagProps) {
+  const toggle = () => onChange?.(!checked)
+  return (
+    <span
+      role="checkbox"
+      aria-checked={!!checked}
+      tabIndex={0}
+      className={cx(
+        'rh-tag',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-rh-pill border px-3 py-1 font-sans text-xs font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(15,118,110,0.16)]',
+        'rh-tag--checkable',
+        checked ? 'border-[rgba(15,118,110,0.22)] bg-[rgba(15,118,110,0.10)] text-rh-primary-strong' : 'border-[rgba(15,23,42,0.12)] bg-white/80 text-rh-text',
+        checked && 'rh-tag--checked',
+        'ant-tag',
+        'ant-tag-checkable',
+        checked && 'ant-tag-checkable-checked',
+        className,
+      )}
+      onClick={(event) => {
+        toggle()
+        onClick?.(event)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === ' ' || event.key === 'Enter') {
+          event.preventDefault()
+          toggle()
+        }
+        onKeyDown?.(event)
+      }}
+      {...props}
+    >
+      {children}
+    </span>
+  )
+}
+
+export const Tag = Object.assign(TagBase, { CheckableTag })
 
 interface TypographyBaseProps extends HTMLAttributes<HTMLElement> {
   type?: ToneType
@@ -997,11 +1068,23 @@ interface RowProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Row({ gutter = 0, align, justify, className, style, children, ...props }: RowProps) {
-  const gap = Array.isArray(gutter) ? `${gutter[1]}px ${gutter[0]}px` : `${gutter}px`
+  const normalizedGutter = normalizeRowGutter(gutter)
   return (
-    <div className={cx('rh-row', 'ant-row', className)} style={{ gap, alignItems: align, justifyContent: justify, ...style }} {...props}>
-      {children}
-    </div>
+    <RowGutterContext.Provider value={normalizedGutter}>
+      <div
+        className={cx('rh-row', 'ant-row', className)}
+        style={{
+          columnGap: normalizedGutter.x,
+          rowGap: normalizedGutter.y,
+          alignItems: align,
+          justifyContent: justify,
+          ...style,
+        }}
+        {...props}
+      >
+        {children}
+      </div>
+    </RowGutterContext.Provider>
   )
 }
 
@@ -1012,12 +1095,27 @@ interface ColProps extends HTMLAttributes<HTMLDivElement> {
   md?: number
   lg?: number
   xl?: number
+  xxl?: number
   flex?: string | number
 }
 
-export function Col({ span, xs, sm, md, lg, xl, flex, className, style, children, ...props }: ColProps) {
-  const basis = span ?? xs ?? sm ?? md ?? lg ?? xl ?? 24
-  const width = `calc(${Math.min(24, basis) / 24 * 100}% - 0.01px)`
+export function Col({ span, xs, sm, md, lg, xl, xxl, flex, className, style, children, ...props }: ColProps) {
+  const screens = useMediaScreens()
+  const gutter = useContext(RowGutterContext)
+  let basis = span ?? xs
+  if (screens.sm && sm != null) basis = sm
+  if (screens.md && md != null) basis = md
+  if (screens.lg && lg != null) basis = lg
+  if (screens.xl && xl != null) basis = xl
+  if (screens.xxl && xxl != null) basis = xxl
+  const gridStyle: CSSProperties = {}
+  if (basis != null) {
+    const ratio = Math.min(24, basis) / 24
+    const gutterOffset = gutter.x * (1 - ratio)
+    const width = `calc(${ratio * 100}% - ${gutterOffset}px)`
+    gridStyle.flex = `0 0 ${width}`
+    gridStyle.maxWidth = width
+  }
   return (
     <div
       className={cx(
@@ -1029,9 +1127,10 @@ export function Col({ span, xs, sm, md, lg, xl, flex, className, style, children
         md != null && `ant-col-md-${md}`,
         lg != null && `ant-col-lg-${lg}`,
         xl != null && `ant-col-xl-${xl}`,
+        xxl != null && `ant-col-xxl-${xxl}`,
         className,
       )}
-      style={{ flex: flex ?? `1 1 ${width}`, maxWidth: flex ? undefined : width, ...style }}
+      style={{ ...(flex != null ? { flex } : gridStyle), ...style }}
       {...props}
     >
       {children}

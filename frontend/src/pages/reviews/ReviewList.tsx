@@ -29,8 +29,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import ReportModal from '@/components/ReportModal'
 import type { ReportTargetType } from '@/components/ReportModal'
 import EmptyState from '@/components/EmptyState'
+import { resolveAssetUrl } from '@/lib/asset-url'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Paragraph, Text } = Typography
+const { Paragraph, Text } = Typography
 const { TextArea } = Input
 
 const FILTER_OPTIONS = [
@@ -56,17 +58,17 @@ function RatingDistribution({ reviews }: { reviews: InternalHandlerReviewRespons
     : 0
 
   return (
-    <Card size="small" title={`Статистика отзывов (${total > 0 ? `на странице: ${total}` : 'нет данных'})`} style={{ marginBottom: 16 }}>
+    <Card size="small" className="rh-admin-detail-card rh-review-stats-card" title={`Статистика отзывов (${total > 0 ? `на странице: ${total}` : 'нет данных'})`}>
       <Row gutter={24}>
-        <Col xs={24} sm={8} style={{ textAlign: 'center', marginBottom: 16 }}>
+        <Col xs={24} sm={8} className="rh-review-stats-summary">
           <Statistic
             title="Средний рейтинг"
             value={avgRating}
             precision={1}
-            prefix={<StarFilled style={{ color: '#d97706' }} />}
+            prefix={<StarFilled className="rh-review-star-icon" />}
           />
-          <div style={{ marginTop: 4 }}>
-            <Rate disabled allowHalf value={avgRating} style={{ fontSize: 14 }} />
+          <div className="rh-review-rating-preview">
+            <Rate disabled allowHalf value={avgRating} className="rh-rate-compact" />
           </div>
           <Text type="secondary">{total} отзывов</Text>
         </Col>
@@ -75,11 +77,11 @@ function RatingDistribution({ reviews }: { reviews: InternalHandlerReviewRespons
             const count = distribution[star - 1] ?? 0
             const percent = total > 0 ? (count / total) * 100 : 0
             return (
-              <Row key={star} align="middle" gutter={8} style={{ marginBottom: 4 }}>
+              <Row key={star} align="middle" gutter={8} className="rh-review-distribution-row">
                 <Col span={3}>
                   <Space size={2}>
                     <span>{star}</span>
-                    <StarFilled style={{ color: '#d97706', fontSize: 12 }} />
+                    <StarFilled className="rh-review-star-icon rh-review-star-icon--small" />
                   </Space>
                 </Col>
                 <Col span={17}>
@@ -91,7 +93,7 @@ function RatingDistribution({ reviews }: { reviews: InternalHandlerReviewRespons
                   />
                 </Col>
                 <Col span={4}>
-                  <Text type="secondary" style={{ fontSize: 12 }}>{count}</Text>
+                  <Text type="secondary" className="rh-table-meta-text">{count}</Text>
                 </Col>
               </Row>
             )
@@ -132,7 +134,7 @@ function ReviewResponseForm({
   }
 
   return (
-    <div style={{ marginTop: 12 }}>
+    <div className="rh-review-response-form">
       <TextArea
         value={responseText}
         onChange={(e) => setResponseText(e.target.value)}
@@ -147,7 +149,7 @@ function ReviewResponseForm({
         onClick={handleSubmit}
         loading={responseMutation.isPending}
         disabled={!responseText.trim()}
-        style={{ marginTop: 8 }}
+        className="rh-section-offset-sm"
         size="small"
       >
         Отправить ответ
@@ -193,31 +195,40 @@ export default function ReviewList() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Отзывы</Title>
-        <EmptyState description="Выберите баню для просмотра отзывов" />
+      <div className="rh-page-stack">
+        <PageHeader
+          title="Отзывы"
+          description="Отзывы гостей, медиа-вложения и ответы от имени объекта."
+          size="compact"
+        />
+        <Card className="rh-admin-detail-card">
+          <EmptyState description="Выберите баню для просмотра отзывов" />
+        </Card>
       </div>
     )
   }
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Отзывы
-      </Title>
+    <div className="rh-page-stack">
+      <PageHeader
+        title="Отзывы"
+        description="Отвечайте на обратную связь и отслеживайте качество клиентского опыта."
+        size="compact"
+      />
 
       <RatingDistribution reviews={reviews} />
 
-      <Space wrap style={{ marginBottom: 16 }}>
+      <Space wrap className="rh-page-toolbar">
         <Select
           value={filter}
           onChange={(val) => { setFilter(val); setPage(1) }}
           options={FILTER_OPTIONS}
-          style={{ width: 180 }}
+          className="rh-review-filter"
         />
       </Space>
 
       <List
+        className="rh-review-list"
         loading={isLoading}
         dataSource={filteredReviews}
         locale={{ emptyText: <EmptyState description="Отзывов пока нет. Забронируйте визит, чтобы оставить первый отзыв" /> }}
@@ -237,13 +248,13 @@ export default function ReviewList() {
           },
         }}
         renderItem={(review) => (
-          <List.Item key={review.id} style={{ alignItems: 'flex-start' }}>
+          <List.Item key={review.id} className="rh-review-list-item">
             <List.Item.Meta
               avatar={<Avatar icon={<UserOutlined />} />}
               title={
                 <Space>
-                  <Rate disabled value={review.rating} style={{ fontSize: 14 }} />
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Rate disabled value={review.rating} className="rh-rate-compact" />
+                  <Text type="secondary" className="rh-table-meta-text">
                     {review.created_at ? dayjs(review.created_at).format('DD.MM.YYYY HH:mm') : ''}
                   </Text>
                   {review.status && review.status !== 'approved' && (
@@ -255,23 +266,23 @@ export default function ReviewList() {
               }
               description={
                 <div>
-                  <Paragraph style={{ marginBottom: 8 }}>
+                  <Paragraph className="rh-review-text">
                     {review.text || <Text type="secondary">Без текста</Text>}
                   </Paragraph>
 
                   {review.media && review.media.length > 0 && (
-                    <div style={{ marginBottom: 8 }}>
+                    <div className="rh-review-media-row">
                       <Image.PreviewGroup>
                         <Space wrap>
                           {review.media.map((m) => (
                             m.type === 'image' ? (
                               <Image
                                 key={m.id}
-                                src={m.thumbnail_url ?? m.url}
+                                src={resolveAssetUrl(m.thumbnail_url ?? m.url)}
                                 width={80}
                                 height={80}
-                                style={{ objectFit: 'cover', borderRadius: 12 }}
-                                preview={{ src: m.url }}
+                                className="rh-review-media-image"
+                                preview={{ src: resolveAssetUrl(m.url) }}
                               />
                             ) : (
                               <Tag key={m.id} color="blue">
@@ -285,16 +296,16 @@ export default function ReviewList() {
                   )}
 
                   {review.images && review.images.length > 0 && !review.media?.length && (
-                    <div style={{ marginBottom: 8 }}>
+                    <div className="rh-review-media-row">
                       <Image.PreviewGroup>
                         <Space wrap>
                           {review.images.map((url, idx) => (
                             <Image
                               key={idx}
-                              src={url}
+                              src={resolveAssetUrl(url)}
                               width={80}
                               height={80}
-                              style={{ objectFit: 'cover', borderRadius: 12 }}
+                              className="rh-review-media-image"
                             />
                           ))}
                         </Space>
@@ -305,14 +316,14 @@ export default function ReviewList() {
                   {review.owner_response && (
                     <Card
                       size="small"
-                      style={{ marginTop: 8, background: 'rgba(21, 128, 61, 0.08)' }}
+                      className="rh-owner-response-card"
                     >
                       <Text strong>Ваш ответ:</Text>
-                      <Paragraph style={{ marginBottom: 0, marginTop: 4 }}>
+                      <Paragraph className="rh-owner-response-text">
                         {review.owner_response}
                       </Paragraph>
                       {review.owner_response_at && (
-                        <Text type="secondary" style={{ fontSize: 11 }}>
+                        <Text type="secondary" className="rh-table-meta-text">
                           {dayjs(review.owner_response_at).format('DD.MM.YYYY HH:mm')}
                         </Text>
                       )}
@@ -332,7 +343,7 @@ export default function ReviewList() {
                       size="small"
                       danger
                       icon={<WarningOutlined />}
-                      style={{ marginTop: 8, padding: 0 }}
+                      className="rh-link-action"
                       onClick={() => setReportTarget({ type: 'review', id: review.id! })}
                     >
                       Пожаловаться

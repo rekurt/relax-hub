@@ -3,7 +3,6 @@ import {
   Table,
   Button,
   Badge,
-  Empty,
   Tag,
   Space,
   Select,
@@ -149,10 +148,11 @@ export default function AdminNotificationCenter() {
       dataIndex: 'title',
       key: 'title',
       render: (title: string, record: AdminNotification) => (
-        <div>
-          <span style={{ fontWeight: record.is_read ? 400 : 600 }}>{title}</span>
-          <br />
-          <span style={{ color: 'var(--rh-text-disabled)', fontSize: 12 }}>{record.body}</span>
+        <div className="rh-admin-notification-title">
+          <span className={record.is_read ? 'rh-admin-notification-title__text' : 'rh-admin-notification-title__text rh-admin-notification-title__text--unread'}>
+            {title}
+          </span>
+          <span className="rh-admin-notification-title__body">{record.body}</span>
         </div>
       ),
     },
@@ -187,7 +187,7 @@ export default function AdminNotificationCenter() {
   ]
 
   return (
-    <div>
+    <div className="rh-admin-notifications-page">
       <PageHeader
         eyebrow="Мониторинг"
         title="Центр уведомлений"
@@ -204,23 +204,22 @@ export default function AdminNotificationCenter() {
         }
       />
 
-      <div style={{ marginBottom: 16 }}>
-        <Card size="small">
-          <Statistic
-            title="Непрочитанных"
-            value={unreadCount}
-            prefix={<Badge status={unreadCount > 0 ? 'processing' : 'default'} />}
-          />
-        </Card>
-      </div>
+      <Card size="small" className="rh-admin-notification-stat">
+        <Statistic
+          title="Непрочитанных"
+          value={unreadCount}
+          prefix={<Badge status={unreadCount > 0 ? 'processing' : 'default'} />}
+        />
+      </Card>
 
       <Card
+        className="rh-admin-notification-table"
         extra={
-          <Space>
+          <Space className="rh-admin-table-tools" wrap>
             <Select
               allowClear
               placeholder="Важность"
-              style={{ width: 160 }}
+              className="rh-admin-notification-filter rh-admin-notification-filter--severity"
               value={severityFilter}
               onChange={(v) => {
                 setSeverityFilter(v)
@@ -234,7 +233,7 @@ export default function AdminNotificationCenter() {
             <Select
               allowClear
               placeholder="Тип"
-              style={{ width: 180 }}
+              className="rh-admin-notification-filter rh-admin-notification-filter--type"
               value={typeFilter}
               onChange={(v) => {
                 setTypeFilter(v)
@@ -248,7 +247,7 @@ export default function AdminNotificationCenter() {
             <Select
               allowClear
               placeholder="Статус"
-              style={{ width: 140 }}
+              className="rh-admin-notification-filter rh-admin-notification-filter--status"
               value={readFilter}
               onChange={(v) => {
                 setReadFilter(v)
@@ -267,7 +266,16 @@ export default function AdminNotificationCenter() {
           columns={columns}
           dataSource={notifications}
           loading={isLoading}
-          locale={{ emptyText: <Empty description="Нет уведомлений" /> }}
+          locale={{
+            emptyText: (
+              <div className="rh-admin-empty-state">
+                <div className="rh-admin-empty-state__title">Нет уведомлений</div>
+                <p className="rh-admin-empty-state__text">
+                  События платформы появятся здесь после обработки.
+                </p>
+              </div>
+            ),
+          }}
           rowClassName={(record) => (record.is_read ? '' : 'rh-table-row-unread')}
           pagination={{
             current: page,
@@ -282,12 +290,6 @@ export default function AdminNotificationCenter() {
           }}
         />
       </Card>
-
-      <style>{`
-        .rh-table-row-unread {
-          background: rgba(22, 119, 255, 0.04) !important;
-        }
-      `}</style>
     </div>
   )
 }

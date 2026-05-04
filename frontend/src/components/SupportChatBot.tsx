@@ -150,30 +150,15 @@ export default function SupportChatBot({ onEscalate }: SupportChatBotProps) {
           <span>Помощник поддержки</span>
         </Space>
       }
-      styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', height: 480 } }}
+      className="rh-support-chat-card"
     >
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: 16,
-        }}
-      >
+      <div className="rh-support-chat__messages">
         {messages.map((msg, idx) => {
           if (msg.type === 'user') {
             return (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong))',
-                    color: '#fff',
-                    borderRadius: '18px 18px 6px 18px',
-                    padding: '10px 14px',
-                    maxWidth: '75%',
-                    boxShadow: '0 12px 24px rgba(15, 118, 110, 0.16)',
-                  }}
-                >
-                  <Text style={{ color: '#fff' }}>{msg.text}</Text>
+              <div key={idx} className="rh-support-chat__row rh-support-chat__row--user">
+                <div className="rh-support-chat__bubble rh-support-chat__bubble--user">
+                  <Text className="rh-support-chat__user-text">{msg.text}</Text>
                 </div>
               </div>
             )
@@ -181,16 +166,8 @@ export default function SupportChatBot({ onEscalate }: SupportChatBotProps) {
 
           if (msg.type === 'bot') {
             return (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
-                <div
-                  style={{
-                    background: 'rgba(248, 244, 236, 0.82)',
-                    border: '1px solid var(--rh-border)',
-                    borderRadius: '18px 18px 18px 6px',
-                    padding: '10px 14px',
-                    maxWidth: '75%',
-                  }}
-                >
+              <div key={idx} className="rh-support-chat__row rh-support-chat__row--bot">
+                <div className="rh-support-chat__bubble rh-support-chat__bubble--bot">
                   <Text>{msg.text}</Text>
                 </div>
               </div>
@@ -199,7 +176,7 @@ export default function SupportChatBot({ onEscalate }: SupportChatBotProps) {
 
           if (msg.type === 'faq_results' && msg.matches) {
             return (
-              <div key={idx} style={{ marginBottom: 12 }}>
+              <div key={idx} className="rh-support-chat__faq">
                 <Collapse
                   accordion
                   items={msg.matches.map((m, i) => ({
@@ -216,7 +193,7 @@ export default function SupportChatBot({ onEscalate }: SupportChatBotProps) {
                     children: <Paragraph>{m.faq.answer}</Paragraph>,
                   }))}
                 />
-                <Divider style={{ margin: '12px 0' }} />
+                <Divider className="rh-support-chat__divider" />
                 <Space>
                   <Button
                     type="primary"
@@ -240,8 +217,8 @@ export default function SupportChatBot({ onEscalate }: SupportChatBotProps) {
         })}
         <div ref={messagesEndRef} />
       </div>
-      <div style={{ padding: '10px 16px 16px', borderTop: '1px solid var(--rh-border)' }}>
-        <Space.Compact style={{ width: '100%' }}>
+      <div className="rh-support-chat__composer">
+        <Space.Compact className="rh-full-width">
           <Input
             placeholder="Опишите вашу проблему..."
             value={input}

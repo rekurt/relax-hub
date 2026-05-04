@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -143,6 +144,15 @@ func (h *WalletHandler) GetWallet(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
 	summary, err := h.walletService.GetBalance(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, domain.ErrWalletNotFound) {
+			if _, ensureErr := h.walletService.EnsureWallet(r.Context(), userID); ensureErr != nil {
+				handleServiceError(w, ensureErr)
+				return
+			}
+			summary, err = h.walletService.GetBalance(r.Context(), userID)
+		}
+	}
 	if err != nil {
 		handleServiceError(w, err)
 		return

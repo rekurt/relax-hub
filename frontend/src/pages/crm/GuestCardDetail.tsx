@@ -5,7 +5,6 @@ import {
   Card,
   Col,
   Descriptions,
-  Empty,
   Input,
   Row,
   Space,
@@ -25,8 +24,10 @@ import {
 } from '@/api/generated/crm/crm'
 import { formatPrice } from '@/lib/format'
 import { useQueryClient } from '@tanstack/react-query'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 export default function GuestCardDetail() {
   const { id } = useParams<{ id: string }>()
@@ -68,30 +69,32 @@ export default function GuestCardDetail() {
 
   if (!guest) {
     return (
-      <div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/crm/guests')}>
+      <div className="rh-stack">
+        <Button type="link" className="rh-admin-detail-back" icon={<ArrowLeftOutlined />} onClick={() => navigate('/crm/guests')}>
           Назад
         </Button>
-        <Empty
+        <EmptyState
           description="Карточка гостя не найдена. Возможно, она была удалена или ещё не создана."
-          style={{ padding: '48px 0' }}
-        >
-          <Button type="primary" onClick={() => navigate('/crm/guests')}>
-            К списку гостей
-          </Button>
-        </Empty>
+          actionText="К списку гостей"
+          onAction={() => navigate('/crm/guests')}
+        />
       </div>
     )
   }
 
   return (
-    <div>
-      <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/crm/guests')}>
+    <div className="rh-stack">
+      <div className="rh-admin-detail-back">
+        <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => navigate('/crm/guests')}>
           Назад
         </Button>
-        <Title level={3} style={{ margin: 0 }}>Карточка гостя</Title>
-      </Space>
+      </div>
+      <PageHeader
+        eyebrow="CRM"
+        title="Карточка гостя"
+        description="История визитов, суммы, заметки и теги гостя."
+        size="compact"
+      />
 
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}>
@@ -111,10 +114,10 @@ export default function GuestCardDetail() {
         </Col>
       </Row>
 
-      <Card style={{ marginTop: 16 }}>
+      <Card className="rh-admin-detail-card rh-section-offset">
         <Descriptions column={1} bordered size="small">
           <Descriptions.Item label="ID клиента">
-            <Text copyable style={{ fontFamily: 'monospace' }}>{guest.client_id}</Text>
+            <Text copyable className="rh-code-text">{guest.client_id}</Text>
           </Descriptions.Item>
           <Descriptions.Item label="Первый визит">
             {guest.first_visit_at ? dayjs(guest.first_visit_at).format('DD.MM.YYYY HH:mm') : '—'}
@@ -128,8 +131,8 @@ export default function GuestCardDetail() {
         </Descriptions>
       </Card>
 
-      <Card title="Заметки и теги" style={{ marginTop: 16 }}>
-        <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+      <Card title="Заметки и теги" className="rh-admin-detail-card rh-section-offset">
+        <Space orientation="vertical" className="rh-full-width" size="middle">
           <div>
             <Text strong>Заметки</Text>
             <Input.TextArea

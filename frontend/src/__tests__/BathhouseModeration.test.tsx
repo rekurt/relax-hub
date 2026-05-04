@@ -129,13 +129,14 @@ describe('BathhouseModeration', () => {
 
     renderWithProviders(<BathhouseModeration />)
 
-    // pending and rejected can be approved (2 items), active can be approved too? No - active cannot be approved
-    // pending: approve + reject, active: reject only, rejected: approve only
     const approveButtons = screen.getAllByText('Одобрить')
-    expect(approveButtons.length).toBe(2) // pending + rejected
+    expect(approveButtons.length).toBe(1)
 
     const rejectButtons = screen.getAllByText('Отклонить')
-    expect(rejectButtons.length).toBe(2) // pending + active
+    expect(rejectButtons.length).toBe(1)
+
+    expect(screen.getByText('Объект уже опубликован')).toBeInTheDocument()
+    expect(screen.getByText('Заявка уже отклонена')).toBeInTheDocument()
   })
 
   it('renders status filter', () => {

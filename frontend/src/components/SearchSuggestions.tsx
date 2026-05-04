@@ -85,35 +85,21 @@ export default function SearchSuggestions({
     <div
       ref={containerRef}
       data-testid="search-suggestions"
-      style={{
-        position: 'absolute',
-        top: '100%',
-        left: 0,
-        right: 0,
-        background: 'var(--rh-surface-strong)',
-        border: '1px solid var(--rh-border)',
-        borderTop: 0,
-        borderRadius: '0 0 20px 20px',
-        boxShadow: 'var(--rh-shadow)',
-        backdropFilter: 'blur(18px)',
-        zIndex: 100,
-        maxHeight: 360,
-        overflow: 'auto',
-      }}
+      className="rh-search-suggestions"
     >
       {isLoading ? (
-        <div style={{ padding: 16, textAlign: 'center' }}>
+        <div className="rh-search-suggestions__loading">
           <Spin size="small" />
         </div>
       ) : sortedGroups.length === 0 ? (
-        <div style={{ padding: '12px 16px' }}>
+        <div className="rh-search-suggestions__empty">
           <Text type="secondary">Ничего не найдено</Text>
         </div>
       ) : (
         sortedGroups.map((type) => (
           <div key={type}>
-            <div style={{ padding: '10px 16px 6px', background: 'rgba(248, 244, 236, 0.76)' }}>
-              <Text type="secondary" style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase' }}>
+            <div className="rh-search-suggestions__group-title">
+              <Text type="secondary" className="rh-search-suggestions__group-label">
                 {TYPE_LABELS[type] ?? type}
               </Text>
             </div>
@@ -123,14 +109,7 @@ export default function SearchSuggestions({
                 data-testid={`suggestion-${type}`}
                 role="option"
                 tabIndex={0}
-                style={{
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  minHeight: 42,
-                }}
+                className="rh-search-suggestions__option"
                 onMouseDown={(e) => {
                   e.preventDefault()
                   onSelect(text)
@@ -139,7 +118,7 @@ export default function SearchSuggestions({
                   if (e.key === 'Enter') onSelect(text)
                 }}
               >
-                <span style={{ color: 'var(--rh-text-muted)' }}>{TYPE_ICONS[type] ?? <SearchOutlined />}</span>
+                <span className="rh-search-suggestions__icon">{TYPE_ICONS[type] ?? <SearchOutlined />}</span>
                 <span>{text}</span>
               </div>
             ))}

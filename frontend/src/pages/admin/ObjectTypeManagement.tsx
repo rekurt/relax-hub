@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Empty,
+  Card,
   Form,
   Input,
   InputNumber,
@@ -12,7 +12,6 @@ import {
   Switch,
   Table,
   Tag,
-  Typography,
 } from '@/components/design/system'
 import {
   PlusOutlined,
@@ -22,8 +21,8 @@ import {
 import type { ColumnsType } from '@/components/design/types'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { TextArea } = Input
 
 interface ObjectType {
@@ -187,32 +186,45 @@ export default function ObjectTypeManagement() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Типы объектов
-        </Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-          Добавить тип
-        </Button>
-      </div>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Справочник"
+        title="Типы объектов"
+        description="Категории объектов с описанием, сортировкой и статусом публикации."
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+            Добавить тип
+          </Button>
+        }
+      />
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
-          <Spin size="large" />
-        </div>
-      ) : objectTypes.length === 0 ? (
-        <Empty description="Нет типов объектов" />
-      ) : (
-        <Table
-          dataSource={objectTypes}
-          columns={columns}
-          rowKey="id"
-          pagination={false}
-          size="middle"
-          locale={{ emptyText: 'Нет типов объектов' }}
-        />
-      )}
+      <Card className="rh-admin-reference-card" title="Каталог типов объектов">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем типы объектов</span>
+          </div>
+        ) : objectTypes.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет типов объектов</div>
+            <p className="rh-admin-empty-state__text">
+              Добавьте первый тип, чтобы структурировать каталог объектов платформы.
+            </p>
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+              Добавить тип
+            </Button>
+          </div>
+        ) : (
+          <Table
+            dataSource={objectTypes}
+            columns={columns}
+            rowKey="id"
+            pagination={false}
+            size="middle"
+            locale={{ emptyText: 'Нет типов объектов' }}
+          />
+        )}
+      </Card>
 
       <Modal
         title={editingItem ? 'Редактировать тип объекта' : 'Добавить тип объекта'}
@@ -223,7 +235,7 @@ export default function ObjectTypeManagement() {
         cancelText="Отмена"
         confirmLoading={createMutation.isPending || updateMutation.isPending}
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form form={form} layout="vertical" className="rh-admin-modal-form">
           <Form.Item
             name="name"
             label="Название"
@@ -235,7 +247,7 @@ export default function ObjectTypeManagement() {
             <TextArea rows={3} placeholder="Традиционная русская баня с парной" />
           </Form.Item>
           <Form.Item name="sort_order" label="Порядок сортировки">
-            <InputNumber style={{ width: '100%' }} min={0} />
+            <InputNumber className="rh-admin-form-control" min={0} />
           </Form.Item>
           <Form.Item name="is_active" label="Активно" valuePropName="checked">
             <Switch />

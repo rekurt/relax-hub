@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  Empty,
+  Card,
   Pagination,
   Segmented,
   Spin,
@@ -15,8 +15,9 @@ import {
 } from '@/api/generated/disputes-admin/disputes-admin'
 import type { InternalHandlerDisputeResponse } from '@/api/generated/model'
 import { formatDateTime, formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const STATUS_OPTIONS = [
   { label: 'Все', value: '' },
@@ -154,59 +155,69 @@ export default function DisputeManagement() {
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Управление спорами
-      </Title>
-
-      <Segmented
-        options={STATUS_OPTIONS}
-        value={statusFilter}
-        onChange={(val) => {
-          setStatusFilter(val as string)
-          setPage(1)
-        }}
-        style={{ marginBottom: 16 }}
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Модерация"
+        title="Управление спорами"
+        description="Фильтрация, медиаторы и статусы возвратов в едином операционном списке."
+        extra={
+          <Segmented
+            options={STATUS_OPTIONS}
+            value={statusFilter}
+            onChange={(val) => {
+              setStatusFilter(val as string)
+              setPage(1)
+            }}
+          />
+        }
       />
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
-          <Spin size="large" />
-        </div>
-      ) : disputes.length === 0 ? (
-        <Empty description="Нет споров" />
-      ) : (
-        <>
-          <Table
-            dataSource={disputes}
-            columns={columns}
-            rowKey="id"
-            pagination={false}
-            size="middle"
-            locale={{ emptyText: 'Нет споров' }}
-            onRow={(record) => ({
-              onClick: () => navigate(`/admin/disputes/${record.id}`),
-              style: { cursor: 'pointer' },
-            })}
-          />
-          {meta && meta.total_pages! > 1 && (
-            <div style={{ marginTop: 16, textAlign: 'right' }}>
-              <Pagination
-                current={page}
-                pageSize={pageSize}
-                total={meta.total_count}
-                showSizeChanger
-                pageSizeOptions={['10', '20', '50']}
-                showTotal={(total) => `Всего: ${total}`}
-                onChange={(p, ps) => {
-                  setPage(p)
-                  setPageSize(ps)
-                }}
-              />
-            </div>
-          )}
-        </>
-      )}
+      <Card className="rh-admin-reference-card" title="Список споров">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем споры</span>
+          </div>
+        ) : disputes.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет споров</div>
+            <p className="rh-admin-empty-state__text">
+              Новые обращения появятся здесь, когда клиент или владелец откроет спор по бронированию.
+            </p>
+          </div>
+        ) : (
+          <>
+            <Table
+              dataSource={disputes}
+              columns={columns}
+              rowKey="id"
+              pagination={false}
+              size="middle"
+              locale={{ emptyText: 'Нет споров' }}
+              onRow={(record) => ({
+                onClick: () => navigate(`/admin/disputes/${record.id}`),
+                className: 'rh-clickable-row',
+              })}
+            />
+            {meta && meta.total_pages! > 1 && (
+              <div className="rh-admin-pagination">
+                <Pagination
+                  current={page}
+                  pageSize={pageSize}
+                  total={meta.total_count}
+                  showSizeChanger
+                  pageSizeOptions={['10', '20', '50']}
+                  showTotal={(total) => `Всего: ${total}`}
+                  onChange={(p, ps) => {
+                    setPage(p)
+                    setPageSize(ps)
+                  }}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </Card>
     </div>
   )
 }

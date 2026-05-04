@@ -6,7 +6,6 @@ import {
   Card,
   Descriptions,
   Divider,
-  Empty,
   Input,
   Modal,
   Space,
@@ -38,7 +37,11 @@ import {
 import type { InternalHandlerTicketMessageResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
+
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(' ')
+}
 
 const statusLabel: Record<string, string> = {
   open: 'Открыт',
@@ -178,61 +181,73 @@ export default function AdminTicketDetail() {
 
   if (ticketLoading || messagesLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: 48 }}>
+      <Card className="rh-admin-state-card">
         <Spin size="large" />
-      </div>
+      </Card>
     )
   }
 
   if (!ticket) {
-    return <Empty description="Обращение не найдено" />
+    return (
+      <Card>
+        <div className="rh-admin-empty-state">
+          <div className="rh-admin-empty-state__title">Обращение не найдено</div>
+          <p className="rh-admin-empty-state__text">
+            Проверьте идентификатор обращения или вернитесь к списку тикетов.
+          </p>
+        </div>
+      </Card>
+    )
   }
 
   const canAct = ticket.status !== 'closed' && ticket.status !== 'resolved'
 
   return (
-    <div>
-      <Space style={{ marginBottom: 16 }}>
+    <div className="rh-admin-detail-page">
+      <div className="rh-admin-detail-back">
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/admin/tickets')}
         >
           Назад
         </Button>
-      </Space>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          {ticket.subject}
-        </Title>
-        {canAct && (
-          <Space wrap>
-            <Button
-              icon={<UserSwitchOutlined />}
-              onClick={() => setAssignModalOpen(true)}
-            >
-              Назначить
-            </Button>
-            <Button
-              icon={<ArrowUpOutlined />}
-              onClick={handleEscalate}
-              loading={escalateMutation.isPending}
-            >
-              Эскалировать
-            </Button>
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              onClick={handleResolve}
-              loading={resolveMutation.isPending}
-            >
-              Решить
-            </Button>
-          </Space>
-        )}
       </div>
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card className="rh-admin-detail-hero">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <span className="rh-admin-toolbar__hint">Обращение поддержки</span>
+            <h1 className="rh-admin-toolbar__title">{ticket.subject}</h1>
+          </div>
+          {canAct && (
+            <Space className="rh-admin-toolbar__actions" wrap>
+              <Button
+                icon={<UserSwitchOutlined />}
+                onClick={() => setAssignModalOpen(true)}
+              >
+                Назначить
+              </Button>
+              <Button
+                icon={<ArrowUpOutlined />}
+                onClick={handleEscalate}
+                loading={escalateMutation.isPending}
+              >
+                Эскалировать
+              </Button>
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                onClick={handleResolve}
+                loading={resolveMutation.isPending}
+              >
+                Решить
+              </Button>
+            </Space>
+          )}
+        </div>
+      </Card>
+
+      <Card className="rh-admin-detail-card">
         <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small">
           <Descriptions.Item label="Статус">
             <Tag color={statusColor[ticket.status!] ?? 'default'}>
@@ -291,44 +306,40 @@ export default function AdminTicketDetail() {
         </Descriptions>
       </Card>
 
-      <Card title="Переписка" style={{ marginBottom: 16 }}>
+      <Card title="Переписка" className="rh-admin-detail-card rh-admin-message-card">
         {messages.length === 0 ? (
-          <Empty description="Нет сообщений" />
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет сообщений</div>
+            <p className="rh-admin-empty-state__text">
+              В этом обращении пока нет переписки с пользователем.
+            </p>
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="rh-admin-message-list">
             {messages.map((msg) => {
               const isAdmin = msg.sender_type === 'admin'
               return (
                 <div
                   key={msg.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: isAdmin ? 'flex-end' : 'flex-start',
-                  }}
+                  className={cx('rh-admin-message-row', isAdmin && 'rh-admin-message-row--admin')}
                 >
                   <div
-                    style={{
-                      maxWidth: '70%',
-                      padding: '10px 14px',
-                      borderRadius: 20,
-                      background: isAdmin ? 'rgba(21, 128, 61, 0.08)' : 'rgba(15, 23, 42, 0.08)',
-                      border: isAdmin ? '1px solid #b7eb8f' : '1px solid #c9c1b5',
-                    }}
+                    className={cx('rh-admin-message-bubble', isAdmin && 'rh-admin-message-bubble--admin')}
                   >
-                    <div style={{ marginBottom: 4 }}>
-                      <Text strong style={{ fontSize: 12 }}>
+                    <div className="rh-admin-message-meta">
+                      <Text strong className="rh-admin-message-author">
                         {isAdmin ? 'Поддержка' : 'Пользователь'}
                       </Text>
-                      <Text type="secondary" style={{ fontSize: 11, marginLeft: 8 }}>
+                      <Text type="secondary" className="rh-admin-message-time">
                         {msg.created_at ? formatDateTime(msg.created_at) : ''}
                       </Text>
                     </div>
-                    <Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                    <Paragraph className="rh-admin-message-body">
                       {msg.body}
                     </Paragraph>
                     {msg.attachments && msg.attachments.length > 0 && (
                       <>
-                        <Divider style={{ margin: '8px 0' }} />
+                        <Divider className="rh-admin-message-divider" />
                         <Space orientation="vertical" size={2}>
                           {msg.attachments.map((url, idx) => (
                             <a
@@ -353,7 +364,7 @@ export default function AdminTicketDetail() {
         {canAct && (
           <>
             <Divider />
-            <Space.Compact style={{ width: '100%' }}>
+            <Space.Compact className="rh-admin-reply-box">
               <Input.TextArea
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
@@ -372,12 +383,12 @@ export default function AdminTicketDetail() {
                 onClick={handleSendMessage}
                 loading={sendMutation.isPending}
                 disabled={!messageText.trim()}
-                style={{ height: 'auto' }}
+                className="rh-admin-reply-button"
               >
                 Отправить
               </Button>
             </Space.Compact>
-            <Text type="secondary" style={{ fontSize: 11 }}>
+            <Text type="secondary" className="rh-admin-keyboard-hint">
               Ctrl+Enter для отправки
             </Text>
           </>
@@ -396,9 +407,7 @@ export default function AdminTicketDetail() {
         cancelText="Отмена"
         confirmLoading={assignMutation.isPending}
       >
-        <div style={{ marginBottom: 8 }}>
-          <Text>ID администратора:</Text>
-        </div>
+        <Text className="rh-admin-modal-label">ID администратора:</Text>
         <Input
           placeholder="UUID администратора"
           value={assignInput}

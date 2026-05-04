@@ -109,7 +109,7 @@ export default function PublicFAQ() {
           <Col key={card.key} xs={24} md={12}>
             <Card className="rh-equal-card">
               <div className="rh-section-card">
-                <div className="rh-shell-footer__eyebrow" style={{ color: 'var(--rh-text-soft)' }}>{card.eyebrow}</div>
+                <div className="rh-shell-footer__eyebrow rh-public-muted-eyebrow">{card.eyebrow}</div>
                 <h2 className="rh-section-card__title">{card.title}</h2>
                 <div className="rh-section-card__description">{card.description}</div>
               </div>
@@ -124,7 +124,7 @@ export default function PublicFAQ() {
             <Col key={category} xs={24} lg={12}>
               <Card
                 title={(
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <span className="rh-inline-title">
                     {meta.icon}
                     {meta.label}
                   </span>

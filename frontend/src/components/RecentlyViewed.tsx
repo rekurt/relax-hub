@@ -1,4 +1,3 @@
-import { Card, Typography, Space, Rate } from '@/components/design/system'
 import { ClockCircleOutlined } from '@/components/design/icons'
 import { formatPrice } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
@@ -6,8 +5,7 @@ import { useGetMyRecentlyViewed } from '@/api/generated/saved-searches/saved-sea
 import PublicState from '@/components/PublicState'
 import { resolveAssetUrl } from '@/lib/asset-url'
 import { useAuthStore } from '@/stores/auth'
-
-const { Text, Title } = Typography
+import { DesignListingCard } from '@/components/design'
 
 export default function RecentlyViewed() {
   const navigate = useNavigate()
@@ -25,7 +23,7 @@ export default function RecentlyViewed() {
 
   if (isError) {
     return (
-      <div style={{ marginBottom: 24 }}>
+      <div className="rh-recently-viewed">
         <PublicState
           kind="degraded"
           compact
@@ -41,54 +39,26 @@ export default function RecentlyViewed() {
   if (items.length === 0) return null
 
   return (
-    <div style={{ marginBottom: 24 }}>
-      <Title level={4} style={{ marginBottom: 12 }}>
-        <ClockCircleOutlined style={{ marginRight: 8 }} />
+    <div className="rh-recently-viewed">
+      <h2 className="rh-component-section-title">
+        <ClockCircleOutlined className="rh-component-section-title__icon" />
         Недавно просмотренные
-      </Title>
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          overflowX: 'auto',
-          paddingBottom: 8,
-          scrollSnapType: 'x mandatory',
-        }}
-      >
+      </h2>
+      <div className="rh-horizontal-card-scroll">
         {items.map((item) => (
-          <Card
+          <div
             key={item.id}
-            hoverable
-            size="small"
-            style={{
-              minWidth: 180,
-              maxWidth: 220,
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-            }}
-            cover={item.cover_photo ? (
-              <img
-                alt={item.name}
-                src={resolveAssetUrl(item.cover_photo as string)}
-                style={{ height: 100, objectFit: 'cover' }}
-              />
-            ) : undefined}
-            onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
+            className="rh-horizontal-card-scroll__item"
           >
-            <Space orientation="vertical" size={2}>
-              <Text strong ellipsis style={{ maxWidth: 190 }}>
-                {item.name}
-              </Text>
-              {item.rating != null && (
-                <Rate disabled allowHalf value={item.rating as number} style={{ fontSize: 12 }} />
-              )}
-              {item.base_price != null && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  от {formatPrice(item.base_price as number)}
-                </Text>
-              )}
-            </Space>
-          </Card>
+            <DesignListingCard
+              onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
+              name={item.name}
+              imageUrl={item.cover_photo ? resolveAssetUrl(item.cover_photo as string) : undefined}
+              imageAlt={item.name}
+              rating={typeof item.rating === 'number' ? item.rating : undefined}
+              price={item.base_price != null ? `от ${formatPrice(item.base_price as number)}` : undefined}
+            />
+          </div>
         ))}
       </div>
     </div>

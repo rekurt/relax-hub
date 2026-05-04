@@ -4,10 +4,7 @@ import {
   App,
   Button,
   Card,
-  Col,
-  Empty,
   Input,
-  Row,
   Select,
   Spin,
   Table,
@@ -25,8 +22,9 @@ import {
 } from '@/api/generated/subscriptions/subscriptions'
 import type { InternalHandlerSubscriptionResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { Search } = Input
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -216,89 +214,100 @@ export default function SubscriptionManagement() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Управление подписками
-        </Title>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Монетизация"
+        title="Управление подписками"
+        description="Тарифы, статусы и ручное управление подписками в едином админском списке."
+        extra={
         <Button icon={<ReloadOutlined />} onClick={invalidate}>
           Обновить
         </Button>
-      </div>
+        }
+      />
 
       <Alert
         type="warning"
         showIcon
         title="Раздел в разработке"
         description="Сейчас страница показывает только подписки, привязанные к текущему админу (через /api/v1/my/subscriptions). Платформенный admin-эндпоинт со списком всех подписок ещё не реализован — найдено в аудите A1.7."
-        style={{ marginBottom: 16 }}
+        className="rh-admin-inline-alert"
       />
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={8} sm={8}>
-          <Card size="small">
-            <Text type="secondary">Активных</Text>
-            <div style={{ fontSize: 24, fontWeight: 600 }}>{activeCount}</div>
-          </Card>
-        </Col>
-        <Col xs={8} sm={8}>
-          <Card size="small">
-            <Text type="secondary">Премиум</Text>
-            <div style={{ fontSize: 24, fontWeight: 600, color: '#0f766e' }}>{premiumCount}</div>
-          </Card>
-        </Col>
-        <Col xs={8} sm={8}>
-          <Card size="small">
-            <Text type="secondary">Продвинутых</Text>
-            <div style={{ fontSize: 24, fontWeight: 600, color: '#d97706' }}>{promotedCount}</div>
-          </Card>
-        </Col>
-      </Row>
-
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <Search
-          placeholder="Поиск по ID бани или владельца"
-          allowClear
-          style={{ width: 280 }}
-          onSearch={setSearchText}
-          onChange={(e) => !e.target.value && setSearchText('')}
-        />
-        <Select
-          placeholder="Статус"
-          allowClear
-          style={{ width: 160 }}
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={[
-            { value: 'active', label: 'Активна' },
-            { value: 'expired', label: 'Истекла' },
-            { value: 'cancelled', label: 'Отменена' },
-            { value: 'pending', label: 'Ожидание' },
-          ]}
-        />
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Активных</span>
+          <span className="rh-stat-tile__value">{activeCount}</span>
+          <span className="rh-stat-tile__hint">Подписки в рабочем статусе.</span>
+        </div>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Премиум</span>
+          <span className="rh-stat-tile__value">{premiumCount}</span>
+          <span className="rh-stat-tile__hint">Активные премиальные тарифы.</span>
+        </div>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Продвинутых</span>
+          <span className="rh-stat-tile__value">{promotedCount}</span>
+          <span className="rh-stat-tile__hint">Активные promoted-размещения.</span>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}><Spin size="large" /></div>
-      ) : filteredSubscriptions.length === 0 ? (
-        <Empty description="Нет подписок" />
-      ) : (
-        <Table
-          dataSource={filteredSubscriptions}
-          columns={columns}
-          rowKey="id"
-          size="middle"
-          scroll={{ x: 900 }}
-          pagination={{
-            current: page,
-            pageSize: 20,
-            total: totalCount,
-            onChange: setPage,
-            showTotal: (total) => `Всего: ${total}`,
-          }}
-          locale={{ emptyText: 'Нет подписок' }}
-        />
-      )}
+      <Card className="rh-admin-filter-card" title="Фильтры">
+        <div className="rh-admin-filter-row rh-admin-filter-row--native">
+          <Search
+            className="rh-admin-filter-input"
+            placeholder="Поиск по ID бани или владельца"
+            allowClear
+            onSearch={setSearchText}
+            onChange={(e) => !e.target.value && setSearchText('')}
+          />
+          <Select
+            className="rh-admin-filter-select"
+            placeholder="Статус"
+            allowClear
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: 'active', label: 'Активна' },
+              { value: 'expired', label: 'Истекла' },
+              { value: 'cancelled', label: 'Отменена' },
+              { value: 'pending', label: 'Ожидание' },
+            ]}
+          />
+        </div>
+      </Card>
+
+      <Card className="rh-admin-reference-card" title="Список подписок">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем подписки</span>
+          </div>
+        ) : filteredSubscriptions.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет подписок</div>
+            <p className="rh-admin-empty-state__text">
+              Измените фильтры или обновите список, чтобы увидеть доступные подписки.
+            </p>
+          </div>
+        ) : (
+          <Table
+            dataSource={filteredSubscriptions}
+            columns={columns}
+            rowKey="id"
+            size="middle"
+            scroll={{ x: 900 }}
+            pagination={{
+              current: page,
+              pageSize: 20,
+              total: totalCount,
+              onChange: setPage,
+              showTotal: (total) => `Всего: ${total}`,
+            }}
+            locale={{ emptyText: 'Нет подписок' }}
+          />
+        )}
+      </Card>
     </div>
   )
 }

@@ -311,13 +311,13 @@ cd frontend && npx vitest run src/__tests__/Dashboard.test.tsx  # single test
 ### Frontend Tech Stack
 
 - Vite 6 + React 18 + TypeScript 5.6 (strict mode)
-- Ant Design 6 (UI components, Russian locale)
+- RelaxHUB Design System (`@/components/design`) with repo-owned UI components and Russian locale
 - React Router 7 (client-side routing)
 - TanStack React Query 5 (server state, generated via orval)
 - orval (API client generation from OpenAPI spec)
 - zustand (client state: auth token, selected bathhouse, persisted to localStorage)
 - Vitest + React Testing Library
-- dayjs (dates, built into antd)
+- dayjs (date/time handling used by design-system controls and business flows)
 
 ### Frontend Structure
 
@@ -446,7 +446,7 @@ frontend/src/
 - Prices displayed via `formatPrice()` from `lib/format.ts` (kopecks -> rubles with ₽ symbol)
 - Dev server proxies `/api` -> `http://localhost:8080` and `/ws` -> `ws://localhost:8080`
 - Path alias: `@/` maps to `src/` in imports
-- Multi-step wizard pattern: BathhouseForm (7-step), BookingCreate (4-step) use Ant Design Steps with draft save per step
+- Multi-step wizard pattern: BathhouseForm (7-step), BookingCreate (4-step) use design-system Steps with draft save per step
 - Share functionality: Web Share API with clipboard fallback via ShareButton component
 - Combo payments: wallet + card split with visual slider in BookingCreate
 - Push notifications: permission requested after first booking completion (not at registration)

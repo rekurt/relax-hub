@@ -8,14 +8,13 @@ import {
   Form,
   Input,
   Select,
-  Space,
   Tag,
   Popconfirm,
   App,
-  Empty,
   Collapse,
   InputNumber,
   Descriptions,
+  Space,
 } from '@/components/design/system'
 import {
   PlusOutlined,
@@ -29,8 +28,10 @@ import {
 } from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 interface PMSConnection {
   id: string
@@ -310,24 +311,26 @@ export default function PMSIntegration() {
   ]
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
-      <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div>
-          <Title level={3} style={{ margin: 0 }}>Интеграция с PMS</Title>
-          <Text type="secondary">Подключите Yclients или Restoplace для синхронизации бронирований</Text>
-        </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Подключить PMS
-        </Button>
-      </Space>
+    <div className="rh-stack rh-pms-page">
+      <PageHeader
+        eyebrow="Интеграции"
+        title="Интеграция с PMS"
+        description="Подключите Yclients или Restoplace для синхронизации бронирований."
+        size="compact"
+        extra={(
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            Подключить PMS
+          </Button>
+        )}
+      />
 
-      <Card>
+      <Card className="rh-admin-detail-card">
         <Table
           dataSource={connections}
           columns={columns}
           rowKey="id"
           loading={isLoading}
-          locale={{ emptyText: <Empty description="Нет подключений к PMS. Подключите Yclients или Restoplace для автоматической синхронизации." /> }}
+          locale={{ emptyText: <EmptyState description="Нет подключений к PMS. Подключите Yclients или Restoplace для автоматической синхронизации." /> }}
           pagination={meta ? {
             current: meta.page,
             pageSize: meta.page_size,
@@ -338,7 +341,7 @@ export default function PMSIntegration() {
             expandedRowRender: (record: PMSConnection) => (
               <div>
                 {record.last_sync_error && (
-                  <Descriptions size="small" style={{ marginBottom: 16 }}>
+                  <Descriptions size="small" className="rh-booking-descriptions">
                     <Descriptions.Item label="Последняя ошибка">
                       <Text type="danger">{record.last_sync_error}</Text>
                     </Descriptions.Item>
@@ -412,7 +415,7 @@ export default function PMSIntegration() {
             <Select options={SYNC_DIRECTION_OPTIONS} />
           </Form.Item>
           <Form.Item name="sync_interval_minutes" label="Интервал синхронизации (мин)" initialValue={15}>
-            <InputNumber min={5} max={1440} style={{ width: '100%' }} />
+            <InputNumber min={5} max={1440} className="rh-full-width" />
           </Form.Item>
           {editingConnection && (
             <Form.Item name="status" label="Статус">

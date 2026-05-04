@@ -13,13 +13,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/domain"
-	"github.com/rekurt/relax-hub/internal/payment"
 	"github.com/rekurt/relax-hub/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/payment"
 	"github.com/rekurt/relax-hub/internal/service"
 )
 
 type mockWalletService struct {
 	createWalletFn     func(ctx context.Context, userID uuid.UUID, currency domain.WalletCurrency) (*domain.Wallet, error)
+	ensureWalletFn     func(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error)
 	getWalletFn        func(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error)
 	topUpFn            func(ctx context.Context, userID uuid.UUID, amount int64) (*domain.WalletTransaction, error)
 	spendFn            func(ctx context.Context, walletID uuid.UUID, amount int64, refType string, refID *uuid.UUID, description string) (*domain.WalletTransaction, error)
@@ -51,6 +52,16 @@ func (m *mockWalletService) GetWallet(ctx context.Context, userID uuid.UUID) (*d
 		return m.getWalletFn(ctx, userID)
 	}
 	return nil, domain.ErrWalletNotFound
+}
+
+func (m *mockWalletService) EnsureWallet(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error) {
+	if m.ensureWalletFn != nil {
+		return m.ensureWalletFn(ctx, userID)
+	}
+	if m.createWalletFn != nil {
+		return m.createWalletFn(ctx, userID, domain.WalletCurrencyRUB)
+	}
+	return nil, nil
 }
 
 func (m *mockWalletService) TopUp(ctx context.Context, userID uuid.UUID, amount int64) (*domain.WalletTransaction, error) {
@@ -264,12 +275,36 @@ func TestWalletHandler_GetWallet(t *testing.T) {
 	}
 }
 
-func TestWalletHandler_GetWallet_NotFound(t *testing.T) {
+func TestWalletHandler_GetWallet_CreatesMissingWallet(t *testing.T) {
 	userID := uuid.New()
+	calls := 0
+	created := false
 
 	walletSvc := &mockWalletService{
 		getBalanceFn: func(ctx context.Context, uid uuid.UUID) (*service.WalletBalanceSummary, error) {
-			return nil, domain.ErrWalletNotFound
+			calls++
+			if calls == 1 {
+				return nil, domain.ErrWalletNotFound
+			}
+			if uid != userID {
+				return nil, domain.ErrWalletNotFound
+			}
+			return &service.WalletBalanceSummary{
+				Balance:    0,
+				HeldAmount: 0,
+				Available:  0,
+				Currency:   domain.WalletCurrencyRUB,
+			}, nil
+		},
+		createWalletFn: func(ctx context.Context, uid uuid.UUID, currency domain.WalletCurrency) (*domain.Wallet, error) {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			if currency != domain.WalletCurrencyRUB {
+				t.Fatalf("expected RUB wallet, got %s", currency)
+			}
+			created = true
+			return &domain.Wallet{ID: uuid.New(), UserID: uid, Currency: currency}, nil
 		},
 	}
 
@@ -285,8 +320,14 @@ func TestWalletHandler_GetWallet_NotFound(t *testing.T) {
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("expected status 404, got %d", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !created {
+		t.Fatal("expected missing wallet to be created")
+	}
+	if calls != 2 {
+		t.Fatalf("expected balance to be loaded twice, got %d", calls)
 	}
 }
 

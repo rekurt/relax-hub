@@ -97,11 +97,6 @@ export default function OwnerAnalytics() {
     return change > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />
   }
 
-  const changeColor = (change?: number) => {
-    if (change === undefined || change === 0) return undefined
-    return change > 0 ? '#15803d' : '#b42318'
-  }
-
   const dailyColumns = [
     {
       title: 'Дата',
@@ -142,7 +137,7 @@ export default function OwnerAnalytics() {
     if (change === undefined) return null
 
     return (
-      <Text style={{ color: changeColor(change), fontSize: 13 }}>
+      <Text className={change > 0 ? 'rh-stat-change rh-stat-change--positive' : change < 0 ? 'rh-stat-change rh-stat-change--negative' : 'rh-stat-change'}>
         {changeIcon(change)} {change > 0 ? '+' : ''}
         {change.toFixed(1)}%
       </Text>
@@ -221,7 +216,7 @@ export default function OwnerAnalytics() {
       </div>
 
       <section className="rh-admin-panel" aria-busy={perfLoading}>
-        <div className="rh-admin-toolbar" style={{ marginBottom: 18 }}>
+        <div className="rh-admin-toolbar rh-admin-toolbar--spaced">
           <div className="rh-admin-toolbar__copy">
             <h2 className="rh-admin-toolbar__title">Сравнение с конкурентами</h2>
             <div className="rh-admin-toolbar__hint">Сравните загрузку, конверсию и рейтинг с городским средним.</div>

@@ -34,6 +34,7 @@ import {
   usePostAuth2faSmsEnable,
 } from '@/api/generated/2fa/2fa'
 import PageHeader from '@/components/PageHeader'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Text } = Typography
 
@@ -165,7 +166,7 @@ export default function AdminProfile() {
   }
 
   return (
-    <div className="rh-stack">
+    <div className="rh-stack rh-admin-reference-page">
       <PageHeader
         eyebrow="Админка"
         title="Профиль администратора"
@@ -196,7 +197,7 @@ export default function AdminProfile() {
             form={profileForm}
             layout="vertical"
             onFinish={handleProfileSubmit}
-            style={{ maxWidth: 560 }}
+            className="rh-admin-profile-form"
           >
             <Form.Item label="Email">
               <Input value={user?.email ?? ''} disabled />
@@ -219,7 +220,7 @@ export default function AdminProfile() {
           <Space size={16} align="center">
             <Avatar
               size={88}
-              src={user?.avatar_url}
+              src={resolveAssetUrl(user?.avatar_url)}
               icon={!user?.avatar_url && <UserOutlined />}
             />
             <Space orientation="vertical">
@@ -269,13 +270,13 @@ export default function AdminProfile() {
             showIcon
             title="Доступ к админ-эндпоинтам требует 2FA"
             description="Все запросы к /api/v1/admin/* возвращают 403 admin_2fa_required, пока вы не включите второй фактор."
-            style={{ marginBottom: 16 }}
+            className="rh-admin-inline-alert"
           />
         )}
 
-        <div style={{ display: 'grid', gap: 16 }}>
+        <div className="rh-admin-2fa-stack">
           <section>
-            <Space align="center" style={{ marginBottom: 8 }}>
+            <Space align="center" className="rh-admin-inline-heading">
               <Text strong>TOTP (Google Authenticator, Authy)</Text>
               <Tag color={totpEnabled ? 'green' : 'default'}>
                 {totpEnabled ? 'Включена' : 'Отключена'}
@@ -283,7 +284,7 @@ export default function AdminProfile() {
             </Space>
 
             {totpStep === 'idle' && (
-              <Space orientation="vertical" style={{ width: '100%' }}>
+              <Space className="rh-admin-full-width" orientation="vertical">
                 <Text type="secondary">
                   Сгенерируем QR-код, который вы отсканируете в приложении-аутентификаторе. Коды обновляются каждые 30 секунд.
                 </Text>
@@ -299,8 +300,8 @@ export default function AdminProfile() {
             )}
 
             {totpStep === 'qr' && (
-              <Space align="start" size={24} style={{ width: '100%' }}>
-                <Space orientation="vertical" style={{ flex: 1 }}>
+              <Space align="start" size={24} className="rh-admin-full-width">
+                <Space orientation="vertical" className="rh-admin-flex-fill">
                   <Alert
                     type="info"
                     showIcon
@@ -325,7 +326,7 @@ export default function AdminProfile() {
                         value={verifyCode}
                         onChange={(event) => setVerifyCode(event.target.value)}
                         maxLength={6}
-                        style={{ width: 220 }}
+                        className="rh-admin-code-input"
                       />
                     </Form.Item>
                     <Form.Item>
@@ -345,7 +346,7 @@ export default function AdminProfile() {
             )}
 
             {totpStep === 'done' && (
-              <Space orientation="vertical" style={{ width: '100%' }}>
+              <Space className="rh-admin-full-width" orientation="vertical">
                 <Alert
                   type="success"
                   showIcon
@@ -358,7 +359,7 @@ export default function AdminProfile() {
                     value={disableCode}
                     onChange={(event) => setDisableCode(event.target.value)}
                     maxLength={6}
-                    style={{ width: 240 }}
+                    className="rh-admin-code-input rh-admin-code-input--wide"
                   />
                   <Popconfirm
                     title="Отключить TOTP 2FA?"
@@ -381,7 +382,7 @@ export default function AdminProfile() {
           </section>
 
           <section>
-            <Space align="center" style={{ marginBottom: 8 }}>
+            <Space align="center" className="rh-admin-inline-heading">
               <Text strong>SMS 2FA (резерв)</Text>
               <Tag color={smsEnabled ? 'green' : user?.phone ? 'gold' : 'default'}>
                 {smsEnabled ? 'Включена' : user?.phone ? 'Доступна' : 'Нужен телефон'}
@@ -395,7 +396,7 @@ export default function AdminProfile() {
                 description="Коды будут приходить на подтверждённый номер телефона."
               />
             ) : user?.phone ? (
-              <Space orientation="vertical">
+              <Space className="rh-admin-full-width" orientation="vertical">
                 <Text type="secondary">Коды подтверждения будут отправляться на {user.phone}.</Text>
                 <Button
                   icon={<MobileOutlined />}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Empty,
+  Card,
   Form,
   Input,
   InputNumber,
@@ -164,7 +164,7 @@ export default function CityManagement() {
   ]
 
   return (
-    <div>
+    <div className="rh-stack rh-admin-reference-page">
       <PageHeader
         eyebrow="Справочник"
         title="Управление городами"
@@ -176,22 +176,33 @@ export default function CityManagement() {
         }
       />
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
-          <Spin size="large" />
-        </div>
-      ) : cities.length === 0 ? (
-        <Empty description="Нет городов" />
-      ) : (
-        <Table
-          dataSource={cities}
-          columns={columns}
-          rowKey="id"
-          pagination={false}
-          size="middle"
-          locale={{ emptyText: 'Нет городов' }}
-        />
-      )}
+      <Card className="rh-admin-reference-card" title="Каталог городов">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем города</span>
+          </div>
+        ) : cities.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет городов</div>
+            <p className="rh-admin-empty-state__text">
+              Добавьте первый город, чтобы связать каталог, фильтры и географические сценарии.
+            </p>
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+              Добавить город
+            </Button>
+          </div>
+        ) : (
+          <Table
+            dataSource={cities}
+            columns={columns}
+            rowKey="id"
+            pagination={false}
+            size="middle"
+            locale={{ emptyText: 'Нет городов' }}
+          />
+        )}
+      </Card>
 
       <Modal
         title={editingCity ? 'Редактировать город' : 'Добавить город'}
@@ -202,7 +213,7 @@ export default function CityManagement() {
         cancelText="Отмена"
         confirmLoading={createMutation.isPending || updateMutation.isPending}
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form form={form} layout="vertical" className="rh-admin-modal-form">
           <Form.Item
             name="name"
             label="Название"
@@ -219,7 +230,7 @@ export default function CityManagement() {
           </Form.Item>
           <Form.Item name="latitude" label="Широта">
             <InputNumber
-              style={{ width: '100%' }}
+              className="rh-admin-form-control"
               placeholder="55.7558"
               step={0.0001}
               min={-90}
@@ -228,7 +239,7 @@ export default function CityManagement() {
           </Form.Item>
           <Form.Item name="longitude" label="Долгота">
             <InputNumber
-              style={{ width: '100%' }}
+              className="rh-admin-form-control"
               placeholder="37.6173"
               step={0.0001}
               min={-180}

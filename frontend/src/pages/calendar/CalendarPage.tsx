@@ -57,10 +57,11 @@ import type {
 } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice, formatTime, formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
 dayjs.extend(isoWeek)
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { RangePicker } = DatePicker
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -80,36 +81,41 @@ const VIEW_OPTIONS = [
 ]
 
 /** Status-based color coding per BRD: green=confirmed, yellow=pending, red=cancelled, gray=blocked */
-const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  confirmed: { bg: '#15803d', text: '#fff', label: 'Подтверждено' },
-  pending: { bg: '#d97706', text: '#fff', label: 'Ожидает' },
-  pending_owner: { bg: '#d97706', text: '#fff', label: 'Ожидает владельца' },
-  cancelled: { bg: '#b42318', text: '#fff', label: 'Отменено' },
-  rejected: { bg: '#b42318', text: '#fff', label: 'Отклонено' },
-  completed: { bg: '#15803d', text: '#fff', label: 'Завершено' },
-  no_show: { bg: '#c9c1b5', text: 'var(--rh-text)', label: 'Неявка' },
-  force_majeure_cancelled: { bg: '#c9c1b5', text: 'var(--rh-text)', label: 'Форс-мажор' },
+const STATUS_META: Record<string, { tone: string; label: string }> = {
+  confirmed: { tone: 'success', label: 'Подтверждено' },
+  pending: { tone: 'warning', label: 'Ожидает' },
+  pending_owner: { tone: 'warning', label: 'Ожидает владельца' },
+  cancelled: { tone: 'danger', label: 'Отменено' },
+  rejected: { tone: 'danger', label: 'Отклонено' },
+  completed: { tone: 'success', label: 'Завершено' },
+  no_show: { tone: 'muted', label: 'Неявка' },
+  force_majeure_cancelled: { tone: 'muted', label: 'Форс-мажор' },
 }
 
 const LEGEND_ITEMS = [
-  { color: '#15803d', label: 'Подтверждено' },
-  { color: '#d97706', label: 'Ожидает' },
-  { color: '#b42318', label: 'Отменено' },
-  { color: '#c9c1b5', label: 'Заблокировано' },
+  { tone: 'success', label: 'Подтверждено' },
+  { tone: 'warning', label: 'Ожидает' },
+  { tone: 'danger', label: 'Отменено' },
+  { tone: 'muted', label: 'Заблокировано' },
 ]
 
 /** Color palette for multi-bathhouse consolidated view */
-const BATHHOUSE_COLORS = [
-  '#0f766e', '#0a5f59', '#0f766e', '#d97706', '#d97706',
-  '#15803d', '#0f766e', '#d97706', '#15803d', '#b42318',
-]
+const BATHHOUSE_TONES = ['primary', 'teal', 'primary', 'warning', 'warning', 'success', 'primary', 'warning', 'success', 'danger']
 
-function getBathhouseColor(index: number): string {
-  return BATHHOUSE_COLORS[index % BATHHOUSE_COLORS.length]!
+function getBathhouseTone(index: number): string {
+  return BATHHOUSE_TONES[index % BATHHOUSE_TONES.length]!
 }
 
 function getStatusColor(status: string) {
-  return STATUS_COLORS[status] ?? { bg: '#0f766e', text: '#fff', label: status }
+  return STATUS_META[status] ?? { tone: 'primary', label: status }
+}
+
+function useBookingBlockLayout(top: number, height: number) {
+  return useCallback((node: HTMLDivElement | null) => {
+    if (!node) return
+    node.style.top = `${top}px`
+    node.style.height = `${height}px`
+  }, [top, height])
 }
 
 interface BookingBlock {
@@ -118,14 +124,14 @@ interface BookingBlock {
   height: number
   dayIndex: number
   bathhouseName?: string
-  bathhouseColor?: string
+  bathhouseTone?: string
 }
 
 function computeBookingBlocks(
   bookings: InternalHandlerBookingResponse[],
   days: Dayjs[],
   bookingBathhouseMap?: Map<string, string>,
-  bathhouseColorMap?: Map<string, { name: string; color: string }>,
+  bathhouseColorMap?: Map<string, { name: string; tone: string }>,
 ): BookingBlock[] {
   const blocks: BookingBlock[] = []
   for (const booking of bookings) {
@@ -159,7 +165,7 @@ function computeBookingBlocks(
           height,
           dayIndex: d,
           bathhouseName: bathhouseInfo?.name,
-          bathhouseColor: bathhouseInfo?.color,
+          bathhouseTone: bathhouseInfo?.tone,
         })
       }
     }
@@ -224,12 +230,13 @@ function computeMonthCells(
 function BookingBlockEl({ block }: { block: BookingBlock }) {
   const status = block.booking.status ?? 'pending'
   const sc = getStatusColor(status)
-  const bgColor = block.bathhouseColor ?? sc.bg
+  const tone = block.bathhouseTone ?? sc.tone
+  const blockRef = useBookingBlockLayout(block.top, block.height)
   return (
     <Tooltip
       title={
-        <div>
-          {block.bathhouseName && <div style={{ fontWeight: 600 }}>{block.bathhouseName}</div>}
+        <div className="rh-calendar-tooltip">
+          {block.bathhouseName && <div className="rh-calendar-tooltip__title">{block.bathhouseName}</div>}
           <div>{sc.label}</div>
           <div>
             {block.booking.start_time ? formatTime(block.booking.start_time) : ''} –{' '}
@@ -241,24 +248,10 @@ function BookingBlockEl({ block }: { block: BookingBlock }) {
       }
     >
       <div
-        style={{
-          position: 'absolute',
-          top: block.top,
-          left: 2,
-          right: 2,
-          height: block.height,
-          backgroundColor: bgColor,
-          opacity: 0.85,
-          borderRadius: 12,
-          padding: '2px 4px',
-          overflow: 'hidden',
-          cursor: 'pointer',
-          color: '#fff',
-          fontSize: 11,
-          lineHeight: '14px',
-        }}
+        ref={blockRef}
+        className={`rh-calendar-booking-block rh-calendar-tone--${tone}`}
       >
-        <div style={{ fontWeight: 500 }}>
+        <div className="rh-calendar-booking-block__time">
           {block.booking.start_time ? formatTime(block.booking.start_time) : ''}
         </div>
         {block.height > 30 && (
@@ -272,33 +265,18 @@ function BookingBlockEl({ block }: { block: BookingBlock }) {
 /** Time column shared by day and week views */
 function TimeColumn() {
   return (
-    <div style={{ width: 60, flexShrink: 0, borderRight: '1px solid rgba(15, 23, 42, 0.08)' }}>
-      <div
-        style={{
-          height: 40,
-          borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text type="secondary" style={{ fontSize: 12 }}>
+    <div className="rh-calendar-time-column">
+      <div className="rh-calendar-time-column__header">
+        <Text type="secondary" className="rh-calendar-time-column__label">
           Время
         </Text>
       </div>
       {HOURS.map((hour) => (
         <div
           key={hour}
-          style={{
-            height: 60,
-            borderBottom: '1px solid rgba(248, 244, 236, 0.78)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            paddingTop: 2,
-          }}
+          className="rh-calendar-hour-label"
         >
-          <Text type="secondary" style={{ fontSize: 11 }}>
+          <Text type="secondary" className="rh-calendar-hour-label__text">
             {String(hour).padStart(2, '0')}:00
           </Text>
         </div>
@@ -326,49 +304,29 @@ function DayColumn({
 
   return (
     <div
-      style={{
-        flex: 1,
-        borderRight: isLast ? undefined : '1px solid rgba(15, 23, 42, 0.08)',
-        minWidth: 100,
-      }}
+      className={isLast ? 'rh-calendar-day-column rh-calendar-day-column--last' : 'rh-calendar-day-column'}
     >
       {showDayHeader && (
         <div
-          style={{
-            height: 40,
-            borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: isToday ? 'rgba(15, 118, 110, 0.08)' : undefined,
-          }}
+          className={isToday ? 'rh-calendar-day-header rh-calendar-day-header--today' : 'rh-calendar-day-header'}
         >
-          <Text type="secondary" style={{ fontSize: 11, lineHeight: 1 }}>
+          <Text type="secondary" className="rh-calendar-day-header__weekday">
             {DAYS_SHORT[day.isoWeekday() - 1]}
           </Text>
           <Text
             strong={isToday}
-            style={{
-              fontSize: 14,
-              color: isToday ? '#0f766e' : undefined,
-              lineHeight: 1.2,
-            }}
+            className={isToday ? 'rh-calendar-day-header__date rh-calendar-day-header__date--today' : 'rh-calendar-day-header__date'}
           >
             {day.format('DD')}
           </Text>
         </div>
       )}
 
-      <div style={{ position: 'relative' }}>
+      <div className="rh-calendar-day-body">
         {HOURS.map((hour) => (
           <div
             key={hour}
-            style={{
-              height: 60,
-              borderBottom: '1px solid rgba(248, 244, 236, 0.78)',
-              backgroundColor: isToday ? 'rgba(15, 118, 110, 0.04)' : undefined,
-            }}
+            className={isToday ? 'rh-calendar-hour-cell rh-calendar-hour-cell--today' : 'rh-calendar-hour-cell'}
           />
         ))}
         {dayBlocks.map((block, i) => (
@@ -389,7 +347,7 @@ function DayView({
   date: Dayjs
   bookings: InternalHandlerBookingResponse[]
   bookingBathhouseMap?: Map<string, string>
-  bathhouseColorMap?: Map<string, { name: string; color: string }>
+  bathhouseColorMap?: Map<string, { name: string; tone: string }>
 }) {
   const days = useMemo(() => [date], [date])
   const blocks = useMemo(
@@ -398,7 +356,7 @@ function DayView({
   )
 
   return (
-    <div style={{ display: 'flex', minWidth: 300 }}>
+    <div className="rh-calendar-day-view">
       <TimeColumn />
       <DayColumn day={date} dayIndex={0} blocks={blocks} isLast showDayHeader={false} />
     </div>
@@ -415,7 +373,7 @@ function WeekView({
   weekStart: Dayjs
   bookings: InternalHandlerBookingResponse[]
   bookingBathhouseMap?: Map<string, string>
-  bathhouseColorMap?: Map<string, { name: string; color: string }>
+  bathhouseColorMap?: Map<string, { name: string; tone: string }>
 }) {
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => weekStart.add(i, 'day')),
@@ -427,7 +385,7 @@ function WeekView({
   )
 
   return (
-    <div style={{ display: 'flex', minWidth: 800 }}>
+    <div className="rh-calendar-week-view">
       <TimeColumn />
       {weekDays.map((day, idx) => (
         <DayColumn
@@ -460,19 +418,13 @@ function MonthView({
   }
 
   return (
-    <div>
+    <div className="rh-calendar-month">
       {/* Day of week headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid rgba(15, 23, 42, 0.08)' }}>
+      <div className="rh-calendar-month__header">
         {DAYS_SHORT.map((d) => (
           <div
             key={d}
-            style={{
-              textAlign: 'center',
-              padding: '8px 0',
-              fontWeight: 500,
-              fontSize: 13,
-              color: 'var(--rh-text-soft)',
-            }}
+            className="rh-calendar-month__weekday"
           >
             {d}
           </div>
@@ -483,53 +435,30 @@ function MonthView({
       {weeks.map((week, wi) => (
         <div
           key={wi}
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}
+          className="rh-calendar-month__week"
         >
           {week.map((cell, ci) => {
             const isToday = cell.date.isSame(dayjs(), 'day')
+            const cellClassName = [
+              'rh-calendar-month__cell',
+              ci === 0 ? 'rh-calendar-month__cell--week-start' : '',
+              isToday ? 'rh-calendar-month__cell--today' : '',
+              cell.isCurrentMonth ? '' : 'rh-calendar-month__cell--muted',
+            ].filter(Boolean).join(' ')
             return (
               <div
                 key={ci}
                 onClick={() => onDayClick(cell.date)}
-                style={{
-                  minHeight: 90,
-                  padding: 6,
-                  border: '1px solid rgba(15, 23, 42, 0.08)',
-                  borderTop: 'none',
-                  borderLeft: ci === 0 ? '1px solid rgba(15, 23, 42, 0.08)' : 'none',
-                  backgroundColor: isToday
-                    ? 'rgba(15, 118, 110, 0.08)'
-                    : cell.isCurrentMonth
-                      ? '#fff'
-                      : 'rgba(255, 253, 248, 0.72)',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isToday) e.currentTarget.style.backgroundColor = 'rgba(15, 118, 110, 0.06)'
-                }}
-                onMouseLeave={(e) => {
-                  if (!isToday)
-                    e.currentTarget.style.backgroundColor = cell.isCurrentMonth ? '#fff' : 'rgba(255, 253, 248, 0.72)'
-                }}
+                className={cellClassName}
               >
                 <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: isToday ? 700 : 400,
-                    color: cell.isCurrentMonth
-                      ? isToday
-                        ? '#0f766e'
-                        : 'var(--rh-text)'
-                      : 'var(--rh-text-disabled)',
-                    marginBottom: 4,
-                  }}
+                  className={isToday ? 'rh-calendar-month__date rh-calendar-month__date--today' : 'rh-calendar-month__date'}
                 >
                   {cell.date.format('D')}
                 </div>
 
                 {cell.total > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                  <div className="rh-calendar-month__badges">
                     {(cell.counts['confirmed'] ?? 0) > 0 && (
                       <Badge
                         count={cell.counts['confirmed']}
@@ -600,9 +529,9 @@ export default function CalendarPage() {
 
   // Build bathhouse color map for consolidated view
   const bathhouseColorMap = useMemo(() => {
-    const map = new Map<string, { name: string; color: string }>()
+    const map = new Map<string, { name: string; tone: string }>()
     allBathhouses.forEach((b, i) => {
-      if (b.id) map.set(b.id, { name: b.name ?? `Объект ${i + 1}`, color: getBathhouseColor(i) })
+      if (b.id) map.set(b.id, { name: b.name ?? `Объект ${i + 1}`, tone: getBathhouseTone(i) })
     })
     return map
   }, [allBathhouses])
@@ -796,8 +725,13 @@ export default function CalendarPage() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Календарь</Title>
+      <div className="rh-stack">
+        <PageHeader
+          eyebrow="Расписание"
+          title="Календарь"
+          description="Выберите объект, чтобы открыть сетку бронирований и синхронизации."
+          size="compact"
+        />
         <Alert
           title="Выберите баню"
           description="Для просмотра календаря выберите баню в верхнем меню."
@@ -809,25 +743,18 @@ export default function CalendarPage() {
   }
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 16,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <Title level={3} style={{ margin: 0 }}>
-          Календарь
-        </Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Расписание"
+        title="Календарь"
+        description="Управляйте бронированиями, блокировками и внешней синхронизацией в единой сетке."
+        size="compact"
+        extra={(
         <Space wrap>
           {hasMultipleBathhouses && (
             <Tooltip title="Показать бронирования всех объектов">
               <Space>
-                <Text style={{ fontSize: 13 }}>Все объекты</Text>
+                <Text className="rh-calendar-toggle-label">Все объекты</Text>
                 <Switch
                   size="small"
                   checked={consolidatedView}
@@ -846,19 +773,12 @@ export default function CalendarPage() {
             Внешний календарь
           </Button>
         </Space>
-      </div>
+        )}
+      />
 
       {/* Navigation + View Switcher */}
-      <Card size="small" style={{ marginBottom: 16 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 8,
-          }}
-        >
+      <Card size="small" className="rh-admin-detail-card rh-calendar-nav-card">
+        <div className="rh-calendar-nav">
           <Space>
             <Button icon={<LeftOutlined />} onClick={() => navigate(-1)} />
             <Button onClick={goToToday}>Сегодня</Button>
@@ -874,34 +794,20 @@ export default function CalendarPage() {
           </Space>
         </div>
         {/* Legend */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+        <div className="rh-calendar-legend">
           {consolidatedView ? (
             // Show bathhouse color legend in consolidated mode
             Array.from(bathhouseColorMap.entries()).map(([id, info]) => (
               <Space key={id} size={4}>
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 2,
-                    backgroundColor: info.color,
-                  }}
-                />
-                <Text style={{ fontSize: 12 }}>{info.name}</Text>
+                <span className={`rh-calendar-legend__dot rh-calendar-tone--${info.tone}`} />
+                <Text className="rh-calendar-legend__label">{info.name}</Text>
               </Space>
             ))
           ) : (
             LEGEND_ITEMS.map((item) => (
               <Space key={item.label} size={4}>
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 2,
-                    backgroundColor: item.color,
-                  }}
-                />
-                <Text style={{ fontSize: 12 }}>{item.label}</Text>
+                <span className={`rh-calendar-legend__dot rh-calendar-tone--${item.tone}`} />
+                <Text className="rh-calendar-legend__label">{item.label}</Text>
               </Space>
             ))
           )}
@@ -911,11 +817,10 @@ export default function CalendarPage() {
       {/* Calendar Grid */}
       <Card
         size="small"
-        style={{ marginBottom: 16, overflow: 'auto' }}
-        styles={{ body: { padding: 0 } }}
+        className="rh-calendar-grid-card"
       >
         {(bookingsLoading || consolidatedLoading) ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>
+          <div className="rh-calendar-loading">
             <Spin size="large" />
           </div>
         ) : view === 'day' ? (
@@ -952,13 +857,14 @@ export default function CalendarPage() {
               </Space>
             }
             size="small"
+            className="rh-admin-detail-card"
           >
-            <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+            <Text type="secondary" className="rh-card-intro-text">
               Используйте ссылку для подключения календаря бронирований в Google Calendar,
               Apple Calendar или другие приложения.
             </Text>
             {calendarToken?.url ? (
-              <Space orientation="vertical" style={{ width: '100%' }}>
+              <Space orientation="vertical" className="rh-full-width">
                 <Space.Compact className="rh-compact-control">
                   <Input
                     readOnly
@@ -987,6 +893,7 @@ export default function CalendarPage() {
               </Space>
             }
             size="small"
+            className="rh-admin-detail-card"
             extra={
               <Space>
                 <Button
@@ -1056,7 +963,7 @@ export default function CalendarPage() {
                           </Tag>
                           <Text
                             ellipsis
-                            style={{ maxWidth: 200 }}
+                            className="rh-calendar-url"
                             title={cal.url}
                           >
                             {cal.url}
@@ -1066,12 +973,12 @@ export default function CalendarPage() {
                       description={
                         <Space>
                           {cal.last_sync_at && (
-                            <Text type="secondary" style={{ fontSize: 12 }}>
+                            <Text type="secondary" className="rh-calendar-sync-meta">
                               Синхр.: {formatDateTime(cal.last_sync_at)}
                             </Text>
                           )}
                           {cal.last_error && (
-                            <Text type="danger" style={{ fontSize: 12 }}>
+                            <Text type="danger" className="rh-calendar-sync-meta">
                               Ошибка: {cal.last_error}
                             </Text>
                           )}
@@ -1108,7 +1015,7 @@ export default function CalendarPage() {
             <RangePicker
               showTime={{ format: 'HH:mm' }}
               format="DD.MM.YYYY HH:mm"
-              style={{ width: '100%' }}
+              className="rh-full-width"
               placeholder={['Начало', 'Конец']}
             />
           </Form.Item>
@@ -1120,7 +1027,7 @@ export default function CalendarPage() {
           title="Блокировка запретит бронирование на указанный период."
           type="info"
           showIcon
-          style={{ marginTop: 8 }}
+          className="rh-modal-alert"
         />
       </Modal>
 
@@ -1160,7 +1067,7 @@ export default function CalendarPage() {
           title="Занятые слоты из внешнего календаря будут автоматически блокировать бронирования."
           type="info"
           showIcon
-          style={{ marginTop: 8 }}
+          className="rh-modal-alert"
         />
       </Modal>
     </div>

@@ -136,12 +136,7 @@ export default function GooglePayButton({ amount, onToken, disabled, loading }: 
       disabled={disabled}
       loading={loading}
       size="large"
-      style={{
-        background: '#fff',
-        color: '#3c4043',
-        borderColor: '#dadce0',
-        borderRadius: 20,
-      }}
+      className="rh-wallet-pay-button rh-wallet-pay-button--google"
     >
       Google Pay
     </Button>

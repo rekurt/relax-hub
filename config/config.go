@@ -174,12 +174,13 @@ type CORSConfig struct {
 }
 
 type StorageConfig struct {
-	Endpoint  string `mapstructure:"endpoint"`
-	Bucket    string `mapstructure:"bucket"`
-	AccessKey string `mapstructure:"access_key"`
-	SecretKey string `mapstructure:"secret_key"`
-	Region    string `mapstructure:"region"`
-	UseSSL    bool   `mapstructure:"use_ssl"`
+	Endpoint      string `mapstructure:"endpoint"`
+	PublicBaseURL string `mapstructure:"public_base_url"`
+	Bucket        string `mapstructure:"bucket"`
+	AccessKey     string `mapstructure:"access_key"`
+	SecretKey     string `mapstructure:"secret_key"`
+	Region        string `mapstructure:"region"`
+	UseSSL        bool   `mapstructure:"use_ssl"`
 }
 
 func Load(cfgFile string) (*Config, error) {
@@ -216,6 +217,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("logger.level", "info")
 	v.SetDefault("logger.format", "json")
 	v.SetDefault("storage.endpoint", "localhost:9000")
+	v.SetDefault("storage.public_base_url", "")
 	v.SetDefault("storage.bucket", "bani-avatars")
 	v.SetDefault("storage.access_key", "minioadmin")
 	v.SetDefault("storage.secret_key", "minioadmin")

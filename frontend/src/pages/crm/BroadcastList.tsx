@@ -2,13 +2,11 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Empty,
   Popconfirm,
   Select,
   Space,
   Table,
   Tag,
-  Typography,
 } from '@/components/design/system'
 import {
   PlusOutlined,
@@ -22,8 +20,8 @@ import {
 } from '@/api/generated/crm/crm'
 import type { InternalHandlerBroadcastResponse } from '@/api/generated/model'
 import { useQueryClient } from '@tanstack/react-query'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
+import EmptyState from '@/components/EmptyState'
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'default',
@@ -155,21 +153,26 @@ export default function BroadcastList() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Рассылки</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/crm/broadcasts/new')}>
-          Создать рассылку
-        </Button>
-      </div>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="CRM"
+        title="Рассылки"
+        description="Черновики и отправленные кампании по сегментам гостей."
+        size="compact"
+        extra={(
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/crm/broadcasts/new')}>
+            Создать рассылку
+          </Button>
+        )}
+      />
 
-      <Space style={{ marginBottom: 16 }}>
+      <Space className="rh-page-toolbar">
         <Select
           placeholder="Фильтр по статусу"
           value={statusFilter}
           onChange={(v) => { setStatusFilter(v); setPage(1) }}
           allowClear
-          style={{ width: 180 }}
+          className="rh-crm-status-filter"
           options={[
             { value: 'draft', label: 'Черновик' },
             { value: 'sending', label: 'Отправляется' },
@@ -186,7 +189,7 @@ export default function BroadcastList() {
         loading={isLoading}
         locale={{
           emptyText: (
-            <Empty description="Нет рассылок. Создайте рассылку для информирования гостей об акциях и новостях." />
+            <EmptyState description="Нет рассылок. Создайте рассылку для информирования гостей об акциях и новостях." />
           ),
         }}
         pagination={

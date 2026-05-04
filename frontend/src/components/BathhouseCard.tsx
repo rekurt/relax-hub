@@ -73,7 +73,7 @@ export default function BathhouseCard({
             name="heart"
             size={16}
             fill={bathhouse.is_favorite ? 'currentColor' : 'none'}
-            style={{ color: bathhouse.is_favorite ? 'var(--rh-error)' : undefined }}
+            className={bathhouse.is_favorite ? 'rh-favorite-icon rh-favorite-icon--active' : 'rh-favorite-icon'}
           />
         )}
         onClick={handleFavoriteClick}

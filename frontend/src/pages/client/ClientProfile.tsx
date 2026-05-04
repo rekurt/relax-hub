@@ -61,9 +61,10 @@ import { useGetMyStats } from '@/api/generated/users/users'
 import { useGetMyRegion, usePutMyRegion } from '@/api/generated/region/region'
 import { PLATFORM_NAME } from '@/content/support'
 import { formatPrice } from '@/lib/format'
-import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
+import { PROVIDER_LABELS } from '@/lib/constants'
 import ProfileCompleteness from '@/components/ProfileCompleteness'
 import PageHeader from '@/components/PageHeader'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const REGION_LABELS: Record<string, string> = {
   RU: 'Россия',
@@ -132,7 +133,7 @@ const EVENT_SETTINGS = [
 
 const SOCIAL_PROVIDERS = ['vk', 'yandex', 'google'] as const
 
-const { Text, Paragraph, Title } = Typography
+const { Text, Paragraph } = Typography
 
 interface ToggleRowProps {
   name: string
@@ -390,7 +391,7 @@ export default function ClientProfile() {
           <Alert
             type="warning"
             showIcon
-            style={{ marginBottom: 12 }}
+            className="rh-modal-alert"
             title="Период восстановления — 30 дней"
             description="После подтверждения ваш аккаунт будет деактивирован. В течение 30 дней вы можете отменить удаление."
           />
@@ -485,7 +486,7 @@ export default function ClientProfile() {
                 <div className="rh-profile-hero__identity">
                   <Avatar
                     size={96}
-                    src={user?.avatar_url}
+                    src={resolveAssetUrl(user?.avatar_url)}
                     icon={!user?.avatar_url && <UserOutlined />}
                   />
                   <div className="rh-profile-hero__copy">
@@ -495,15 +496,15 @@ export default function ClientProfile() {
                       {currentCityName && <Tag color="gold">{currentCityName}</Tag>}
                     </Space>
 
-                    <Title level={3} style={{ marginBottom: 0, marginTop: 0 }}>
+                    <h2 className="rh-profile-hero__title">
                       {user?.name ?? 'Профиль клиента'}
-                    </Title>
+                    </h2>
 
-                    <Space orientation="vertical" size={4} style={{ width: '100%' }}>
+                    <Space orientation="vertical" size={4} className="rh-full-width">
                       <Text type="secondary">{user?.email ?? 'Email не указан'}</Text>
                       <Text type="secondary">{user?.phone ?? 'Телефон не указан'}</Text>
                       {user?.bio ? (
-                        <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                        <Paragraph type="secondary" className="rh-profile-bio">
                           {user.bio}
                         </Paragraph>
                       ) : (
@@ -592,9 +593,9 @@ export default function ClientProfile() {
                       <section className="rh-notification-prefs__hero">
                         <div className="rh-notification-prefs__hero-copy">
                           <div className="rh-notification-prefs__eyebrow">Контур уведомлений</div>
-                          <Title level={3} className="rh-notification-prefs__title">
+                          <h2 className="rh-notification-prefs__title">
                             Только нужные сигналы
-                          </Title>
+                          </h2>
                           <Paragraph className="rh-notification-prefs__description">
                             Выберите, через какие каналы {PLATFORM_NAME} может связываться с вами, и оставьте
                             включёнными только те сценарии, которые действительно требуют внимания.
@@ -710,10 +711,8 @@ export default function ClientProfile() {
                         <List.Item.Meta
                           avatar={
                             <Avatar
-                              src={account.avatar_url}
-                              style={{
-                                backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? 'var(--rh-text-muted)',
-                              }}
+                              src={resolveAssetUrl(account.avatar_url)}
+                              className={`rh-social-avatar rh-social-avatar--${account.provider ?? 'default'}`}
                             >
                               {(account.provider ?? '')[0]?.toUpperCase()}
                             </Avatar>
@@ -729,17 +728,14 @@ export default function ClientProfile() {
                     )}
                   />
 
-                  <Divider style={{ margin: '20px 0 16px' }} />
+                  <Divider className="rh-profile-divider" />
                   <Space wrap>
                     {SOCIAL_PROVIDERS.map((provider) =>
                       !linkedProviders.has(provider) ? (
                         <Button
                           key={provider}
                           onClick={() => handleLinkProvider(provider)}
-                          style={{
-                            borderColor: PROVIDER_COLORS[provider],
-                            color: PROVIDER_COLORS[provider],
-                          }}
+                          className={`rh-social-link-button rh-social-link-button--${provider}`}
                         >
                           Привязать {PROVIDER_LABELS[provider]}
                         </Button>
@@ -804,10 +800,10 @@ export default function ClientProfile() {
               {regionLoading ? (
                 <Skeleton active paragraph={{ rows: 2 }} />
               ) : (
-                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
+                <Space orientation="vertical" size={16} className="rh-full-width">
                   <div>
                     <Text type="secondary">Текущий регион: </Text>
-                    <Tag color="blue" style={{ fontSize: 14 }}>
+                    <Tag color="blue" className="rh-region-tag">
                       {currentRegionLabel} ({currentCurrency})
                     </Tag>
                   </div>
@@ -843,7 +839,7 @@ export default function ClientProfile() {
                 cancelText="Отмена"
                 confirmLoading={switchRegion.isPending}
               >
-                <Space orientation="vertical" size={12} style={{ width: '100%' }}>
+                <Space orientation="vertical" size={12} className="rh-full-width">
                   <Text>
                     Вы хотите сменить регион с <strong>{currentRegionLabel}</strong> на <strong>{targetRegionLabel}</strong>?
                   </Text>
@@ -852,7 +848,7 @@ export default function ClientProfile() {
                     showIcon
                     title="Последствия смены региона"
                     description={
-                      <ul style={{ paddingLeft: 20, margin: 0 }}>
+                      <ul className="rh-region-effects-list">
                         <li>Текущий кошелёк ({currentCurrency}) будет архивирован</li>
                         <li>Создан новый кошелёк в {REGION_CURRENCIES[targetRegion] ?? targetRegion}</li>
                         <li>Уровень лояльности будет сброшен</li>
@@ -871,7 +867,7 @@ export default function ClientProfile() {
             className="rh-profile-danger-card"
             title={
               <Space>
-                <ExclamationCircleOutlined style={{ color: '#b42318' }} />
+                <ExclamationCircleOutlined className="rh-danger-icon" />
                 <Text>Удаление аккаунта</Text>
               </Space>
             }
@@ -893,7 +889,7 @@ export default function ClientProfile() {
                   }
                 />
               ) : (
-                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
+                <Space orientation="vertical" size={16} className="rh-full-width">
                   <Text type="secondary">
                     После подтверждения ваш аккаунт будет деактивирован. В течение 30 дней вы можете отменить удаление.
                     Средства, внесённые пополнением, будут возвращены. Бонусы и промо-баланс будут утеряны.

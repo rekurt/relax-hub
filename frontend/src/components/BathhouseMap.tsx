@@ -77,6 +77,7 @@ interface BathhouseMapProps {
   zoom?: number
   isochronePolygon?: number[][] | null // [lat, lng] pairs for Yandex Maps
   style?: React.CSSProperties
+  className?: string
 }
 
 const YMAPS_API_KEY = import.meta.env.VITE_YMAPS_API_KEY || ''
@@ -108,6 +109,10 @@ function loadYmaps(): Promise<void> {
 const DEFAULT_CENTER = { lat: 55.751244, lng: 37.618423 } // Moscow
 const DEFAULT_ZOOM = 11
 
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(' ')
+}
+
 export default function BathhouseMap({
   bathhouses,
   highlightedId,
@@ -118,7 +123,7 @@ export default function BathhouseMap({
   center,
   zoom,
   isochronePolygon,
-  style,
+  className,
 }: BathhouseMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<YMap | null>(null)
@@ -226,18 +231,18 @@ export default function BathhouseMap({
         const safeSlug = encodeURIComponent(slug)
 
         const balloonBody = showMiniCard
-          ? `<div style="min-width:208px;max-width:268px;font-family:Manrope,Segoe UI,sans-serif;color:#16212b;">
-              ${coverImage ? `<img src="${escapeHtml(coverImage)}" alt="" style="width:100%;height:124px;object-fit:cover;border-radius:18px;margin-bottom:10px;" />` : ''}
-              <div style="font-weight:800;font-size:15px;line-height:1.25;margin-bottom:5px;">${safeName}</div>
-              <div style="color:#5f6877;font-size:12px;line-height:1.45;margin-bottom:8px;">${safeAddress}</div>
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-                <span style="color:#d97706;font-weight:700;">★ ${ratingStr}</span>
-                <span style="color:rgba(22,33,43,0.48);font-size:12px;">(${reviewCountStr})</span>
+          ? `<div class="rh-map-balloon">
+              ${coverImage ? `<img src="${escapeHtml(coverImage)}" alt="" class="rh-map-balloon__image" />` : ''}
+              <div class="rh-map-balloon__title">${safeName}</div>
+              <div class="rh-map-balloon__address">${safeAddress}</div>
+              <div class="rh-map-balloon__meta">
+                <span class="rh-map-balloon__rating">★ ${ratingStr}</span>
+                <span class="rh-map-balloon__reviews">(${reviewCountStr})</span>
                 <strong>${priceLabel}/ч</strong>
               </div>
-              <a href="/bathhouses/${safeSlug}" style="display:inline-block;background:#0f766e;color:#fff;padding:8px 14px;border-radius:999px;text-decoration:none;font-size:13px;font-weight:800;box-shadow:0 12px 24px rgba(15,118,110,0.18);">Подробнее</a>
+              <a href="/bathhouses/${safeSlug}" class="rh-map-balloon__link">Подробнее</a>
             </div>`
-          : `<div style="font-family:Manrope,Segoe UI,sans-serif;color:#16212b;line-height:1.5;">${safeAddress}<br/><strong>${priceLabel}/ч</strong></div>`
+          : `<div class="rh-map-balloon rh-map-balloon--compact">${safeAddress}<br/><strong>${priceLabel}/ч</strong></div>`
 
         const placemark = new window.ymaps!.Placemark(
           [b.latitude!, b.longitude!],
@@ -254,19 +259,7 @@ export default function BathhouseMap({
             iconImageHref: '',
             iconImageSize: [0, 0],
             iconContentLayout: window.ymaps!.templateLayoutFactory.createClass(
-              `<div style="
-                background: ${isHighlighted ? '#b42318' : '#fffdf8'};
-                color: ${isHighlighted ? '#fff' : '#16212b'};
-                border: 2px solid ${isHighlighted ? '#b42318' : '#0f766e'};
-                border-radius: 999px;
-                padding: 6px 12px;
-                font-size: 12px;
-                font-weight: 800;
-                white-space: nowrap;
-                box-shadow: 0 14px 28px rgba(15,23,42,0.14);
-                transform: translate(-50%, -100%);
-                cursor: pointer;
-              ">${priceLabel}/ч</div>`,
+              `<div class="rh-map-marker${isHighlighted ? ' rh-map-marker--highlighted' : ''}">${priceLabel}/ч</div>`,
             ),
           },
         )
@@ -319,12 +312,12 @@ export default function BathhouseMap({
   }, [isochronePolygon])
 
   return (
-    <div style={{ position: 'relative', ...style }}>
-      <Spin spinning={loading} style={{ width: '100%', height: '100%' }}>
+    <div className={cx('rh-bathhouse-map', className)}>
+      <Spin spinning={loading} className="rh-bathhouse-map__spin">
         <div
           ref={containerRef}
           data-testid="bathhouse-map"
-          style={{ width: '100%', height: '100%', minHeight: 400 }}
+          className="rh-bathhouse-map__canvas"
         />
       </Spin>
 
@@ -332,14 +325,7 @@ export default function BathhouseMap({
         <Button
           type="primary"
           icon={<AimOutlined />}
-          style={{
-            position: 'absolute',
-            top: 12,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10,
-            boxShadow: '0 14px 28px rgba(15,118,110,0.20)',
-          }}
+          className="rh-map-search-area-button"
           onClick={handleSearchArea}
         >
           Искать в этой области
@@ -350,17 +336,7 @@ export default function BathhouseMap({
         <Button
           size="small"
           data-testid="map-layer-toggle"
-          style={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            zIndex: 10,
-            borderRadius: 999,
-            borderColor: 'rgba(15, 23, 42, 0.10)',
-            boxShadow: '0 12px 24px rgba(15,23,42,0.12)',
-            background: 'rgba(255, 253, 248, 0.92)',
-            fontWeight: 700,
-          }}
+          className="rh-map-layer-toggle"
           onClick={handleToggleMapType}
         >
           {mapType === 'scheme' ? 'Спутник' : 'Схема'}

@@ -86,6 +86,38 @@ describe('ConversionFunnels', () => {
     expect(screen.getByText('75.0%')).toBeInTheDocument()
   })
 
+  it('clamps visual bar width while preserving raw percentages above 100', () => {
+    setupMocks({
+      period: '30d',
+      steps: [
+        { name: 'visit', count: 2, percentage: 100 },
+        { name: 'start_booking', count: 8, percentage: 400 },
+      ],
+    })
+
+    renderWithProviders(<ConversionFunnels />)
+
+    const oversizedBar = screen.getByTestId('funnel-bar-1')
+    expect(screen.getByText('400.0%')).toBeInTheDocument()
+    expect(oversizedBar).toHaveAttribute('aria-valuenow', '100')
+    expect(oversizedBar).toHaveAttribute('value', '100')
+  })
+
+  it('shows growth between funnel stages instead of a negative drop-off', () => {
+    setupMocks({
+      period: '30d',
+      steps: [
+        { name: 'search', count: 0, percentage: 0 },
+        { name: 'view_card', count: 3, percentage: 150 },
+      ],
+    })
+
+    renderWithProviders(<ConversionFunnels />)
+
+    expect(screen.getByText('Прирост: +3 (100.0%)')).toBeInTheDocument()
+    expect(screen.queryByText(/Отсев: -/)).not.toBeInTheDocument()
+  })
+
   it('renders empty state when no data', () => {
     vi.mocked(useGetAdminAnalyticsFunnel).mockReturnValue({
       data: { data: { period: '30d', steps: [] }, success: true },

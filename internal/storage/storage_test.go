@@ -71,6 +71,19 @@ func TestMockStorage_ImplementsInterface(t *testing.T) {
 	var _ FileStorage = (*MockStorage)(nil)
 }
 
+func TestS3Storage_ObjectURLUsesPublicBaseURL(t *testing.T) {
+	s := &S3Storage{
+		bucket:        "bani",
+		publicBaseURL: "http://localhost:9102/",
+	}
+
+	got := s.objectURL("avatars/avatar.png")
+	want := "http://localhost:9102/bani/avatars/avatar.png"
+	if got != want {
+		t.Errorf("objectURL() = %q, want %q", got, want)
+	}
+}
+
 func TestAvatarPath(t *testing.T) {
 	tests := []struct {
 		userID string

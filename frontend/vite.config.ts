@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 export default defineConfig(({ mode }) => {
@@ -12,9 +13,11 @@ export default defineConfig(({ mode }) => {
   const backendPort = env.BANI_SERVER_PORT || '8080'
   const backendUrl = env.BANI_BACKEND_URL || `http://localhost:${backendPort}`
   const backendWsUrl = backendUrl.replace(/^http/, 'ws')
+  const storagePort = env.BANI_DOCKER_MINIO_API_PORT || '9102'
+  const storageUrl = env.VITE_STORAGE_PROXY_TARGET || env.BANI_STORAGE_PUBLIC_BASE_URL || `http://localhost:${storagePort}`
 
   return {
-    plugins: [react()],
+    plugins: [tailwindcss(), react()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
@@ -29,7 +32,8 @@ export default defineConfig(({ mode }) => {
       hookTimeout: 30000,
     },
     server: {
-      allowedHosts: ['mac.local'],
+      host: true,
+      allowedHosts: true,
       proxy: {
         '/api': {
           target: backendUrl,
@@ -39,6 +43,10 @@ export default defineConfig(({ mode }) => {
         '/ws': {
           target: backendWsUrl,
           ws: true,
+        },
+        '/bani': {
+          target: storageUrl,
+          changeOrigin: true,
         },
       },
     },
