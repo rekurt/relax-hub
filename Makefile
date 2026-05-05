@@ -1,4 +1,4 @@
-.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin seed-demo clean swagger swagger-fmt frontend-dev frontend-build frontend-generate-api frontend-test
+.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin seed-demo clean swagger swagger-fmt frontend-dev frontend-docker-dev frontend-docker-down frontend-build frontend-generate-api frontend-test
 
 APP_NAME := bani-server
 BUILD_DIR := ./bin
@@ -62,6 +62,12 @@ swagger-fmt:
 
 frontend-dev:
 	cd frontend && npm run dev -- --host
+
+frontend-docker-dev:
+	docker compose --profile dev up -d frontend
+
+frontend-docker-down:
+	docker compose --profile dev rm -sf frontend
 
 frontend-build:
 	cd frontend && npm run build

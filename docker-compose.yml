@@ -55,6 +55,24 @@ services:
       timeout: 5s
       retries: 5
 
+  frontend:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      BANI_BACKEND_URL: ${BANI_BACKEND_URL_DOCKER:-http://app:8080}
+      VITE_STORAGE_PROXY_TARGET: ${VITE_STORAGE_PROXY_TARGET:-http://minio:9000}
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+      - ./docs:/app/docs
+    restart: unless-stopped
+
   minio:
     image: minio/minio:latest
     ports:

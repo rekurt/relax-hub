@@ -27,3 +27,6 @@ services:
     ports: !override
       - "${BANI_DOCKER_MINIO_API_PORT:-9102}:9000"
       - "${BANI_DOCKER_MINIO_CONSOLE_PORT:-9103}:9001"
+  frontend:
+    # Vite default 5173; override if it collides locally.
+    ports: !override ["${BANI_DOCKER_FRONTEND_PORT:-5173}:5173"]
