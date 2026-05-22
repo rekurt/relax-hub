@@ -74,7 +74,7 @@ type floatSummaryResponse struct {
 //	@Tags		admin,reconciliation
 //	@Security	BearerAuth
 //	@Success	200	{object}	APIResponse{data=floatSummaryResponse}
-//	@Router		/api/v1/admin/reconciliation/summary [get]
+//	@Router		/admin/reconciliation/summary [get]
 func (h *ReconciliationHandler) GetFloatSummary(w http.ResponseWriter, r *http.Request) {
 	summary, err := h.reconciliationService.GetFloatSummary(r.Context())
 	if err != nil {
@@ -108,7 +108,7 @@ func (h *ReconciliationHandler) GetFloatSummary(w http.ResponseWriter, r *http.R
 //	@Tags		admin,reconciliation
 //	@Security	BearerAuth
 //	@Success	200	{object}	APIResponse{data=floatSnapshotResponse}
-//	@Router		/api/v1/admin/reconciliation/snapshot [post]
+//	@Router		/admin/reconciliation/snapshot [post]
 func (h *ReconciliationHandler) TakeSnapshot(w http.ResponseWriter, r *http.Request) {
 	snapshot, err := h.reconciliationService.TakeFloatSnapshot(r.Context())
 	if err != nil {
@@ -128,7 +128,7 @@ func (h *ReconciliationHandler) TakeSnapshot(w http.ResponseWriter, r *http.Requ
 //	@Param		page		query		int		false	"Page number"
 //	@Param		page_size	query		int		false	"Page size"
 //	@Success	200			{object}	APIResponse{data=[]floatSnapshotResponse}
-//	@Router		/api/v1/admin/reconciliation/snapshots [get]
+//	@Router		/admin/reconciliation/snapshots [get]
 func (h *ReconciliationHandler) ListSnapshots(w http.ResponseWriter, r *http.Request) {
 	from, to := reconciliationParseDateRange(r)
 	page, pageSize := reconciliationParsePagination(r)
@@ -165,7 +165,7 @@ func (h *ReconciliationHandler) ListSnapshots(w http.ResponseWriter, r *http.Req
 //	@Param		date_from	query		string	false	"Start date (YYYY-MM-DD)"
 //	@Param		date_to		query		string	false	"End date (YYYY-MM-DD)"
 //	@Success	200			{object}	APIResponse{data=reconciliationReportResponse}
-//	@Router		/api/v1/admin/reconciliation/reconcile [post]
+//	@Router		/admin/reconciliation/reconcile [post]
 func (h *ReconciliationHandler) Reconcile(w http.ResponseWriter, r *http.Request) {
 	from, to := reconciliationParseDateRange(r)
 
@@ -185,7 +185,7 @@ func (h *ReconciliationHandler) Reconcile(w http.ResponseWriter, r *http.Request
 //	@Param		page		query		int	false	"Page number"
 //	@Param		page_size	query		int	false	"Page size"
 //	@Success	200			{object}	APIResponse{data=[]reconciliationReportResponse}
-//	@Router		/api/v1/admin/reconciliation/reports [get]
+//	@Router		/admin/reconciliation/reports [get]
 func (h *ReconciliationHandler) ListReports(w http.ResponseWriter, r *http.Request) {
 	page, pageSize := reconciliationParsePagination(r)
 

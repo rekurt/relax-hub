@@ -8,6 +8,20 @@ import (
 	"github.com/rekurt/relax-hub/internal/middleware"
 )
 
+// BatchListings godoc
+//
+//	@Summary		Batch listing operations
+//	@Description	Performs batch approve or reject on up to 1000 listings. Processes in chunks of 100.
+//	@Tags			admin-bathhouses
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		batchActionRequest	true	"Action (approve/reject) and list of IDs"
+//	@Success		200		{object}	APIResponse{data=batchDetailedResult}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/listings/batch [post]
 func (h *AdminHandler) BatchListings(w http.ResponseWriter, r *http.Request) {
 	var req batchActionRequest
 	if err := readJSON(w, r, &req); err != nil {

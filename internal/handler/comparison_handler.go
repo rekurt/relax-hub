@@ -60,7 +60,7 @@ type compareResponse struct {
 //	@Success		200		{object}	APIResponse{data=compareResponse}
 //	@Failure		400		{object}	APIResponse
 //	@Failure		404		{object}	APIResponse
-//	@Router			/api/v1/bathhouses/compare [post]
+//	@Router			/bathhouses/compare [post]
 func (h *ComparisonHandler) Compare(w http.ResponseWriter, r *http.Request) {
 	var req compareRequest
 	if err := readJSON(w, r, &req); err != nil {

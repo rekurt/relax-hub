@@ -75,12 +75,15 @@ func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, cha
 	}
 }
 
-// HandleWS upgrades HTTP to WebSocket and manages the connection.
-// Authentication is done via ?token= query parameter since browsers
-// cannot set custom headers on WebSocket connections.
-// SECURITY NOTE: Tokens in query parameters are logged by proxies and servers.
-// For production, consider using cookie-based authentication (secure, httponly flags)
-// or implementing a two-step auth: HTTP POST to get temporary credential, then WebSocket upgrade.
+// HandleWS godoc
+//
+//	@Summary		Connect notifications WebSocket
+//	@Description	Upgrade HTTP to WebSocket for real-time notifications. Authentication uses the token query parameter because browsers cannot set custom headers on WebSocket connections.
+//	@Tags			websocket
+//	@Param			token	query		string	true	"JWT access token"
+//	@Success		101		{string}	string	"Switching Protocols"
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/ws/notifications [get]
 func (h *WSHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	if token == "" {

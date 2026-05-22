@@ -59,7 +59,7 @@ type bankStatementUploadResponse struct {
 //	@Param		file	formData	file	true	"Bank statement file (CSV or 1C format)"
 //	@Success	200		{object}	APIResponse{data=bankStatementUploadResponse}
 //	@Failure	400		{object}	APIResponse
-//	@Router		/api/v1/admin/finance/bank-statement [post]
+//	@Router		/admin/finance/bank-statement [post]
 func (h *BankReconciliationHandler) UploadBankStatement(w http.ResponseWriter, r *http.Request) {
 	adminID := middleware.GetUserID(r.Context())
 
@@ -151,7 +151,7 @@ func (h *BankReconciliationHandler) UploadBankStatement(w http.ResponseWriter, r
 //	@Param		page		query		int		false	"Page number"
 //	@Param		page_size	query		int		false	"Page size"
 //	@Success	200			{object}	APIResponse{data=[]bankStatementEntryResponse}
-//	@Router		/api/v1/admin/finance/reconciliation [get]
+//	@Router		/admin/finance/reconciliation [get]
 func (h *BankReconciliationHandler) ListUnmatched(w http.ResponseWriter, r *http.Request) {
 	filter := domain.BankStatementFilter{
 		Page:     getPage(r.URL.Query().Get("page")),
@@ -218,7 +218,7 @@ type manualMatchRequest struct {
 //	@Success	200		{object}	APIResponse{data=simpleMessageResponse}
 //	@Failure	400		{object}	APIResponse
 //	@Failure	404		{object}	APIResponse
-//	@Router		/api/v1/admin/finance/reconciliation/{id}/match [put]
+//	@Router		/admin/finance/reconciliation/{id}/match [put]
 func (h *BankReconciliationHandler) ManualMatch(w http.ResponseWriter, r *http.Request) {
 	entryIDStr := chi.URLParam(r, "id")
 	entryID, err := uuid.Parse(entryIDStr)

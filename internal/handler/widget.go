@@ -307,6 +307,15 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toWidgetBookingResponse(result.Booking))
 }
 
+// ServeScript godoc
+//
+//	@Summary		Serve widget JavaScript
+//	@Description	Return the embeddable booking widget JavaScript bundle.
+//	@Tags			widget
+//	@Produce		plain
+//	@Success		200	{string}	string	"Widget JavaScript"
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/widget.js [get]
 func (h *WidgetHandler) ServeScript(w http.ResponseWriter, r *http.Request) {
 	// Use absolute path based on executable location
 	exePath, err := os.Executable()
@@ -347,6 +356,15 @@ func (h *WidgetHandler) ServeScript(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ServeStyles godoc
+//
+//	@Summary		Serve widget CSS
+//	@Description	Return the embeddable booking widget stylesheet.
+//	@Tags			widget
+//	@Produce		plain
+//	@Success		200	{string}	string	"Widget CSS"
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/widget.css [get]
 func (h *WidgetHandler) ServeStyles(w http.ResponseWriter, r *http.Request) {
 	// Use absolute path based on executable location
 	exePath, err := os.Executable()

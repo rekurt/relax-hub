@@ -11,6 +11,17 @@ import (
 	"github.com/rekurt/relax-hub/internal/seo"
 )
 
+// GetMeta godoc
+//
+//	@Summary		Get bathhouse SEO meta
+//	@Description	Return generated SEO meta tags for a bathhouse.
+//	@Tags			bathhouses
+//	@Produce		json
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=seo.MetaTags}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bathhouses/{id}/meta [get]
 func (h *BathhouseHandler) GetMeta(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

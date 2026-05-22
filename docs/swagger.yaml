@@ -7536,6 +7536,115 @@ paths:
       tags:
       - admin
       - feature-flags
+  /admin/finance/bank-statement:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Bank statement file (CSV or 1C format)
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.bankStatementUploadResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload bank statement
+      tags:
+      - admin
+      - finance
+  /admin/finance/reconciliation:
+    get:
+      parameters:
+      - description: Filter by status (pending, matched, manual, ignored)
+        in: query
+        name: status
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.bankStatementEntryResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List unmatched bank entries
+      tags:
+      - admin
+      - finance
+  /admin/finance/reconciliation/{id}/match:
+    put:
+      parameters:
+      - description: Bank entry ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Match details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.manualMatchRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Manual match bank entry
+      tags:
+      - admin
+      - finance
   /admin/force-majeure:
     get:
       description: Returns all force majeure events ordered by creation date desc
@@ -8043,6 +8152,63 @@ paths:
       tags:
       - kyc
       - admin
+  /admin/listings/batch:
+    post:
+      consumes:
+      - application/json
+      description: Performs batch approve or reject on up to 1000 listings. Processes
+        in chunks of 100.
+      parameters:
+      - description: Action (approve/reject) and list of IDs
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.batchActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.batchDetailedResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Batch listing operations
+      tags:
+      - admin-bathhouses
   /admin/notifications:
     get:
       description: Returns paginated list of admin notifications filtered by role,
@@ -8795,6 +8961,135 @@ paths:
       summary: Create global promo code
       tags:
       - promo-codes
+  /admin/reconciliation/reconcile:
+    post:
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.reconciliationReportResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reconcile with provider
+      tags:
+      - admin
+      - reconciliation
+  /admin/reconciliation/reports:
+    get:
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.reconciliationReportResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List reconciliation reports
+      tags:
+      - admin
+      - reconciliation
+  /admin/reconciliation/snapshot:
+    post:
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.floatSnapshotResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Take float snapshot
+      tags:
+      - admin
+      - reconciliation
+  /admin/reconciliation/snapshots:
+    get:
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.floatSnapshotResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List float snapshots
+      tags:
+      - admin
+      - reconciliation
+  /admin/reconciliation/summary:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.floatSummaryResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get float summary
+      tags:
+      - admin
+      - reconciliation
   /admin/reviews:
     get:
       description: Returns a paginated list of all reviews for moderation. Supports
@@ -10596,338 +10891,6 @@ paths:
       summary: Batch credit wallets
       tags:
       - admin-wallets
-  /api/v1/admin/finance/bank-statement:
-    post:
-      consumes:
-      - multipart/form-data
-      parameters:
-      - description: Bank statement file (CSV or 1C format)
-        in: formData
-        name: file
-        required: true
-        type: file
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.bankStatementUploadResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Upload bank statement
-      tags:
-      - admin
-      - finance
-  /api/v1/admin/finance/reconciliation:
-    get:
-      parameters:
-      - description: Filter by status (pending, matched, manual, ignored)
-        in: query
-        name: status
-        type: string
-      - description: Start date (YYYY-MM-DD)
-        in: query
-        name: date_from
-        type: string
-      - description: End date (YYYY-MM-DD)
-        in: query
-        name: date_to
-        type: string
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: page_size
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/internal_handler.bankStatementEntryResponse'
-                  type: array
-              type: object
-      security:
-      - BearerAuth: []
-      summary: List unmatched bank entries
-      tags:
-      - admin
-      - finance
-  /api/v1/admin/finance/reconciliation/{id}/match:
-    put:
-      parameters:
-      - description: Bank entry ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Match details
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/internal_handler.manualMatchRequest'
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Manual match bank entry
-      tags:
-      - admin
-      - finance
-  /api/v1/admin/reconciliation/reconcile:
-    post:
-      parameters:
-      - description: Start date (YYYY-MM-DD)
-        in: query
-        name: date_from
-        type: string
-      - description: End date (YYYY-MM-DD)
-        in: query
-        name: date_to
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.reconciliationReportResponse'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Reconcile with provider
-      tags:
-      - admin
-      - reconciliation
-  /api/v1/admin/reconciliation/reports:
-    get:
-      parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: page_size
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/internal_handler.reconciliationReportResponse'
-                  type: array
-              type: object
-      security:
-      - BearerAuth: []
-      summary: List reconciliation reports
-      tags:
-      - admin
-      - reconciliation
-  /api/v1/admin/reconciliation/snapshot:
-    post:
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.floatSnapshotResponse'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Take float snapshot
-      tags:
-      - admin
-      - reconciliation
-  /api/v1/admin/reconciliation/snapshots:
-    get:
-      parameters:
-      - description: Start date (YYYY-MM-DD)
-        in: query
-        name: date_from
-        type: string
-      - description: End date (YYYY-MM-DD)
-        in: query
-        name: date_to
-        type: string
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: page_size
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/internal_handler.floatSnapshotResponse'
-                  type: array
-              type: object
-      security:
-      - BearerAuth: []
-      summary: List float snapshots
-      tags:
-      - admin
-      - reconciliation
-  /api/v1/admin/reconciliation/summary:
-    get:
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.floatSummaryResponse'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Get float summary
-      tags:
-      - admin
-      - reconciliation
-  /api/v1/bathhouses/compare:
-    post:
-      consumes:
-      - application/json
-      description: Compare 2-3 bathhouses side by side
-      parameters:
-      - description: Bathhouse IDs to compare
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_handler.compareRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.compareResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
-      summary: Compare bathhouses
-      tags:
-      - bathhouses
-  /api/v1/bookings/share:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Booking parameters to share
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_handler.shareBookingRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.shareBookingResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Create a shareable booking link
-      tags:
-      - share
-  /api/v1/share/booking/{token}:
-    get:
-      parameters:
-      - description: Share token
-        in: path
-        name: token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.resolveShareResponse'
-              type: object
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
-      summary: Resolve a shareable booking link
-      tags:
-      - share
   /apple-pay/validate-merchant:
     post:
       consumes:
@@ -12713,6 +12676,48 @@ paths:
       summary: Get bathhouse gallery
       tags:
       - review-media
+  /bathhouses/{id}/meta:
+    get:
+      description: Return generated SEO meta tags for a bathhouse.
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_seo.MetaTags'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Get bathhouse SEO meta
+      tags:
+      - bathhouses
   /bathhouses/{id}/photos:
     get:
       description: Get verified photos for a bathhouse.
@@ -13267,6 +13272,41 @@ paths:
                   $ref: '#/definitions/internal_handler.APIError'
               type: object
       summary: Get bathhouse by slug
+      tags:
+      - bathhouses
+  /bathhouses/compare:
+    post:
+      consumes:
+      - application/json
+      description: Compare 2-3 bathhouses side by side
+      parameters:
+      - description: Bathhouse IDs to compare
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.compareRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.compareResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      summary: Compare bathhouses
       tags:
       - bathhouses
   /bookings:
@@ -14838,6 +14878,38 @@ paths:
       summary: Reject modification request
       tags:
       - bookings
+  /bookings/share:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Booking parameters to share
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.shareBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.shareBookingResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a shareable booking link
+      tags:
+      - share
   /certificates/{code}/balance:
     get:
       description: Returns the balance and status of a gift certificate by its code
@@ -25252,6 +25324,33 @@ paths:
       summary: Get a public platform setting
       tags:
       - platform-settings
+  /share/booking/{token}:
+    get:
+      parameters:
+      - description: Share token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.resolveShareResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      summary: Resolve a shareable booking link
+      tags:
+      - share
   /users/{id}/profile:
     get:
       description: Returns a user's public profile by ID
@@ -25466,6 +25565,50 @@ paths:
       summary: YooKassa webhook
       tags:
       - payments
+  /widget.css:
+    get:
+      description: Return the embeddable booking widget stylesheet.
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Widget CSS
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Serve widget CSS
+      tags:
+      - widget
+  /widget.js:
+    get:
+      description: Return the embeddable booking widget JavaScript bundle.
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Widget JavaScript
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Serve widget JavaScript
+      tags:
+      - widget
   /widget/{api_key}/bathhouse:
     get:
       description: Returns bathhouse info for the embeddable widget. Public endpoint,
@@ -25646,6 +25789,34 @@ paths:
       summary: Get available slots (widget)
       tags:
       - widget
+  /ws/notifications:
+    get:
+      description: Upgrade HTTP to WebSocket for real-time notifications. Authentication
+        uses the token query parameter because browsers cannot set custom headers
+        on WebSocket connections.
+      parameters:
+      - description: JWT access token
+        in: query
+        name: token
+        required: true
+        type: string
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Connect notifications WebSocket
+      tags:
+      - websocket
 securityDefinitions:
   BearerAuth:
     description: 'JWT Bearer token. Format: "Bearer {token}"'

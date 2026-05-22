@@ -54,7 +54,7 @@ type resolveShareResponse struct {
 //	@Success	200		{object}	APIResponse{data=shareBookingResponse}
 //	@Failure	400		{object}	APIResponse
 //	@Security	BearerAuth
-//	@Router		/api/v1/bookings/share [post]
+//	@Router		/bookings/share [post]
 func (h *ShareHandler) CreateShareLink(w http.ResponseWriter, r *http.Request) {
 	var req shareBookingRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -135,7 +135,7 @@ func (h *ShareHandler) CreateShareLink(w http.ResponseWriter, r *http.Request) {
 //	@Param		token	path		string	true	"Share token"
 //	@Success	200		{object}	APIResponse{data=resolveShareResponse}
 //	@Failure	404		{object}	APIResponse
-//	@Router		/api/v1/share/booking/{token} [get]
+//	@Router		/share/booking/{token} [get]
 func (h *ShareHandler) ResolveShareLink(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
 	if token == "" {
